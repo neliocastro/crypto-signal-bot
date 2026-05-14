@@ -1,136 +1,170 @@
 """
-Envia mensagens formatadas para o Telegram.
+Envio de mensagens para o Telegram.
+Funções públicas:
+  - send_message(text)         -> envia texto puro
+  - format_signal(sig, fg=None)-> formata um Signal para Markdown
+  - send_signal(sig, fg=None)  -> formata e envia
+  - send_heartbeat(text)       -> envia heartbeat/status do scan
 """
+from __future__ import annotations
+
 import os
+import logging
+from typing import Optional
+
 import requests
 
-TOKEN = os.environ.get("TELEGRAM_TOKEN")
-CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+from .config import settings  # espera settings.telegram_token / settings.telegram_chat_id
 
-def send(text: str):
-    if not TOKEN or not CHAT_ID:
-        print("⚠️ TELEGRAM_TOKEN ou TELEGRAM_CHAT_ID ausentes.")
-        return False
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": text,
-        "parse_mode": "Markdown",
-        "disable_web_page_preview": True,
-    }
-    r = requests.post(url, json=payload, timeout=15)
-    if not r.ok:
-        print("Telegram error:", r.text)
-    return r.ok
+log = logging.getLogger(__name__)
 
-def format_signal(sig, fg=None) -> str:
-    side_emoji = "🟢" if sig.side == "BUY" else "🔴"
-    side_text = "COMPRA" if sig.side == "BUY" else "VENDA"
-    stars = "⭐" * sig.confidence
+TELEGRAM_API = "https://api.telegram.org/bot{token}/sendMessage"
 
-    fg_line = ""
-    if fg:
-        fg_line = f"\n*Sentimento:* {fg['emoji']} {fg['score']}/100 ({fg['label']})"
+# ---------------------------------------------------------------------------
+# helpers internos
+# ---------------------------------------------------------------------------
+def _get_credentials() -> tuple[str, str]:
+    """
+    Busca token e chat_id em settings (config.py) ou nas variáveis de ambiente.
+    """
+    token = (
+        getattr(settings, "telegram_token", None)
+        or os.getenv("TELEGRAM_TOKEN")
+        or os.getenv("TELEGRAM_BOT_TOKEN")
+    )
+    chat_id = (
+        getattr(settings, "telegram_chat_id", None)
+        or os.getenv("TELEGRAM_CHAT_ID")
+    )
+    if not token or not chat_id:
+        raise RuntimeError(
+            "Credenciais do Telegram ausentes (TELEGRAM_TOKEN / TELEGRAM_CHAT_ID)."
+        )
+    return str(token), str(chat_id)
 
+def _escape_md(text: str) -> str:
+    """
+    Escape mínimo para MarkdownV1 (suficiente para nosso uso).
+    """
+    if text is None:
+        return ""
     return (
-        f"{side_emoji} *SINAL DE {side_text}* — `{sig.symbol}`\n"
-        f"_Timeframe: 1H | Estratégia: MACD + EMA200_\n\n"
-        f"*Entrada:* `{sig.entry}`\n"
-        f"*Stop Loss:* `{sig.stop_loss}` ({sig.extras['stop_pct']}%)\n"
-        f"*TP1:* `{sig.take_profit_1}` (R:R 1:{sig.rr_tp1:.0f})\n"
-        f"*TP2:* `{sig.take_profit_2}` (R:R 1:3)\n\n"
-        f"*Confiança:* {sig.confidence}/10 {stars}\n"
-        f"*Risco:* {sig.risk_level} ⚠️"
-        f"{fg_line}\n\n"
-        f"*Indicadores:*\n"
-        f"• RSI: `{sig.extras['rsi']}`\n"
-        f"• MACD: `{sig.extras['macd']}` / Sig: `{sig.extras['macd_signal']}`\n"
-        f"• EMA200: `{sig.extras['ema200']}`\n\n"
-        f"*Racional:* _{sig.rationale}_\n\n"
-        f"🕐 Candle: `{sig.timestamp}`\n"
-        f"📌 _Análise educacional. Execute manualmente na sua corretora._"
+        str(text)
+        .replace("_", r"\_")
+        .replace("*", r"\*")
+        .replace("`", r"\`")
+        .replace("[", r"\[")
     )
 
-def send_heartbeat(checked: int, signals_found: int, fg=None):
-    """Envia ping silencioso quando NÃO houver sinais (opcional)."""
-    fg_text = f" | F&G: {fg['score']} {fg['emoji']}" if fg else ""
-    msg = f"🤖 _Scan concluído: {checked} ativos verificados, {signals_found} sinal(is).{fg_text}_"
-    return send(msg)
-
-from datetime import datetime
-
-def _fg_emoji(score: int) -> str:
-    if score <= 24: return "😱"
-    if score <= 49: return "😟"
-    if score <= 54: return "😐"
-    if score <= 74: return "🙂"
-    return "🤑"
-
-def _fg_label(score: int) -> str:
-    if score <= 24: return "Medo Extremo"
-    if score <= 49: return "Medo"
-    if score <= 54: return "Neutro"
-    if score <= 74: return "Ganância"
-    return "Ganância Extrema"
-
-def _trend_emoji(rsi: float, price: float, ema200: float) -> str:
-    """Cor do bullet por leitura combinada."""
-    if rsi != rsi:  # NaN
-        return "⚪"
-    if rsi >= 55 and price > ema200:
-        return "🟢"
-    if rsi <= 45 and price < ema200:
-        return "🔴"
-    return "🟡"
-
 def _fmt_price(v: float) -> str:
-    if v != v:  # NaN
+    if v is None:
         return "—"
-    if v >= 1000:
-        return f"$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    if v >= 1:
-        return f"$ {v:,.2f}"
-    return f"$ {v:.4f}"
+    if abs(v) >= 1000:
+        return f"{v:,.2f}"
+    if abs(v) >= 1:
+        return f"{v:.4f}"
+    return f"{v:.6f}"
 
-def _fmt(v: float, decimals: int = 2) -> str:
-    if v != v:  # NaN
-        return "—"
-    return f"{v:.{decimals}f}"
+def _fg_label(fg: Optional[int]) -> str:
+    """Classifica o Fear & Greed."""
+    if fg is None:
+        return ""
+    if fg < 25:
+        return "😱 Medo Extremo"
+    if fg < 45:
+        return "😟 Medo"
+    if fg < 55:
+        return "😐 Neutro"
+    if fg < 75:
+        return "🙂 Ganância"
+    return "🤑 Ganância Extrema"
 
-def format_scan_summary(diagnostics, signals_count, fg, timeframe, exchange):
-    now = datetime.now().strftime("%d/%m %H:%M")
-    fg_score = fg if isinstance(fg, int) else fg.get("score", 0)
+# ---------------------------------------------------------------------------
+# API pública
+# ---------------------------------------------------------------------------
+def send_message(text: str, parse_mode: str = "Markdown") -> bool:
+    """
+    Envia uma mensagem de texto para o chat configurado.
+    Retorna True em caso de sucesso.
+    """
+    try:
+        token, chat_id = _get_credentials()
+    except RuntimeError as e:
+        log.error("%s", e)
+        return False
 
-    lines = [
-        f"🤖 *Scan Concluído* • {now}",
-        f"{_fg_emoji(fg_score)} *Fear & Greed:* {fg_score} ({_fg_label(fg_score)})",
-        "",
-        f"📊 *Ativos Verificados* ({len(diagnostics)}) — TF {timeframe} • {exchange}",
-        "",
-    ]
+    url = TELEGRAM_API.format(token=token)
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": parse_mode,
+        "disable_web_page_preview": True,
+    }
+    try:
+        r = requests.post(url, json=payload, timeout=15)
+        if r.status_code != 200:
+            log.error("Telegram %s: %s", r.status_code, r.text)
+            # fallback sem parse_mode (caso o Markdown quebre)
+            if parse_mode:
+                payload.pop("parse_mode", None)
+                r2 = requests.post(url, json=payload, timeout=15)
+                return r2.status_code == 200
+            return False
+        return True
+    except Exception as e:  # noqa: BLE001
+        log.exception("Falha ao enviar Telegram: %s", e)
+        return False
 
-    for d in diagnostics:
-        if "error" in d:
-            lines.append(f"⚠️ *{d['symbol']}* — erro: {d['error'][:60]}")
-            lines.append("")
-            continue
+def format_signal(sig, fg: Optional[int] = None) -> str:
+    """
+    Formata um objeto Signal em Markdown amigável.
+    `fg` é o índice Fear & Greed (0-100), opcional.
+    """
+    side_emoji = "🟢 LONG" if sig.side == "LONG" else "🔴 SHORT"
 
-        price = d["price"]
-        ema200 = d["ema200"]
-        rsi = d["rsi"]
-        bullet = _trend_emoji(rsi, price, ema200)
+    # alvos
+    targets_str = ""
+    if sig.targets:
+        targets_str = "\n".join(
+            f"  • TP{i+1}: `{_fmt_price(t)}`" for i, t in enumerate(sig.targets)
+        )
 
-        ema_status = ""
-        if ema200 == ema200 and price == price:
-            ema_status = " (preço acima ✅)" if price > ema200 else " (preço abaixo ⚠️)"
+    # motivos
+    reasons_str = ""
+    if sig.reasons:
+        reasons_str = "\n".join(f"  ✓ {_escape_md(r)}" for r in sig.reasons)
 
-        lines.append(f"{bullet} *{d['symbol']}*")
-        lines.append(f"   💰 {_fmt_price(price)}")
-        lines.append(f"   📈 RSI(14): `{_fmt(rsi, 1)}`  |  MACD: `{_fmt(d['macd'], 2)}`")
-        lines.append(f"   📉 Signal: `{_fmt(d['macd_signal'], 2)}`  |  Hist: `{_fmt(d['macd_hist'], 2)}`")
-        lines.append(f"   🎯 EMA200: {_fmt_price(ema200)}{ema_status}")
-        lines.append("")
+    # cabeçalho do F&G
+    fg_line = ""
+    if fg is not None:
+        fg_line = f"\n🌡️ *F&G:* {fg} — {_fg_label(fg)}"
 
-    lines.append(f"🎯 *Sinais qualificados:* {signals_count}")
+    # confidence em estrelas (10 = ★★★★★)
+    stars = "★" * min(5, max(1, round(sig.confidence / 2)))
+    stars = stars.ljust(5, "☆")
 
-    return "\n".join(lines)
+    msg = (
+        f"🤖 *Sinal {side_emoji}*\n"
+        f"📊 *Par:* `{_escape_md(sig.symbol)}`  ⏱ `{_escape_md(sig.timeframe)}`\n"
+        f"🎯 *Confiança:* {stars}  ({sig.confidence}/10)"
+        f"{fg_line}\n"
+        f"\n"
+        f"💰 *Entrada:* `{_fmt_price(sig.entry)}`\n"
+        f"🛑 *Stop:* `{_fmt_price(sig.stop)}`\n"
+        f"🎯 *Alvos:*\n{targets_str}\n"
+        f"\n"
+        f"🧠 *Confluências:*\n{reasons_str}\n"
+        f"\n"
+        f"🕒 _{_escape_md(sig.timestamp)}_"
+    )
+    return msg
+
+def send_signal(sig, fg: Optional[int] = None) -> bool:
+    """Conveniência: formata e envia um Signal."""
+    return send_message(format_signal(sig, fg))
+
+def send_heartbeat(text: str) -> bool:
+    """
+    Mensagem curta de status do scan (ex.: 'Scan concluído: 3 ativos, 0 sinais').
+    """
+    return send_message(f"🤖 _{_escape_md(text)}_")
