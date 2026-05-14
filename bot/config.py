@@ -14,6 +14,13 @@ WATCHLIST = [
     "BTC/USDT",
     "ETH/USDT",
     "SOL/USDT",
+    "XRP/USDT",
+    "TRX/USDT",
+    "BNB/USDT",
+    "LINK/USDT",
+    "HYPE/USDT",
+    "AAVE/USDT",
+    "PAXG/USDT",
 ]
 
 # ============ TIMEFRAME ============
