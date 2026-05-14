@@ -175,4 +175,3 @@ def evaluate(symbol: str, df: pd.DataFrame) -> Optional[Signal]:
         )
 
     return None
-Copiar para área de transferência
