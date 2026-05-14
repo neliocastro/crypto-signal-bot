@@ -1,97 +1,84 @@
 """
-Cálculo de indicadores técnicos sobre o DataFrame OHLCV.
-Função pública obrigatória: enrich(df) -> df enriquecido.
+Indicadores técnicos.
+Função pública exigida pelo main.py: add_indicators(df) -> df
 """
 import numpy as np
 import pandas as pd
 
-# ---------- helpers ----------
-def _ema(series: pd.Series, length: int) -> pd.Series:
-    return series.ewm(span=length, adjust=False).mean()
+def _ema(s: pd.Series, n: int) -> pd.Series:
+    return s.ewm(span=n, adjust=False).mean()
 
-def _sma(series: pd.Series, length: int) -> pd.Series:
-    return series.rolling(length).mean()
+def _sma(s: pd.Series, n: int) -> pd.Series:
+    return s.rolling(n).mean()
 
-def _rsi(series: pd.Series, length: int = 14) -> pd.Series:
-    delta = series.diff()
+def _rsi(s: pd.Series, n: int = 14) -> pd.Series:
+    delta = s.diff()
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
-    avg_gain = gain.ewm(alpha=1 / length, adjust=False).mean()
-    avg_loss = loss.ewm(alpha=1 / length, adjust=False).mean()
+    avg_gain = gain.ewm(alpha=1 / n, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1 / n, adjust=False).mean()
     rs = avg_gain / avg_loss.replace(0, np.nan)
     return 100 - (100 / (1 + rs))
 
-def _macd(series: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9):
-    ema_fast = _ema(series, fast)
-    ema_slow = _ema(series, slow)
-    macd_line = ema_fast - ema_slow
-    signal_line = _ema(macd_line, signal)
-    hist = macd_line - signal_line
-    return macd_line, signal_line, hist
+def _macd(s: pd.Series, fast=12, slow=26, signal=9):
+    macd = _ema(s, fast) - _ema(s, slow)
+    sig = _ema(macd, signal)
+    return macd, sig, macd - sig
 
-def _atr(df: pd.DataFrame, length: int = 14) -> pd.Series:
-    high, low, close = df["high"], df["low"], df["close"]
-    prev_close = close.shift(1)
-    tr = pd.concat(
-        [
-            (high - low),
-            (high - prev_close).abs(),
-            (low - prev_close).abs(),
-        ],
-        axis=1,
-    ).max(axis=1)
-    return tr.ewm(alpha=1 / length, adjust=False).mean()
+def _atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
+    h, l, c = df["high"], df["low"], df["close"]
+    pc = c.shift(1)
+    tr = pd.concat([(h - l), (h - pc).abs(), (l - pc).abs()], axis=1).max(axis=1)
+    return tr.ewm(alpha=1 / n, adjust=False).mean()
 
-def _bollinger(series: pd.Series, length: int = 20, mult: float = 2.0):
-    mid = _sma(series, length)
-    std = series.rolling(length).std()
-    upper = mid + mult * std
-    lower = mid - mult * std
-    return upper, mid, lower
+def _bbands(s: pd.Series, n: int = 20, k: float = 2.0):
+    mid = _sma(s, n)
+    std = s.rolling(n).std()
+    return mid + k * std, mid, mid - k * std
 
-# ---------- API pública ----------
-def enrich(df: pd.DataFrame) -> pd.DataFrame:
+def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """
     Recebe DataFrame com colunas ['timestamp','open','high','low','close','volume']
-    e devolve o mesmo DF com indicadores adicionados.
+    e devolve o mesmo DF com colunas de indicadores adicionadas.
     """
     if df is None or df.empty:
         return df
 
     df = df.copy()
-
-    # garante ordenação por tempo
     if "timestamp" in df.columns:
         df = df.sort_values("timestamp").reset_index(drop=True)
 
-    close = df["close"]
+    c = df["close"]
 
-    # médias móveis
-    df["ema9"]   = _ema(close, 9)
-    df["ema21"]  = _ema(close, 21)
-    df["ema50"]  = _ema(close, 50)
-    df["ema200"] = _ema(close, 200)
-    df["sma20"]  = _sma(close, 20)
+    # Tendência
+    df["ema9"]   = _ema(c, 9)
+    df["ema21"]  = _ema(c, 21)
+    df["ema50"]  = _ema(c, 50)
+    df["ema200"] = _ema(c, 200)
+    df["sma20"]  = _sma(c, 20)
 
-    # momentum
-    df["rsi14"] = _rsi(close, 14)
-    macd_line, signal_line, hist = _macd(close)
-    df["macd"]        = macd_line
-    df["macd_signal"] = signal_line
+    # Momentum
+    df["rsi14"] = _rsi(c, 14)
+    macd, sig, hist = _macd(c)
+    df["macd"]        = macd
+    df["macd_signal"] = sig
     df["macd_hist"]   = hist
 
-    # volatilidade
+    # Volatilidade
     df["atr14"] = _atr(df, 14)
-    up, mid, low = _bollinger(close, 20, 2.0)
-    df["bb_upper"] = up
-    df["bb_mid"]   = mid
-    df["bb_lower"] = low
+    up, mid, lo = _bbands(c, 20, 2.0)
+    df["bb_upper"], df["bb_mid"], df["bb_lower"] = up, mid, lo
 
-    # volume
+    # Volume
     df["vol_sma20"] = _sma(df["volume"], 20)
     df["vol_ratio"] = df["volume"] / df["vol_sma20"]
 
-    # variação percentual
-    df["pct_change"] = close.pct_change() * 100
+    # Variação
+    df["pct_change"] = c.pct_change() * 100
 
     return df
+
+# ---- aliases defensivos (caso outro módulo importe nomes diferentes) ----
+enrich = add_indicators
+compute_indicators = add_indicators
+calculate_indicators = add_indicators
