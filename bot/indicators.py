@@ -9,7 +9,7 @@ from ta.volatility import AverageTrueRange, BollingerBands
 def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """
     Recebe um DataFrame OHLCV e adiciona colunas de indicadores:
-    rsi, ema50, ema200, macd, macd_signal, atr, bb_high, bb_low
+    rsi, ema50, ema200, macd, macd_signal, macd_diff, atr, bb_high, bb_low, bb_mid
     """
     if df is None or df.empty or len(df) < 200:
         return df
@@ -47,7 +47,6 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
 def get_latest_values(df: pd.DataFrame) -> dict:
     """
     Retorna os valores mais recentes dos indicadores como dicionário.
-    Útil para o módulo de estratégias.
     """
     if df is None or df.empty:
         return {}
@@ -69,3 +68,6 @@ def get_latest_values(df: pd.DataFrame) -> dict:
         "bb_low": float(last["bb_low"]) if pd.notna(last["bb_low"]) else None,
         "bb_mid": float(last["bb_mid"]) if pd.notna(last["bb_mid"]) else None,
     }
+
+# Alias para compatibilidade com main.py
+enrich = add_indicators
