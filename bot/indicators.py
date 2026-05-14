@@ -1,6 +1,6 @@
 """
 Indicadores técnicos.
-Função pública exigida pelo main.py: add_indicators(df) -> df
+Função pública: add_indicators(df) -> df
 """
 import numpy as np
 import pandas as pd
@@ -31,15 +31,10 @@ def _atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
     tr = pd.concat([(h - l), (h - pc).abs(), (l - pc).abs()], axis=1).max(axis=1)
     return tr.ewm(alpha=1 / n, adjust=False).mean()
 
-def _bbands(s: pd.Series, n: int = 20, k: float = 2.0):
-    mid = _sma(s, n)
-    std = s.rolling(n).std()
-    return mid + k * std, mid, mid - k * std
-
 def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Recebe DataFrame com colunas ['timestamp','open','high','low','close','volume']
-    e devolve o mesmo DF com colunas de indicadores adicionadas.
+    Recebe DataFrame OHLCV e devolve o mesmo DF com colunas de indicadores.
+    Colunas esperadas: open, high, low, close, volume (+ timestamp opcional).
     """
     if df is None or df.empty:
         return df
@@ -50,35 +45,24 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     c = df["close"]
 
-    # Tendência
+    # EMAs (nomes alinhados ao config.py: 9, 21, 50, 200)
     df["ema9"]   = _ema(c, 9)
     df["ema21"]  = _ema(c, 21)
     df["ema50"]  = _ema(c, 50)
     df["ema200"] = _ema(c, 200)
-    df["sma20"]  = _sma(c, 20)
 
     # Momentum
-    df["rsi14"] = _rsi(c, 14)
-    macd, sig, hist = _macd(c)
-    df["macd"]        = macd
+    df["rsi"] = _rsi(c, 14)
+    macd, sig, hist = _macd(c, 12, 26, 9)
+    df["macd"] = macd
     df["macd_signal"] = sig
     df["macd_hist"]   = hist
 
     # Volatilidade
-    df["atr14"] = _atr(df, 14)
-    up, mid, lo = _bbands(c, 20, 2.0)
-    df["bb_upper"], df["bb_mid"], df["bb_lower"] = up, mid, lo
+    df["atr"] = _atr(df, 14)
 
     # Volume
     df["vol_sma20"] = _sma(df["volume"], 20)
     df["vol_ratio"] = df["volume"] / df["vol_sma20"]
 
-    # Variação
-    df["pct_change"] = c.pct_change() * 100
-
     return df
-
-# ---- aliases defensivos (caso outro módulo importe nomes diferentes) ----
-enrich = add_indicators
-compute_indicators = add_indicators
-calculate_indicators = add_indicators
