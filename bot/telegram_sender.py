@@ -211,6 +211,7 @@ def format_scan_summary(
         f"🤖 *Scan Concluído*\n"
         f"{fg_line}"
         f"📊 *Ativos:* {len(diagnostics)} — TF `{timeframe}` • {exchange}\n"
+        f"_Legenda:_ ✅ Elegível · 👀 Quase lá · ⚠️ Bloqueado · 🚫 Em risco\n"
         f"━━━━━━━━━━━━━━━━━━\n"
     )
 
@@ -220,17 +221,53 @@ def format_scan_summary(
         if "error" in d:
             body_lines.append(f"⚠️ `{sym}` — erro: {str(d['error'])[:60]}")
             continue
-        price  = d.get("price")
-        rsi    = d.get("rsi")
-        macd   = d.get("macd")
-        ema200 = d.get("ema200")
+        price       = d.get("price")
+        rsi         = d.get("rsi")
+        macd        = d.get("macd")
+        macd_signal = d.get("macd_signal")
+        macd_hist   = d.get("macd_hist")
+        ema200      = d.get("ema200")
+
+        # ícone do filtro EMA200 (mantido na linha de indicadores)
         trend  = "✅" if (price and ema200 and price > ema200) else "⚠️"
-        rsi_s  = f"{rsi:.1f}" if rsi is not None else "—"
+        rsi_s  = f"{rsi:.1f}"  if rsi  is not None else "—"
         macd_s = f"{macd:.2f}" if macd is not None else "—"
 
+        # --- status do ativo (semáforo + motivo sintético) -----------------
+        status_icon = "✅"
+        status_label = "Elegível"
+        reason = "Aguardando gatilho final (cruzamento MACD/EMAs)"
+
+        above_ema200 = bool(price and ema200 and price > ema200)
+        macd_pos     = (macd is not None and macd > 0)
+        macd_above   = (macd is not None and macd_signal is not None and macd > macd_signal)
+        hist_pos     = (macd_hist is not None and macd_hist > 0)
+
+        if not above_ema200:
+            status_icon, status_label = "⚠️", "Bloqueado"
+            reason = "Preço abaixo da EMA200 — filtro base bloqueia LONG"
+        elif rsi is not None and rsi >= 70:
+            status_icon, status_label = "🚫", "Em risco"
+            reason = f"RSI sobrecomprado ({rsi:.0f} ≥ 70) — evita comprar topo"
+        elif macd_above and hist_pos and rsi is not None and 50 <= rsi < 65:
+            status_icon, status_label = "👀", "Quase lá"
+            reason = "MACD cruzou o sinal · RSI saudável — vigiar próximo candle"
+        elif macd_pos and rsi is not None and 45 <= rsi < 70:
+            status_icon, status_label = "👀", "Quase lá"
+            reason = "MACD positivo e RSI ok — aguardando cruzamento final"
+        else:
+            status_icon, status_label = "✅", "Elegível"
+            if rsi is not None and rsi < 30:
+                reason = "RSI sobrevendido — aguardando reversão"
+            elif macd is not None and macd < 0:
+                reason = "Acima da EMA200, mas MACD ainda negativo"
+            else:
+                reason = "Filtros base ok — aguardando confluência final"
+
         body_lines.append(
-            f"`{sym}`  {_fmt_price(price)}\n"
-            f"  RSI: `{rsi_s}` | MACD: `{macd_s}` | EMA200 {trend}"
+            f"`{sym}`  {_fmt_price(price)}  {status_icon} *{status_label}*\n"
+            f"  RSI: `{rsi_s}` | MACD: `{macd_s}` | EMA200 {trend}\n"
+            f"  └ _{reason}_"
         )
 
     body = "\n\n".join(body_lines) if body_lines else "_Sem dados._"
