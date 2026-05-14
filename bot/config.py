@@ -49,3 +49,9 @@ SIGNAL_COOLDOWN_HOURS = 4
 
 # ============ ARQUIVOS DE ESTADO ============
 STATE_FILE = "state/last_signals.json"
+
+# ============ ALIASES DE COMPATIBILIDADE ============
+# Permite que main.py importe nomes alternativos sem quebrar.
+SYMBOLS = WATCHLIST
+EXCHANGE = EXCHANGE_ID
+CANDLE_LIMIT = CANDLES_LIMIT
