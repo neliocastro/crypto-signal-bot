@@ -1,6 +1,14 @@
 """
 Estratégia de geração de sinais.
 Função pública: evaluate_signal(symbol, df) -> dict | None
+
+Esta versão aceita chamadas em qualquer ordem/forma:
+  evaluate_signal(symbol, df)
+  evaluate_signal(df, symbol)
+  evaluate_signal(symbol=symbol, df=df)
+  evaluate_signal(df=df, symbol=symbol)
+  evaluate_signal(symbol, df=df)
+para evitar "got multiple values for argument".
 """
 from typing import Optional, Dict, Any, List
 import pandas as pd
@@ -10,7 +18,29 @@ def _trend_down(r): return r["ema21"] < r["ema50"] < r["ema200"]
 def _xup(p, c, a, b):   return p[a] <= p[b] and c[a] > c[b]
 def _xdown(p, c, a, b): return p[a] >= p[b] and c[a] < c[b]
 
-def evaluate_signal(symbol: str, df: pd.DataFrame) -> Optional[Dict[str, Any]]:
+def _parse_args(args, kwargs):
+    """Extrai (symbol, df) de qualquer combinação de args/kwargs."""
+    symbol = kwargs.pop("symbol", None)
+    df = kwargs.pop("df", None)
+
+    # aliases comuns
+    if df is None:
+        df = kwargs.pop("dataframe", None) or kwargs.pop("data", None) or kwargs.pop("candles", None)
+    if symbol is None:
+        symbol = kwargs.pop("ticker", None) or kwargs.pop("pair", None) or kwargs.pop("asset", None)
+
+    # processa posicionais (qualquer ordem)
+    for a in args:
+        if isinstance(a, pd.DataFrame):
+            if df is None:
+                df = a
+        elif isinstance(a, str):
+            if symbol is None:
+                symbol = a
+
+    return symbol, df
+
+def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
     """
     Avalia um ativo. Retorna dict com o sinal ou None se não houver setup.
 
@@ -22,8 +52,12 @@ def evaluate_signal(symbol: str, df: pd.DataFrame) -> Optional[Dict[str, Any]]:
         "timestamp"
       }
     """
-    if df is None or len(df) < 210:
+    symbol, df = _parse_args(list(args), dict(kwargs))
+
+    if df is None or not isinstance(df, pd.DataFrame) or len(df) < 210:
         return None
+    if not symbol:
+        symbol = "UNKNOWN"
 
     # vela fechada (penúltima) e a anterior para detectar cruzamentos
     curr = df.iloc[-2]
