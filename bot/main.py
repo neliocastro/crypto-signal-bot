@@ -1,90 +1,41 @@
-"""
-Orquestrador principal — executado pelo GitHub Actions a cada 15 min.
-"""
-import json
-import os
-import traceback
-from datetime import datetime, timezone, timedelta
+name: Crypto Signal Bot
 
-from . import config
-from .data_fetcher import fetch_ohlcv
-from .indicators import enrich
-from .strategies import evaluate
-from .sentiment import fear_and_greed
-from .telegram_sender import send, format_signal
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
 
-# Liga/desliga heartbeat (mensagem quando NÃO há sinais).
-# Para a fase de testes, deixe True. Depois mude para False.
-SEND_HEARTBEAT = True
+permissions:
+  contents: write
 
-def load_state():
-    if os.path.exists(config.STATE_FILE):
-        try:
-            with open(config.STATE_FILE) as f:
-                return json.load(f)
-        except Exception:
-            return {}
-    return {}
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
 
-def save_state(state):
-    os.makedirs(os.path.dirname(config.STATE_FILE), exist_ok=True)
-    with open(config.STATE_FILE, "w") as f:
-        json.dump(state, f, indent=2)
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
-def should_send(symbol: str, side: str, candle_ts: str, state: dict) -> bool:
-    """Evita reenviar o mesmo sinal dentro do cooldown."""
-    key = f"{symbol}:{side}"
-    last = state.get(key)
-    if not last:
-        return True
-    last_time = datetime.fromisoformat(last["sent_at"])
-    if datetime.now(timezone.utc) - last_time < timedelta(hours=config.SIGNAL_COOLDOWN_HOURS):
-        return False
-    return True
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-def mark_sent(symbol: str, side: str, candle_ts: str, state: dict):
-    key = f"{symbol}:{side}"
-    state[key] = {
-        "candle": candle_ts,
-        "sent_at": datetime.now(timezone.utc).isoformat(),
-    }
+      - name: Run bot
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m bot.main
 
-def run():
-    print(f"=== Scan iniciado: {datetime.now(timezone.utc).isoformat()} ===")
-    state = load_state()
-    fg = fear_and_greed()
-    signals_found = 0
-    checked = 0
-
-    for symbol in config.WATCHLIST:
-        try:
-            print(f"→ {symbol}")
-            df = fetch_ohlcv(symbol)
-            df = enrich(df)
-            sig = evaluate(symbol, df)
-            checked += 1
-
-            if sig and should_send(symbol, sig.side, sig.timestamp, state):
-                msg = format_signal(sig, fg)
-                if send(msg):
-                    mark_sent(symbol, sig.side, sig.timestamp, state)
-                    signals_found += 1
-                    print(f"  ✅ Sinal {sig.side} enviado (conf {sig.confidence}/10)")
-            elif sig:
-                print(f"  ⏸ Sinal {sig.side} em cooldown")
-            else:
-                print(f"  · Sem setup")
-        except Exception as e:
-            print(f"  ❌ Erro em {symbol}: {e}")
-            traceback.print_exc()
-
-    save_state(state)
-
-    if SEND_HEARTBEAT and signals_found == 0:
-        from .telegram_sender import send_heartbeat
-        send_heartbeat(checked, signals_found, fg)
-
-    print(f"=== Fim: {signals_found}/{checked} sinais ===")
-
-if __name__ == "__main__":
-    run()
+      - name: Commit state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/last_signals.json || true
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore: update signal state [skip ci]"
+          git push || true
