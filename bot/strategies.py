@@ -1,23 +1,25 @@
 """
 Estratégia de geração de sinais.
-Função pública: evaluate_signal(symbol, df) -> dict | None
+Função pública: evaluate_signal(symbol, df, **extras) -> dict | None
 
 Esta versão aceita chamadas em qualquer ordem/forma:
   evaluate_signal(symbol, df)
   evaluate_signal(df, symbol)
   evaluate_signal(symbol=symbol, df=df)
   evaluate_signal(df=df, symbol=symbol)
-  evaluate_signal(symbol, df=df)
+  evaluate_signal(df, symbol=symbol, timeframe="1h")
 para evitar "got multiple values for argument".
 """
 from typing import Optional, Dict, Any, List
 import pandas as pd
 
+# ---------- helpers de indicadores ----------
 def _trend_up(r):   return r["ema21"] > r["ema50"] > r["ema200"]
 def _trend_down(r): return r["ema21"] < r["ema50"] < r["ema200"]
 def _xup(p, c, a, b):   return p[a] <= p[b] and c[a] > c[b]
 def _xdown(p, c, a, b): return p[a] >= p[b] and c[a] < c[b]
 
+# ---------- parser tolerante ----------
 def _parse_args(args, kwargs):
     """Extrai (symbol, df) de qualquer combinação de args/kwargs."""
     symbol = kwargs.pop("symbol", None)
@@ -25,11 +27,20 @@ def _parse_args(args, kwargs):
 
     # aliases comuns
     if df is None:
-        df = kwargs.pop("dataframe", None) or kwargs.pop("data", None) or kwargs.pop("candles", None)
+        df = (
+            kwargs.pop("dataframe", None)
+            or kwargs.pop("data", None)
+            or kwargs.pop("candles", None)
+            or kwargs.pop("ohlcv", None)
+        )
     if symbol is None:
-        symbol = kwargs.pop("ticker", None) or kwargs.pop("pair", None) or kwargs.pop("asset", None)
+        symbol = (
+            kwargs.pop("ticker", None)
+            or kwargs.pop("pair", None)
+            or kwargs.pop("asset", None)
+        )
 
-    # processa posicionais (qualquer ordem)
+    # processa posicionais (independente da ordem)
     for a in args:
         if isinstance(a, pd.DataFrame):
             if df is None:
@@ -38,8 +49,11 @@ def _parse_args(args, kwargs):
             if symbol is None:
                 symbol = a
 
+    # consome silenciosamente kwargs extras (ex: timeframe), sem erro
+    kwargs.clear()
     return symbol, df
 
+# ---------- função principal ----------
 def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
     """
     Avalia um ativo. Retorna dict com o sinal ou None se não houver setup.
