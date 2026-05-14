@@ -49,9 +49,11 @@ def _parse_args(args, kwargs):
             if symbol is None:
                 symbol = a
 
-    # consome silenciosamente kwargs extras (ex: timeframe), sem erro
+    # extrai timeframe/exchange se vierem (demais kwargs sao descartados)
+    timeframe = kwargs.pop("timeframe", None) or kwargs.pop("tf", None)
+    exchange  = kwargs.pop("exchange", None)
     kwargs.clear()
-    return symbol, df
+    return symbol, df, timeframe, exchange
 
 # ---------- função principal ----------
 def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
@@ -66,7 +68,7 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         "timestamp"
       }
     """
-    symbol, df = _parse_args(list(args), dict(kwargs))
+    symbol, df, timeframe, exchange = _parse_args(list(args), dict(kwargs))
 
     if df is None or not isinstance(df, pd.DataFrame) or len(df) < 210:
         return None
@@ -116,12 +118,28 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
     entry = float(curr["close"])
     atr = float(curr["atr"]) if pd.notna(curr["atr"]) else entry * 0.01
 
+    # SL = 1.5 * ATR  |  TP1/TP2/TP3 = 1.5 / 3.0 / 4.5 * ATR  -> R:R 1:1, 1:2, 1:3
     if side == "LONG":
         stop = entry - 1.5 * atr
-        tp1, tp2, tp3 = entry + 1.0 * atr, entry + 2.0 * atr, entry + 3.5 * atr
+        tp1, tp2, tp3 = entry + 1.5 * atr, entry + 3.0 * atr, entry + 4.5 * atr
     else:
         stop = entry + 1.5 * atr
-        tp1, tp2, tp3 = entry - 1.0 * atr, entry - 2.0 * atr, entry - 3.5 * atr
+        tp1, tp2, tp3 = entry - 1.5 * atr, entry - 3.0 * atr, entry - 4.5 * atr
+
+    # Razao Risco/Retorno baseada em TP2 (alvo principal)
+    risk   = abs(entry - stop)
+    reward = abs(tp2 - entry)
+    risk_reward = round(reward / risk, 2) if risk > 0 else None
+
+    # Heuristica do tipo de ordem (distancia % do preco para a EMA21)
+    ema21_v = float(curr["ema21"]) if pd.notna(curr["ema21"]) else entry
+    dist_pct = (abs(entry - ema21_v) / entry * 100.0) if entry else 0.0
+    if dist_pct <= 0.3:
+        order_type = "Limit"        # preco encostado na EMA21 -> entrada melhor
+    elif dist_pct <= 1.0:
+        order_type = "Market"       # rompimento proximo, momentum a favor
+    else:
+        order_type = "Stop-Limit"   # afastado da media -> aguardar pullback
 
     ts = curr["timestamp"] if "timestamp" in df.columns else df.index[-2]
     ts = ts.isoformat() if hasattr(ts, "isoformat") else str(ts)
@@ -134,9 +152,14 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         "tp1":   round(tp1, 6),
         "tp2":   round(tp2, 6),
         "tp3":   round(tp3, 6),
-        "confidence": confidence,
-        "reasons": reasons,
-        "timestamp": ts,
+        "targets":     [round(tp1, 6), round(tp2, 6), round(tp3, 6)],
+        "risk_reward": risk_reward,
+        "order_type":  order_type,
+        "timeframe":   timeframe,
+        "exchange":    exchange,
+        "confidence":  confidence,
+        "reasons":     reasons,
+        "timestamp":   ts,
     }
 
 # aliases defensivos (não atrapalham)
