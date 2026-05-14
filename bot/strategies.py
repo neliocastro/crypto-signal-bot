@@ -1,133 +1,114 @@
 """
-Implementa a Estratégia MACD + EMA200 (estratégia 3.3).
-Retorna Signal com Entry, SL, TP1, TP2 e confiança 0-10.
+Avalia o DataFrame enriquecido e retorna um Signal (ou None).
+Função pública obrigatória: evaluate(symbol, df) -> Signal | None.
 """
-from dataclasses import dataclass, asdict
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import List, Optional
 import pandas as pd
-from . import config
-from .indicators import get_latest_values
 
 @dataclass
 class Signal:
     symbol: str
-    timestamp: str
-    side: str            # "LONG" ou "SHORT"
+    side: str                      # "LONG" ou "SHORT"
     entry: float
-    stop_loss: float
-    take_profit_1: float
-    take_profit_2: float
-    confidence: int      # 0 a 10
-    rr_ratio: float
-    rsi: float
-    reason: str
+    stop: float
+    targets: List[float] = field(default_factory=list)
+    confidence: int = 0            # 0..10
+    reasons: List[str] = field(default_factory=list)
+    timeframe: str = "1h"
+    timestamp: str = ""            # ISO do candle que disparou
 
-    def to_dict(self) -> dict:
-        return asdict(self)
+# ---------- regras auxiliares ----------
+def _trend_up(row) -> bool:
+    return row["ema21"] > row["ema50"] > row["ema200"]
 
+def _trend_down(row) -> bool:
+    return row["ema21"] < row["ema50"] < row["ema200"]
+
+def _cross_up(prev, curr, a: str, b: str) -> bool:
+    return prev[a] <= prev[b] and curr[a] > curr[b]
+
+def _cross_down(prev, curr, a: str, b: str) -> bool:
+    return prev[a] >= prev[b] and curr[a] < curr[b]
+
+# ---------- API pública ----------
 def evaluate(symbol: str, df: pd.DataFrame) -> Optional[Signal]:
     """
-    Avalia o DataFrame enriquecido e retorna Signal ou None.
-
-    LONG:
-      - close > ema200
-      - cruzamento MACD para cima (macd_diff_prev <= 0 e macd_diff > 0)
-      - RSI entre 40 e 70
-    SHORT:
-      - close < ema200
-      - cruzamento MACD para baixo
-      - RSI entre 30 e 60
-
-    SL: 1.5 * ATR  |  TP1: R:R 1:1  |  TP2: R:R 1:2
+    Retorna Signal se houver setup válido, caso contrário None.
+    Estratégia: confluência de tendência (EMAs) + RSI + cruzamento MACD + volume.
     """
-    if df is None or df.empty or len(df) < 200:
+    if df is None or len(df) < 210:   # precisa de histórico p/ EMA200
         return None
 
-    v = get_latest_values(df)
-    if not v:
+    # usamos a penúltima vela (fechada). a última pode estar em formação.
+    curr = df.iloc[-2]
+    prev = df.iloc[-3]
+
+    reasons_long: List[str] = []
+    reasons_short: List[str] = []
+
+    # --- viés LONG ---
+    if _trend_up(curr):
+        reasons_long.append("Tendência de alta (EMA21>50>200)")
+    if 40 <= curr["rsi14"] <= 65:
+        reasons_long.append(f"RSI saudável ({curr['rsi14']:.1f})")
+    if _cross_up(prev, curr, "macd", "macd_signal"):
+        reasons_long.append("MACD cruzou p/ cima")
+    if curr["vol_ratio"] and curr["vol_ratio"] > 1.2:
+        reasons_long.append(f"Volume {curr['vol_ratio']:.2f}x média")
+    if curr["close"] > curr["ema21"] and prev["close"] <= prev["ema21"]:
+        reasons_long.append("Rompimento da EMA21")
+
+    # --- viés SHORT ---
+    if _trend_down(curr):
+        reasons_short.append("Tendência de baixa (EMA21<50<200)")
+    if 35 <= curr["rsi14"] <= 60:
+        reasons_short.append(f"RSI em zona de venda ({curr['rsi14']:.1f})")
+    if _cross_down(prev, curr, "macd", "macd_signal"):
+        reasons_short.append("MACD cruzou p/ baixo")
+    if curr["vol_ratio"] and curr["vol_ratio"] > 1.2:
+        reasons_short.append(f"Volume {curr['vol_ratio']:.2f}x média")
+    if curr["close"] < curr["ema21"] and prev["close"] >= prev["ema21"]:
+        reasons_short.append("Perdeu a EMA21")
+
+    score_long = len(reasons_long)
+    score_short = len(reasons_short)
+
+    # exige pelo menos 3 confluências
+    if max(score_long, score_short) < 3:
         return None
 
-    required = ["close", "ema200", "macd_diff", "macd_diff_prev", "atr", "rsi"]
-    if any(v.get(k) is None for k in required):
-        return None
+    side = "LONG" if score_long >= score_short else "SHORT"
+    reasons = reasons_long if side == "LONG" else reasons_short
+    score = score_long if side == "LONG" else score_short
 
-    close          = v["close"]
-    ema50          = v.get("ema50")
-    ema200         = v["ema200"]
-    macd_diff      = v["macd_diff"]
-    macd_diff_prev = v["macd_diff_prev"]
-    atr            = v["atr"]
-    rsi            = v["rsi"]
+    entry = float(curr["close"])
+    atr = float(curr["atr14"]) if not pd.isna(curr["atr14"]) else entry * 0.01
 
-    sl_mult  = getattr(config, "ATR_SL_MULT", 1.5)
-    tp1_mult = getattr(config, "TP1_RR", 1.0)
-    tp2_mult = getattr(config, "TP2_RR", 2.0)
-
-    side: Optional[str] = None
-    score = 0
-    reasons = []
-
-    long_ok  = close > ema200 and macd_diff_prev <= 0 < macd_diff and 40 <= rsi <= 70
-    short_ok = close < ema200 and macd_diff_prev >= 0 > macd_diff and 30 <= rsi <= 60
-
-    if long_ok:
-        side = "LONG"
-        score = 6  # base
-        reasons.append("Preço acima da EMA200")
-        reasons.append("Cruzamento MACD de alta")
-        reasons.append(f"RSI saudável ({rsi:.1f})")
-        if ema50 and close > ema50:
-            score += 2
-            reasons.append("Preço acima da EMA50")
-        if abs(macd_diff) > abs(macd_diff_prev):
-            score += 2
-            reasons.append("Momentum MACD acelerando")
-    elif short_ok:
-        side = "SHORT"
-        score = 6
-        reasons.append("Preço abaixo da EMA200")
-        reasons.append("Cruzamento MACD de baixa")
-        reasons.append(f"RSI saudável ({rsi:.1f})")
-        if ema50 and close < ema50:
-            score += 2
-            reasons.append("Preço abaixo da EMA50")
-        if abs(macd_diff) > abs(macd_diff_prev):
-            score += 2
-            reasons.append("Momentum MACD acelerando")
-
-    if side is None:
-        return None
-
-    entry = close
     if side == "LONG":
-        stop_loss = entry - sl_mult * atr
-        risk = entry - stop_loss
-        tp1 = entry + tp1_mult * risk
-        tp2 = entry + tp2_mult * risk
+        stop = entry - 1.5 * atr
+        targets = [entry + 1.0 * atr, entry + 2.0 * atr, entry + 3.5 * atr]
     else:
-        stop_loss = entry + sl_mult * atr
-        risk = stop_loss - entry
-        tp1 = entry - tp1_mult * risk
-        tp2 = entry - tp2_mult * risk
+        stop = entry + 1.5 * atr
+        targets = [entry - 1.0 * atr, entry - 2.0 * atr, entry - 3.5 * atr]
 
-    if risk <= 0:
-        return None
+    # confiança 0..10 (cada confluência ~2 pontos, teto 10)
+    confidence = min(10, score * 2)
 
-    rr = round(tp2_mult, 2)
-
-    ts = v.get("timestamp")
-    ts_str = str(ts) if ts is not None else ""
+    ts = curr["timestamp"]
+    if hasattr(ts, "isoformat"):
+        ts = ts.isoformat()
+    else:
+        ts = str(ts)
 
     return Signal(
         symbol=symbol,
-        timestamp=ts_str,
         side=side,
         entry=round(entry, 6),
-        stop_loss=round(stop_loss, 6),
-        take_profit_1=round(tp1, 6),
-        take_profit_2=round(tp2, 6),
-        confidence=min(score, 10),
-        rr_ratio=rr,
-        rsi=round(rsi, 2),
-        reason=" | ".join(reasons),
+        stop=round(stop, 6),
+        targets=[round(t, 6) for t in targets],
+        confidence=confidence,
+        reasons=reasons,
+        timeframe="1h",
+        timestamp=ts,
     )
