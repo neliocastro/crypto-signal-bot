@@ -31,6 +31,27 @@ def _atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
     tr = pd.concat([(h - l), (h - pc).abs(), (l - pc).abs()], axis=1).max(axis=1)
     return tr.ewm(alpha=1 / n, adjust=False).mean()
 
+def _vwap_daily(df: pd.DataFrame) -> pd.Series:
+    """
+    VWAP ancorado no fechamento diario em UTC 00:00.
+    Reseta a cada novo dia (padrao cripto: Gate.com, TradingView default).
+
+    Usa typical price = (high + low + close) / 3, ponderado pelo volume.
+    """
+    if "timestamp" not in df.columns or df["volume"].sum() == 0:
+        return pd.Series([float("nan")] * len(df), index=df.index)
+
+    ts = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+    day_key = ts.dt.strftime("%Y-%m-%d")
+
+    tp = (df["high"] + df["low"] + df["close"]) / 3.0
+    pv = tp * df["volume"]
+
+    cum_pv  = pv.groupby(day_key).cumsum()
+    cum_vol = df["volume"].groupby(day_key).cumsum()
+    vwap = cum_pv / cum_vol.replace(0, np.nan)
+    return vwap
+
 def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """
     Recebe DataFrame OHLCV e devolve o mesmo DF com colunas de indicadores.
@@ -60,6 +81,9 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     # Volatilidade
     df["atr"] = _atr(df, 14)
+
+    # VWAP Daily (ancorado em UTC 00:00)
+    df["vwap"] = _vwap_daily(df)
 
     # Volume
     df["vol_sma20"] = _sma(df["volume"], 20)
