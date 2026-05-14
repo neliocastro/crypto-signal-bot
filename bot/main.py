@@ -1,88 +1,55 @@
-"""
-Orquestrador principal — executado pelo GitHub Actions a cada 15 min.
-"""
-import json
-import os
-import traceback
-from datetime import datetime, timezone, timedelta
-
-from . import config
+from datetime import datetime
+from .config import SYMBOLS, TIMEFRAME, EXCHANGE_ID
 from .data_fetcher import fetch_ohlcv
 from .indicators import enrich
 from .strategies import evaluate
 from .sentiment import fear_and_greed
-from .telegram_sender import send, format_signal
-
-# Liga/desliga heartbeat (mensagem quando NÃO há sinais).
-SEND_HEARTBEAT = True
-
-def load_state():
-    if os.path.exists(config.STATE_FILE):
-        try:
-            with open(config.STATE_FILE) as f:
-                return json.load(f)
-        except Exception:
-            return {}
-    return {}
-
-def save_state(state):
-    os.makedirs(os.path.dirname(config.STATE_FILE), exist_ok=True)
-    with open(config.STATE_FILE, "w") as f:
-        json.dump(state, f, indent=2)
-
-def should_send(symbol: str, side: str, candle_ts: str, state: dict) -> bool:
-    key = f"{symbol}:{side}"
-    last = state.get(key)
-    if not last:
-        return True
-    last_time = datetime.fromisoformat(last["sent_at"])
-    if datetime.now(timezone.utc) - last_time < timedelta(hours=config.SIGNAL_COOLDOWN_HOURS):
-        return False
-    return True
-
-def mark_sent(symbol: str, side: str, candle_ts: str, state: dict):
-    key = f"{symbol}:{side}"
-    state[key] = {
-        "candle": candle_ts,
-        "sent_at": datetime.now(timezone.utc).isoformat(),
-    }
+from .telegram_sender import send_message, format_signal, format_scan_summary
 
 def run():
-    print(f"=== Scan iniciado: {datetime.now(timezone.utc).isoformat()} ===")
-    state = load_state()
     fg = fear_and_greed()
-    signals_found = 0
-    checked = 0
+    signals = []
+    diagnostics = []
 
-    for symbol in config.WATCHLIST:
+    for symbol in SYMBOLS:
         try:
-            print(f"→ {symbol}")
-            df = fetch_ohlcv(symbol)
+            df = fetch_ohlcv(symbol, TIMEFRAME, limit=300)
             df = enrich(df)
+            last = df.iloc[-1]
+
+            # Diagnóstico do ativo (sempre coletado)
+            diagnostics.append({
+                "symbol": symbol,
+                "price": float(last["close"]),
+                "rsi": float(last.get("RSI_14", float("nan"))),
+                "macd": float(last.get("MACD_12_26_9", float("nan"))),
+                "macd_signal": float(last.get("MACDs_12_26_9", float("nan"))),
+                "macd_hist": float(last.get("MACDh_12_26_9", float("nan"))),
+                "ema200": float(last.get("EMA_200", float("nan"))),
+            })
+
+            # Avaliação de setup
             sig = evaluate(symbol, df)
-            checked += 1
+            if sig:
+                signals.append(sig)
 
-            if sig and should_send(symbol, sig.side, sig.timestamp, state):
-                msg = format_signal(sig, fg)
-                if send(msg):
-                    mark_sent(symbol, sig.side, sig.timestamp, state)
-                    signals_found += 1
-                    print(f"  ✅ Sinal {sig.side} enviado (conf {sig.confidence}/10)")
-            elif sig:
-                print(f"  ⏸ Sinal {sig.side} em cooldown")
-            else:
-                print(f"  · Sem setup")
         except Exception as e:
-            print(f"  ❌ Erro em {symbol}: {e}")
-            traceback.print_exc()
+            diagnostics.append({"symbol": symbol, "error": str(e)})
 
-    save_state(state)
+    # Envia sinais (se houver)
+    for sig in signals:
+        send_message(format_signal(sig, fg))
 
-    if SEND_HEARTBEAT and signals_found == 0:
-        from .telegram_sender import send_heartbeat
-        send_heartbeat(checked, signals_found, fg)
-
-    print(f"=== Fim: {signals_found}/{checked} sinais ===")
+    # Sempre envia o resumo diagnóstico
+    send_message(
+        format_scan_summary(
+            diagnostics=diagnostics,
+            signals_count=len(signals),
+            fg=fg,
+            timeframe=TIMEFRAME,
+            exchange=EXCHANGE_ID,
+        )
+    )
 
 if __name__ == "__main__":
     run()
