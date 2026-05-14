@@ -47,14 +47,30 @@ def _fmt_price(v: Optional[float]) -> str:
         return f"$ {v:.4f}".replace(".", ",")
     return f"$ {v:.6f}".replace(".", ",")
 
-def _fg_emoji(fg: Optional[int]) -> str:
+def _fg_parts(fg: Any) -> tuple[Optional[int], str, str]:
+    """Aceita int OU dict {score,label,emoji}. Retorna (score, label, emoji)."""
     if fg is None:
-        return ""
-    if fg < 25:  return "😱"
-    if fg < 45:  return "😟"
-    if fg < 55:  return "😐"
-    if fg < 75:  return "🙂"
-    return "🤑"
+        return None, "", ""
+    if isinstance(fg, dict):
+        score = fg.get("score")
+        label = fg.get("label") or ""
+        emoji = fg.get("emoji") or ""
+        if score is not None and label and emoji:
+            return score, label, emoji
+        fg = score
+    try:
+        score = int(fg)
+    except (TypeError, ValueError):
+        return None, "", ""
+    if score < 25:  return score, "Extreme Fear",  "😱"
+    if score < 45:  return score, "Fear",          "😟"
+    if score < 55:  return score, "Neutral",       "😐"
+    if score < 75:  return score, "Greed",         "🙂"
+    return score, "Extreme Greed", "🤑"
+
+def _fg_emoji(fg: Any) -> str:
+    """Compat: retorna apenas o emoji."""
+    return _fg_parts(fg)[2]
 
 def _get(obj: Any, key: str, default=None):
     """Lê chave/atributo de dict OU dataclass."""
@@ -134,7 +150,8 @@ def format_signal(sig: Any, fg: Optional[int] = None) -> str:
     n_stars = min(5, max(0, round(int(confidence) / 2)))
     stars = "★" * n_stars + "☆" * (5 - n_stars)
 
-    fg_line = f"\n🌡️ *F&G:* {fg} {_fg_emoji(fg)}" if fg is not None else ""
+    _fg_s, _fg_l, _fg_e = _fg_parts(fg)
+    fg_line = f"\n🌡️ *F&G:* {_fg_s} ({_fg_l}) {_fg_e}" if _fg_s is not None else ""
 
     msg = (
         f"🤖 *Sinal {side_emoji}*\n"
@@ -159,7 +176,8 @@ def send_signal(sig: Any, fg: Optional[int] = None) -> bool:
 # heartbeat / resumo
 # ---------------------------------------------------------------------------
 def send_heartbeat(checked: int, signals: int, fg: Optional[int] = None) -> bool:
-    fg_str = f" | F&G: {fg} {_fg_emoji(fg)}" if fg is not None else ""
+    _fg_s, _fg_l, _fg_e = _fg_parts(fg)
+    fg_str = f" | F&G: {_fg_s} ({_fg_l}) {_fg_e}" if _fg_s is not None else ""
     return send(f"🤖 _Scan concluído: {checked} ativos verificados, {signals} sinal(is).{fg_str}_")
 
 def format_scan_summary(
@@ -172,8 +190,8 @@ def format_scan_summary(
     """
     Resumo detalhado do scan (1 mensagem com diagnóstico de todos ativos).
     """
-    fg_val = fg.get("score") if isinstance(fg, dict) else fg
-    fg_line = f"{_fg_emoji(fg_val)} *Fear & Greed:* {fg_val}\n" if fg_val is not None else ""
+    _fg_s, _fg_l, _fg_e = _fg_parts(fg)
+    fg_line = f"{_fg_e} *Fear & Greed:* {_fg_s} ({_fg_l})\n" if _fg_s is not None else ""
 
     head = (
         f"🤖 *Scan Concluído*\n"
