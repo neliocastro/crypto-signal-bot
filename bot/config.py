@@ -50,6 +50,11 @@ INDICATORS = {
     "atr_periodo": 14,
 }
 
+# ============ MULTI-TIMEFRAME (Fase 2b) ============
+# True = aplica filtros 4h (tendencia) + 15m (pullback) no evaluate_signal
+# False = comportamento legado (so 1h). Kill switch seguro.
+MTF_ENABLED = True
+
 # ============ ANTI-SPAM ============
 # Não reenvia o mesmo sinal antes desse cooldown (em horas).
 SIGNAL_COOLDOWN_HOURS = 4
