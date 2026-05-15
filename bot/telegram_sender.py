@@ -221,12 +221,14 @@ def format_scan_summary(
         if "error" in d:
             body_lines.append(f"⚠️ `{sym}` — erro: {str(d['error'])[:60]}")
             continue
-        price       = d.get("price")
-        rsi         = d.get("rsi")
-        macd        = d.get("macd")
-        macd_signal = d.get("macd_signal")
-        macd_hist   = d.get("macd_hist")
-        ema200      = d.get("ema200")
+        price          = d.get("price")
+        rsi            = d.get("rsi")
+        macd           = d.get("macd")
+        macd_signal    = d.get("macd_signal")
+        macd_hist      = d.get("macd_hist")
+        macd_hist_prev = d.get("macd_hist_prev")   # Fase 1 (aceleracao)
+        vol_ratio      = d.get("vol_ratio")        # Fase 1 (forca de volume)
+        ema200         = d.get("ema200")
 
         # ícone do filtro EMA200 (mantido na linha de indicadores)
         trend  = "✅" if (price and ema200 and price > ema200) else "⚠️"
@@ -243,6 +245,21 @@ def format_scan_summary(
         macd_above   = (macd is not None and macd_signal is not None and macd > macd_signal)
         hist_pos     = (macd_hist is not None and macd_hist > 0)
 
+        # Fase 1: deteccao antecipada de cruzamento via aceleracao do histograma
+        hist_accel = (
+            macd_hist is not None and macd_hist_prev is not None
+            and macd_hist > 0 and macd_hist_prev > 0
+            and macd_hist > macd_hist_prev * 1.5
+        )
+        # Fase 1: filtros de volume
+        vol_strong = (vol_ratio is not None and vol_ratio > 1.5)
+        vol_weak   = (vol_ratio is not None and vol_ratio < 0.7)
+
+        def _vol_suffix() -> str:
+            if vol_strong: return " · 🔥 volume forte"
+            if vol_weak:   return " · 💤 volume fraco"
+            return ""
+
         if not above_ema200:
             status_icon, status_label = "⚠️", "Bloqueado"
             reason = "Preço abaixo da EMA200 — filtro base bloqueia LONG"
@@ -251,10 +268,13 @@ def format_scan_summary(
             reason = f"RSI sobrecomprado ({rsi:.0f} ≥ 70) — evita comprar topo"
         elif macd_above and hist_pos and rsi is not None and 50 <= rsi < 65:
             status_icon, status_label = "👀", "Quase lá"
-            reason = "MACD cruzou o sinal · RSI saudável — vigiar próximo candle"
+            reason = "MACD cruzou o sinal · RSI saudável — vigiar próximo candle" + _vol_suffix()
+        elif hist_accel and rsi is not None and 45 <= rsi < 70:
+            status_icon, status_label = "👀", "MACD acelerando"
+            reason = "Histograma 1.5x maior — cruzamento iminente" + _vol_suffix()
         elif macd_pos and rsi is not None and 45 <= rsi < 70:
             status_icon, status_label = "👀", "Quase lá"
-            reason = "MACD positivo e RSI ok — aguardando cruzamento final"
+            reason = "MACD positivo e RSI ok — aguardando cruzamento final" + _vol_suffix()
         else:
             status_icon, status_label = "✅", "Elegível"
             if rsi is not None and rsi < 30:
