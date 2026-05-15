@@ -18,7 +18,11 @@ import traceback
 from typing import Any
 
 from .config import SYMBOLS, TIMEFRAME, EXCHANGE
-from .data_fetcher import fetch_ohlcv
+try:
+    from .config import MTF_ENABLED                              # Fase 2b.2
+except ImportError:
+    MTF_ENABLED = False
+from .data_fetcher import fetch_ohlcv, fetch_multi_tf            # Fase 2b.2
 from .indicators import add_indicators          # <- ver nota abaixo
 from .strategies import evaluate_signal         # <- ver nota abaixo
 from .sentiment import get_fear_greed
@@ -90,7 +94,22 @@ def scan_symbol(symbol: str) -> dict[str, Any]:
         })
 
         # Avalia estratégia → Signal ou None
-        sig = evaluate_signal(df, symbol=symbol, timeframe=TIMEFRAME)
+        # Fase 2b.2: fetch multi-TF (4h tendencia + 15m timing) com graceful degradation
+        df_4h = None
+        df_15m = None
+        if MTF_ENABLED:
+            try:
+                mtf = fetch_multi_tf(symbol, timeframes=("4h", "15m"))
+                if "4h" in mtf:
+                    df_4h = add_indicators(mtf["4h"])
+                if "15m" in mtf:
+                    df_15m = add_indicators(mtf["15m"])
+            except Exception as e:
+                log.warning("[MTF] %s: fetch_multi_tf falhou (%s) - degradando p/ 1h puro",
+                            symbol, str(e)[:100])
+
+        sig = evaluate_signal(df, symbol=symbol, timeframe=TIMEFRAME,
+                              df_4h=df_4h, df_15m=df_15m)
         diag["signal"] = sig
 
     except Exception as e:
