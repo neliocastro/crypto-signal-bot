@@ -29,8 +29,8 @@ def _safe(curr, key, default=float("nan")):
         return default
 
 # ---------- parser tolerante ----------
-def _parse_args(args, kwargs) -> Tuple[Optional[str], Optional[pd.DataFrame], Optional[str], Optional[str]]:
-    """Extrai (symbol, df, timeframe, exchange) de qualquer combinacao de args/kwargs."""
+def _parse_args(args, kwargs):
+    """Extrai (symbol, df, timeframe, exchange, df_4h, df_15m) de qualquer combinacao."""
     symbol = kwargs.pop("symbol", None)
     df = kwargs.pop("df", None)
 
@@ -58,8 +58,11 @@ def _parse_args(args, kwargs) -> Tuple[Optional[str], Optional[pd.DataFrame], Op
 
     timeframe = kwargs.pop("timeframe", None) or kwargs.pop("tf", None)
     exchange  = kwargs.pop("exchange", None)
+    # Fase 2b.2: dataframes multi-TF (opcionais)
+    df_4h  = kwargs.pop("df_4h", None)
+    df_15m = kwargs.pop("df_15m", None)
     kwargs.clear()
-    return symbol, df, timeframe, exchange
+    return symbol, df, timeframe, exchange, df_4h, df_15m
 
 # ---------- estrategia 1: Integrada Curto Prazo ----------
 def _check_integrada_long(prev, curr) -> Optional[List[str]]:
@@ -185,7 +188,7 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         "timestamp"
       }
     """
-    symbol, df, timeframe, exchange = _parse_args(list(args), dict(kwargs))
+    symbol, df, timeframe, exchange, df_4h, df_15m = _parse_args(list(args), dict(kwargs))
 
     if df is None or not isinstance(df, pd.DataFrame) or len(df) < 210:
         return None
@@ -203,6 +206,24 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
     if not r1 and not r2:
         return None
 
+    # ---------- Fase 2b.2: gating Multi-TimeFrame ----------
+    mtf_reasons: List[str] = []
+    mtf_bonus = 0
+    trend_4h = _check_trend_4h(df_4h)
+    pullback_15m = _check_pullback_15m(df_15m)
+
+    # 4h: se for explicitamente False -> bloqueia LONG (downtrend macro)
+    if trend_4h is False:
+        return None
+    if trend_4h is True:
+        mtf_reasons.append("Tendencia 4h confirmada (EMA50>EMA200, preco>EMA200)")
+        mtf_bonus += 1
+
+    # 15m: bonus de timing se houver pullback proximo a EMA9
+    if pullback_15m is True:
+        mtf_reasons.append("Pullback 15m proximo a EMA9 (timing preciso)")
+        mtf_bonus += 1
+
     # Confluencia: as 2 estrategias dispararam (decisao Q)
     if r1 and r2:
         strategy_name = "Integrada + MACD"
@@ -216,6 +237,11 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         strategy_name = "Tendencia MACD"
         reasons = r2
         confidence = 7
+
+    # Fase 2b.2: anexa contexto MTF
+    if mtf_reasons:
+        reasons = reasons + ["--- MTF ---"] + mtf_reasons
+    confidence = min(10, confidence + mtf_bonus)
 
     # ---------- TP/SL via ATR (2 TPs apenas: R:R 1:2 e 1:3) ----------
     entry = float(curr["close"])
