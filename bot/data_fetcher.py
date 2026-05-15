@@ -73,3 +73,58 @@ def fetch_ohlcv(symbol: str, timeframe: str = None, limit: int = None) -> pd.Dat
     raise RuntimeError(
         f"Todas as exchanges falharam para {symbol} ({timeframe}): " + " | ".join(errors)
     )
+
+
+# ---------------------------------------------------------------------------
+# Fase 2a: suporte multi-timeframe
+# ---------------------------------------------------------------------------
+# Lista padrão de timeframes usados pela estratégia MTF.
+# Pode ser sobrescrita via config.MTF_TIMEFRAMES no futuro.
+DEFAULT_MTF_TIMEFRAMES = ("4h", "1h", "15m")
+
+# Quantidade mínima de candles por timeframe (para indicadores como EMA200).
+# 4h: 250 candles ≈ 42 dias; 1h: 300 ≈ 12 dias; 15m: 200 ≈ 2 dias
+DEFAULT_MTF_LIMITS = {
+    "4h":  250,
+    "1h":  300,
+    "15m": 200,
+}
+
+
+def fetch_multi_tf(
+    symbol: str,
+    timeframes=None,
+    limits: dict = None,
+) -> dict:
+    """
+    Busca OHLCV em múltiplos timeframes para o mesmo ativo.
+
+    Args:
+        symbol:     par no formato ccxt (ex: "BTC/USDT")
+        timeframes: tupla/lista de timeframes (default: 4h, 1h, 15m)
+        limits:     dict {timeframe: int}; usa DEFAULT_MTF_LIMITS se None
+
+    Returns:
+        dict { timeframe: pd.DataFrame } — DataFrames OHLCV completos.
+        Timeframes que falharem em TODAS as exchanges são omitidos do dict
+        (não levanta exceção global — permite fallback parcial na estratégia).
+
+    Nota:
+        Cada chamada interna reutiliza fetch_ohlcv(), portanto herda
+        automaticamente o fallback gateio -> binance -> bybit.
+    """
+    timeframes = tuple(timeframes) if timeframes else DEFAULT_MTF_TIMEFRAMES
+    limits = limits or DEFAULT_MTF_LIMITS
+
+    result: dict = {}
+    for tf in timeframes:
+        tf_limit = limits.get(tf, config.CANDLES_LIMIT)
+        try:
+            result[tf] = fetch_ohlcv(symbol, timeframe=tf, limit=tf_limit)
+        except Exception as e:                                       # noqa: BLE001
+            log.warning("[multi_tf] %s @ %s falhou em todas as fontes: %s",
+                        symbol, tf, str(e)[:120])
+            # Não adiciona ao dict; a estratégia decide como reagir
+            continue
+
+    return result
