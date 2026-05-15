@@ -69,13 +69,24 @@ def scan_symbol(symbol: str) -> dict[str, Any]:
 
         df = add_indicators(df)  # deve adicionar: ema200, rsi, macd, macd_signal, macd_hist
 
+        # macd_hist_prev: penúltimo valor do histograma (para detectar aceleração)
+        macd_hist_prev = float("nan")
+        try:
+            if "macd_hist" in df.columns and len(df["macd_hist"]) >= 2:
+                macd_hist_prev = float(df["macd_hist"].iloc[-2])
+        except Exception:
+            pass
+
         diag.update({
-            "price":       _safe_last(df["close"]),
-            "ema200":      _safe_last(df["ema200"]),
-            "rsi":         _safe_last(df["rsi"]),
-            "macd":        _safe_last(df["macd"]),
-            "macd_signal": _safe_last(df["macd_signal"]),
-            "macd_hist":   _safe_last(df["macd_hist"]),
+            "price":          _safe_last(df["close"]),
+            "ema200":         _safe_last(df["ema200"]),
+            "rsi":            _safe_last(df["rsi"]),
+            "macd":           _safe_last(df["macd"]),
+            "macd_signal":    _safe_last(df["macd_signal"]),
+            "macd_hist":      _safe_last(df["macd_hist"]),
+            "macd_hist_prev": macd_hist_prev,
+            "atr":            _safe_last(df["atr"]) if "atr" in df.columns else float("nan"),
+            "vol_ratio":      _safe_last(df["vol_ratio"]) if "vol_ratio" in df.columns else float("nan"),
         })
 
         # Avalia estratégia → Signal ou None
