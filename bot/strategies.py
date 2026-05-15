@@ -260,6 +260,53 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         "timestamp":   ts,
     }
 
+# ---------- Fase 2b: helpers Multi-TimeFrame (aditivo, ainda nao plugado) ----------
+def _check_trend_4h(df_4h: Optional[pd.DataFrame]) -> Optional[bool]:
+    """
+    Filtro de tendencia maior no 4h.
+    Retorna:
+      True  -> tendencia de alta confirmada (EMA50 > EMA200 e preco > EMA200)
+      False -> tendencia de baixa (nao operar LONG no 1h)
+      None  -> dados insuficientes (estrategia deve decidir o fallback)
+    """
+    if df_4h is None or not isinstance(df_4h, pd.DataFrame) or len(df_4h) < 210:
+        return None
+    try:
+        last = df_4h.iloc[-2]   # vela fechada
+        price  = _safe(last, "close")
+        ema50  = _safe(last, "ema50")
+        ema200 = _safe(last, "ema200")
+        if _is_nan(price) or _is_nan(ema50) or _is_nan(ema200):
+            return None
+        return bool(price > ema200 and ema50 > ema200)
+    except Exception:
+        return None
+
+
+def _check_pullback_15m(df_15m: Optional[pd.DataFrame],
+                        max_dist_pct: float = 0.4) -> Optional[bool]:
+    """
+    Timing fino no 15m: detecta pullback recente proximo a EMA9.
+
+    Retorna:
+      True  -> ha pullback (preco a <= max_dist_pct% da EMA9 na vela fechada)
+      False -> nao ha pullback
+      None  -> dados insuficientes
+    """
+    if df_15m is None or not isinstance(df_15m, pd.DataFrame) or len(df_15m) < 30:
+        return None
+    try:
+        last = df_15m.iloc[-2]
+        price = _safe(last, "close")
+        ema9  = _safe(last, "ema9")
+        if _is_nan(price) or _is_nan(ema9) or price <= 0:
+            return None
+        dist_pct = abs(price - ema9) / price * 100.0
+        return bool(dist_pct <= max_dist_pct)
+    except Exception:
+        return None
+
+
 # aliases defensivos (mantem compat com codigo antigo)
 evaluate_signals = evaluate_signal
 evaluate = evaluate_signal
