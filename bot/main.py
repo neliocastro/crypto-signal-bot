@@ -129,8 +129,24 @@ def scan_symbol(symbol: str) -> dict[str, Any]:
     return diag
 
 def main() -> int:
+    # Fase C4: gating por runtime_config (paused / scan_interval / DND)
+    try:
+        from . import runtime_config as rc
+        cfg = rc.load()
+        run_ok, motivo = rc.should_run_now(cfg)
+        if not run_ok:
+            log.info("⏭️  Scan PULADO — %s", motivo)
+            return 0
+        log.info("✅ Scan AUTORIZADO — %s", motivo)
+        runtime_watchlist = cfg.get("watchlist") or []
+        effective_symbols = list(runtime_watchlist) if runtime_watchlist else list(SYMBOLS)
+    except Exception as e:
+        log.warning("runtime_config indisponivel (%s) — usando defaults estaticos", e)
+        cfg = None
+        effective_symbols = list(SYMBOLS)
+
     log.info("🚀 Iniciando scan | symbols=%s | TF=%s | exchange=%s",
-             SYMBOLS, TIMEFRAME, EXCHANGE)
+             effective_symbols, TIMEFRAME, EXCHANGE)
 
     # 1) Sentimento (Fear & Greed)
     try:
@@ -144,7 +160,7 @@ def main() -> int:
     diagnostics: list[dict[str, Any]] = []
     qualified_signals = []
 
-    for sym in SYMBOLS:
+    for sym in effective_symbols:
         log.info("🔎 Analisando %s...", sym)
         d = scan_symbol(sym)
         diagnostics.append(d)
@@ -193,6 +209,13 @@ def main() -> int:
                 log.info("💾 Dashboard state: %s", path)
         except Exception:
             log.error("Falha ao gerar dashboard state:\n%s", traceback.format_exc())
+
+    # Fase C4: registra timestamp do scan bem-sucedido
+    try:
+        from . import runtime_config as rc
+        rc.mark_scan_ran(updated_by="scan")
+    except Exception as e:
+        log.warning("Falha ao gravar last_scan_utc: %s", e)
 
     log.info("✅ Scan finalizado.")
     return 0
