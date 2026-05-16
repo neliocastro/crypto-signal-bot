@@ -117,14 +117,43 @@ def fetch_multi_tf(
     limits = limits or DEFAULT_MTF_LIMITS
 
     result: dict = {}
-    for tf in timeframes:
+
+    # ---------------------------------------------------------------
+    # Fase 2c.1: paralelizacao dos timeframes (ThreadPoolExecutor)
+    # Cada fetch_ohlcv() instancia sua propria exchange ccxt em modo
+    # publico, portanto threads sao independentes (sem estado compartilhado).
+    # Reducao esperada: ~3x no tempo de coleta por ativo.
+    # Kill switch: bot.config.MTF_PARALLEL_FETCH (default True).
+    # ---------------------------------------------------------------
+    parallel_enabled = getattr(config, "MTF_PARALLEL_FETCH", True)
+
+    def _one(tf):
         tf_limit = limits.get(tf, config.CANDLES_LIMIT)
         try:
-            result[tf] = fetch_ohlcv(symbol, timeframe=tf, limit=tf_limit)
+            df = fetch_ohlcv(symbol, timeframe=tf, limit=tf_limit)
+            return tf, df, None
         except Exception as e:                                       # noqa: BLE001
-            log.warning("[multi_tf] %s @ %s falhou em todas as fontes: %s",
-                        symbol, tf, str(e)[:120])
-            # Não adiciona ao dict; a estratégia decide como reagir
-            continue
+            return tf, None, str(e)[:120]
+
+    if parallel_enabled and len(timeframes) > 1:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=len(timeframes)) as pool:
+            futures = [pool.submit(_one, tf) for tf in timeframes]
+            for fut in as_completed(futures):
+                tf, df, err = fut.result()
+                if err is not None:
+                    log.warning("[multi_tf] %s @ %s falhou em todas as fontes: %s",
+                                symbol, tf, err)
+                    continue
+                result[tf] = df
+    else:
+        # Fallback sequencial (mantem comportamento original)
+        for tf in timeframes:
+            tf, df, err = _one(tf)
+            if err is not None:
+                log.warning("[multi_tf] %s @ %s falhou em todas as fontes: %s",
+                            symbol, tf, err)
+                continue
+            result[tf] = df
 
     return result
