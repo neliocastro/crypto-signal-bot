@@ -70,3 +70,7 @@ INTERVAL         = TIMEFRAME          # caso main use INTERVAL
 COOLDOWN_HOURS   = SIGNAL_COOLDOWN_HOURS
 RISK_PROFILE     = PROFILE
 INDICATOR_CONFIG = INDICATORS
+
+# ============ DASHBOARD (Fase C2) ============
+# Kill switch para gerar docs/data/latest.json a cada scan.
+DASHBOARD_ENABLED = True
