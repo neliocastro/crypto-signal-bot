@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-05-16T02:30:40.003644+00:00",
+  "timeframe": "1h",
+  "exchange": "gateio",
+  "fear_greed": {
+    "score": 31,
+    "label": "Fear"
+  },
+  "market_regime": {
+    "label": "Bear",
+    "arrow": "down",
+    "level": "fear"
+  },
+  "signals_count": 0,
+  "assets_count": 10,
+  "assets": [
+    {
+      "symbol": "BTC/USDT",
+      "price": 79176.2,
+      "rsi": 39.203496180960286,
+      "macd": -378.2567881164432,
+      "macd_signal": -371.0744916340075,
+      "macd_hist": -7.182296482435731,
+      "ema200": 80334.65134095305,
+      "vol_ratio": 0.10842904609642792,
+      "category": "inativo",
+      "signal": null
+    },
+    {
+      "symbol": "ETH/USDT",
+      "price": 2229.25,
+      "rsi": 42.48554600514808,
+      "macd": -10.774993564045417,
+      "macd_signal": -12.328628315103698,
+      "macd_hist": 1.553634751058281,
+      "ema200": 2290.510652147525,
+      "vol_ratio": 0.12106989940254376,
+      "category": "inativo",
+      "signal": null
+    },
+    {
+      "symbol": "SOL/USDT",
+      "price": 89.18,
+      "rsi": 37.48980067326008,
+      "macd": -0.6182990249767926,
+      "macd_signal": -0.634655869428488,
+      "macd_hist": 0.016356844451695385,
+      "ema200": 91.63085260028406,
+      "vol_ratio": 0.3413518757278522,
+      "category": "inativo",
+      "signal": null
+    },
+    {
+      "symbol": "XRP/USDT",
+      "price": 1.438,
+      "rsi": 42.852352222952454,
+      "macd": -0.00855662490540321,
+      "macd_signal": -0.008058103883669473,
+      "macd_hist": -0.0004985210217337364,
+      "ema200": 1.4419718001506068,
+      "vol_ratio": 0.1603482128637295,
+      "category": "inativo",
+      "signal": null
+    },
+    {
+      "symbol": "TRX/USDT",
+      "price": 0.35148,
+      "rsi": 44.86383732405902,
+      "macd": -0.0001925517234645513,
+      "macd_signal": -0.0002231334438275726,
+      "macd_hist": 3.0581720363021306e-05,
+      "ema200": 0.349875151987621,
+      "vol_ratio": 0.1769974611310307,
+      "category": "observacao",
+      "signal": null
+    },
+    {
+      "symbol": "BNB/USDT",
+      "price": 670.5,
+      "rsi": 40.92935080781535,
+      "macd": -2.05936238937943,
+      "macd_signal": -1.350546718420254,
+      "macd_hist": -0.7088156709591762,
+      "ema200": 662.7819025119325,
+      "vol_ratio": 0.2265655570352504,
+      "category": "observacao",
+      "signal": null
+    },
+    {
+      "symbol": "LINK/USDT",
+      "price": 10.074,
+      "rsi": 39.889275674519006,
+      "macd": -0.07523076413164276,
+      "macd_signal": -0.07996716452638024,
+      "macd_hist": 0.0047364003947374805,
+      "ema200": 10.22875828031807,
+      "vol_ratio": 0.1615165316726836,
+      "category": "inativo",
+      "signal": null
+    },
+    {
+      "symbol": "HYPE/USDT",
+      "price": 43.369,
+      "rsi": 42.591455672379396,
+      "macd": -0.016163081482581276,
+      "macd_signal": 0.21166221434346547,
+      "macd_hist": -0.22782529582604674,
+      "ema200": 42.258715877662844,
+      "vol_ratio": 0.24735812335297155,
+      "category": "observacao",
+      "signal": null
+    },
+    {
+      "symbol": "AAVE/USDT",
+      "price": 92.66,
+      "rsi": 34.113646666812144,
+      "macd": -1.1633633790456628,
+      "macd_signal": -1.1636856985634974,
+      "macd_hist": 0.00032231951783456836,
+      "ema200": 96.41398440551522,
+      "vol_ratio": 0.48396055978500224,
+      "category": "inativo",
+      "signal": null
+    },
+    {
+      "symbol": "PAXG/USDT",
+      "price": 4543.77,
+      "rsi": 37.049381193603,
+      "macd": -19.52587812987076,
+      "macd_signal": -22.787392712684603,
+      "macd_hist": 3.2615145828138417,
+      "ema200": 4653.334056870531,
+      "vol_ratio": 0.04720734492377963,
+      "category": "inativo",
+      "signal": null
+    }
+  ]
+}
