@@ -1,0 +1,24 @@
+{
+  "scan_interval_min": 15,
+  "watchlist": [
+    "BTC/USDT",
+    "ETH/USDT",
+    "SOL/USDT",
+    "XRP/USDT",
+    "TRX/USDT",
+    "BNB/USDT",
+    "LINK/USDT",
+    "HYPE/USDT",
+    "AAVE/USDT",
+    "PAXG/USDT"
+  ],
+  "dnd_enabled": false,
+  "dnd_start_hour_local": 23,
+  "dnd_end_hour_local": 7,
+  "dnd_interval_min": 60,
+  "timezone": "America/Bahia",
+  "paused": false,
+  "last_scan_utc": null,
+  "_updated_at_utc": null,
+  "_updated_by": "init"
+}
