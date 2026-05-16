@@ -31,6 +31,16 @@ from .telegram_sender import (
     format_signal,
     format_scan_summary,
 )
+try:
+    from .config import DASHBOARD_ENABLED
+except ImportError:
+    DASHBOARD_ENABLED = False
+try:
+    from .dashboard_writer import write_dashboard_state
+    _DASHBOARD_AVAILABLE = True
+except ImportError:
+    _DASHBOARD_AVAILABLE = False
+    write_dashboard_state = None  # type: ignore
 
 logging.basicConfig(
     level=logging.INFO,
@@ -165,6 +175,24 @@ def main() -> int:
                  len(diagnostics), len(qualified_signals))
     except Exception:
         log.error("Falha ao enviar resumo:\n%s", traceback.format_exc())
+
+    # 5) Escreve estado do dashboard (Fase C2 - D.1)
+    if DASHBOARD_ENABLED and _DASHBOARD_AVAILABLE:
+        try:
+            fg_for_dash = fg if isinstance(fg, dict) else (
+                {"score": fg} if isinstance(fg, (int, float)) else None
+            )
+            path = write_dashboard_state(
+                diagnostics=diagnostics,
+                signals_count=len(qualified_signals),
+                fg=fg_for_dash,
+                timeframe=TIMEFRAME,
+                exchange=EXCHANGE,
+            )
+            if path:
+                log.info("💾 Dashboard state: %s", path)
+        except Exception:
+            log.error("Falha ao gerar dashboard state:\n%s", traceback.format_exc())
 
     log.info("✅ Scan finalizado.")
     return 0
