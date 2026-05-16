@@ -194,6 +194,38 @@ def send_heartbeat(checked: int, signals: int, fg: Optional[int] = None) -> bool
     fg_str = f" | F&G: {_fg_s} ({_fg_l}) {_fg_e}" if _fg_s is not None else ""
     return send(f"🤖 _Scan concluído: {checked} ativos verificados, {signals} sinal(is).{fg_str}_")
 
+def _market_regime(fg_score):
+    """Mapeia F&G score para (label, emoji, arrow). Visual v2."""
+    if fg_score is None:
+        return ("-", "", "")
+    try:
+        s = int(fg_score)
+    except Exception:
+        return ("-", "", "")
+    if s <= 24:
+        return ("Bear forte", "⚛️", "⬇️")
+    if s <= 44:
+        return ("Bear", "📉", "⬇️")
+    if s <= 55:
+        return ("Lateral", "↔️", "→")
+    if s <= 74:
+        return ("Bull", "📈", "⬆️")
+    return ("Bull forte", "🚀", "⬆️⬆️")
+
+
+def _local_time_str(tz_name: str = "America/Bahia") -> str:
+    """Hora local atual no formato HH:MM · TZ. Fallback UTC."""
+    try:
+        from datetime import datetime
+        try:
+            from zoneinfo import ZoneInfo
+            return datetime.now(ZoneInfo(tz_name)).strftime("%H:%M") + f" · {tz_name}"
+        except Exception:
+            return datetime.utcnow().strftime("%H:%M") + " UTC"
+    except Exception:
+        return ""
+
+
 def format_scan_summary(
     diagnostics: List[dict],
     signals_count: int,
@@ -201,96 +233,148 @@ def format_scan_summary(
     timeframe: str = "",
     exchange: str = "",
 ) -> str:
-    """
-    Resumo detalhado do scan (1 mensagem com diagnóstico de todos ativos).
-    """
+    """Resumo do scan - visual v2 (Format Inteligente)."""
     _fg_s, _fg_l, _fg_e = _fg_parts(fg)
-    fg_line = f"{_fg_e} *Fear & Greed:* {_fg_s} ({_fg_l})\n" if _fg_s is not None else ""
+    regime_label, regime_emoji, regime_arrow = _market_regime(_fg_s)
+    if _fg_s is not None:
+        header_2 = (
+            f"{regime_emoji} *{regime_label}* {regime_arrow} ▸ "
+            f"{_fg_e} F&G: {_fg_s} ({_fg_l}) ▸ "
+            f"⏱️ `{timeframe}` ▸ {exchange}"
+        )
+    else:
+        header_2 = f"⏱️ `{timeframe}` ▸ {exchange}"
 
     head = (
-        f"🤖 *Scan Concluído*\n"
-        f"{fg_line}"
-        f"📊 *Ativos:* {len(diagnostics)} — TF `{timeframe}` • {exchange}\n"
-        f"_Legenda:_ ✅ Elegível · 👀 Quase lá · ⚠️ Bloqueado · 🚫 Em risco\n"
-        f"━━━━━━━━━━━━━━━━━━\n"
+        f"🤖 *Crypto Signal Bot*\n"
+        f"{header_2}\n"
+        f"━━━━━━━━━━━━━━\n"
+        f"🎯 *Sinais qualificados:* {signals_count}\n"
     )
 
-    body_lines = []
+    pronto, quase_la, observacao, risco, inativo, erros = [], [], [], [], [], []
     for d in diagnostics:
-        sym = d.get("symbol", "—")
+        sym = d.get("symbol", "-")
         if "error" in d:
-            body_lines.append(f"⚠️ `{sym}` — erro: {str(d['error'])[:60]}")
+            erros.append((sym, str(d["error"])[:60]))
             continue
         price          = d.get("price")
         rsi            = d.get("rsi")
         macd           = d.get("macd")
         macd_signal    = d.get("macd_signal")
         macd_hist      = d.get("macd_hist")
-        macd_hist_prev = d.get("macd_hist_prev")   # Fase 1 (aceleracao)
-        vol_ratio      = d.get("vol_ratio")        # Fase 1 (forca de volume)
+        macd_hist_prev = d.get("macd_hist_prev")
+        vol_ratio      = d.get("vol_ratio")
         ema200         = d.get("ema200")
-
-        # ícone do filtro EMA200 (mantido na linha de indicadores)
-        trend  = "✅" if (price and ema200 and price > ema200) else "⚠️"
-        rsi_s  = f"{rsi:.1f}"  if rsi  is not None else "—"
-        macd_s = f"{macd:.2f}" if macd is not None else "—"
-
-        # --- status do ativo (semáforo + motivo sintético) -----------------
-        status_icon = "✅"
-        status_label = "Elegível"
-        reason = "Aguardando gatilho final (cruzamento MACD/EMAs)"
+        signal         = d.get("signal")
 
         above_ema200 = bool(price and ema200 and price > ema200)
         macd_pos     = (macd is not None and macd > 0)
         macd_above   = (macd is not None and macd_signal is not None and macd > macd_signal)
         hist_pos     = (macd_hist is not None and macd_hist > 0)
-
-        # Fase 1: deteccao antecipada de cruzamento via aceleracao do histograma
-        hist_accel = (
+        hist_accel   = (
             macd_hist is not None and macd_hist_prev is not None
             and macd_hist > 0 and macd_hist_prev > 0
             and macd_hist > macd_hist_prev * 1.5
         )
-        # Fase 1: filtros de volume
         vol_strong = (vol_ratio is not None and vol_ratio > 1.5)
         vol_weak   = (vol_ratio is not None and vol_ratio < 0.7)
-
-        def _vol_suffix() -> str:
-            if vol_strong: return " · 🔥 volume forte"
-            if vol_weak:   return " · 💤 volume fraco"
-            return ""
-
-        if not above_ema200:
-            status_icon, status_label = "⚠️", "Bloqueado"
-            reason = "Preço abaixo da EMA200 — filtro base bloqueia LONG"
-        elif rsi is not None and rsi >= 70:
-            status_icon, status_label = "🚫", "Em risco"
-            reason = f"RSI sobrecomprado ({rsi:.0f} ≥ 70) — evita comprar topo"
-        elif macd_above and hist_pos and rsi is not None and 50 <= rsi < 65:
-            status_icon, status_label = "👀", "Quase lá"
-            reason = "MACD cruzou o sinal · RSI saudável — vigiar próximo candle" + _vol_suffix()
-        elif hist_accel and rsi is not None and 45 <= rsi < 70:
-            status_icon, status_label = "👀", "MACD acelerando"
-            reason = "Histograma 1.5x maior — cruzamento iminente" + _vol_suffix()
-        elif macd_pos and rsi is not None and 45 <= rsi < 70:
-            status_icon, status_label = "👀", "Quase lá"
-            reason = "MACD positivo e RSI ok — aguardando cruzamento final" + _vol_suffix()
+        if vol_strong:
+            vol_suffix = " · 🔥 volume forte"
+        elif vol_weak:
+            vol_suffix = " · 💤 volume fraco"
         else:
-            status_icon, status_label = "✅", "Elegível"
-            if rsi is not None and rsi < 30:
-                reason = "RSI sobrevendido — aguardando reversão"
-            elif macd is not None and macd < 0:
-                reason = "Acima da EMA200, mas MACD ainda negativo"
-            else:
-                reason = "Filtros base ok — aguardando confluência final"
+            vol_suffix = ""
 
-        body_lines.append(
-            f"`{sym}`  {_fmt_price(price)}  {status_icon} *{status_label}*\n"
-            f"  RSI: `{rsi_s}` | MACD: `{macd_s}` | EMA200 {trend}\n"
-            f"  └ _{reason}_"
+        item = {"sym": sym, "price": price, "rsi": rsi, "macd": macd,
+                "ema200": ema200, "signal": signal}
+
+        if signal:
+            pronto.append(item)
+            continue
+        if not above_ema200:
+            inativo.append(item)
+            continue
+        if rsi is not None and rsi >= 70:
+            item["reason"] = f"RSI sobrecomprado ({rsi:.0f} ≥ 70) - evita comprar topo"
+            risco.append(item)
+            continue
+        if macd_above and hist_pos and rsi is not None and 50 <= rsi < 65:
+            item["reason"] = "MACD cruzou o sinal · RSI saudavel" + vol_suffix
+            quase_la.append(item)
+            continue
+        if hist_accel and rsi is not None and 45 <= rsi < 70:
+            item["reason"] = "Histograma 1.5x maior - cruzamento iminente" + vol_suffix
+            quase_la.append(item)
+            continue
+        if macd_pos and rsi is not None and 45 <= rsi < 70:
+            item["reason"] = "MACD positivo e RSI ok - falta cruzamento final" + vol_suffix
+            quase_la.append(item)
+            continue
+        if rsi is not None and rsi < 30:
+            item["reason"] = "RSI sobrevendido - aguardando reversao"
+        elif macd is not None and macd < 0:
+            item["reason"] = "Acima da EMA200 - aguardando MACD virar positivo"
+        else:
+            item["reason"] = "Acima da EMA200 - aguardando confluencia"
+        observacao.append(item)
+
+    def _fmt_full(it):
+        rsi_s  = f"{it['rsi']:.1f}"  if it['rsi']  is not None else "-"
+        macd_s = f"{it['macd']:.2f}" if it['macd'] is not None else "-"
+        ema_s  = _fmt_price(it['ema200']) if it['ema200'] is not None else "-"
+        return (
+            f"`{it['sym']}`  {_fmt_price(it['price'])}\n"
+            f"  RSI `{rsi_s}` ▸ MACD `{macd_s}` ▸ EMA200 {ema_s}\n"
+            f"  └ _{it['reason']}_"
         )
 
-    body = "\n\n".join(body_lines) if body_lines else "_Sem dados._"
-    foot = f"\n━━━━━━━━━━━━━━━━━━\n🎯 *Sinais qualificados:* {signals_count}"
+    def _fmt_pronto(it):
+        sig = it.get("signal") or {}
+        strat = sig.get("strategy", "-")
+        entry = sig.get("entry")
+        stop  = sig.get("stop")
+        tp2   = sig.get("tp2")
+        tp3   = sig.get("tp3")
+        rr    = sig.get("risk_reward")
+        rr_s  = f"1:{rr}" if rr is not None else "-"
+        return (
+            f"`{it['sym']}`  {_fmt_price(it['price'])}\n"
+            f"  🎯 *{strat}*\n"
+            f"  Entry {_fmt_price(entry)} ▸ SL {_fmt_price(stop)}\n"
+            f"  TP {_fmt_price(tp2)} / {_fmt_price(tp3)}  ·  R:R {rr_s}"
+        )
 
-    return head + body + foot
+    def _section(emoji, title, items, fmt_fn):
+        if not items:
+            return ""
+        body = "\n\n".join(fmt_fn(it) for it in items)
+        return (
+            f"\n─────────────\n\n"
+            f"{emoji} *{title}* ({len(items)})\n\n{body}\n"
+        )
+
+    parts = []
+    parts.append(_section("🟢", "PRONTO PARA OPERAR", pronto,     _fmt_pronto))
+    parts.append(_section("🟡", "QUASE LA",            quase_la,   _fmt_full))
+    parts.append(_section("🔵", "OBSERVACAO",          observacao, _fmt_full))
+    parts.append(_section("🔴", "RISCO",               risco,      _fmt_full))
+
+    if inativo:
+        names = " ▸ ".join(f"`{it['sym'].split('/')[0]}`" for it in inativo)
+        parts.append(
+            f"\n─────────────\n\n"
+            f"⚪️ *INATIVOS* ({len(inativo)})\n{names}\n"
+            f"  └ _Preco abaixo da EMA200 (filtro base bloqueia LONG)_\n"
+        )
+
+    if erros:
+        err_body = "\n".join(f"⚠️ `{s}` - {msg}" for s, msg in erros)
+        parts.append(
+            f"\n─────────────\n\n"
+            f"⚠️ *Erros* ({len(erros)})\n{err_body}\n"
+        )
+
+    body_str = "".join(parts) if parts else "\n_Sem dados._\n"
+    foot = f"\n🕐 _{_local_time_str()}_"
+    return head + body_str + foot
