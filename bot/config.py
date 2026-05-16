@@ -73,4 +73,4 @@ INDICATOR_CONFIG = INDICATORS
 
 # ============ DASHBOARD (Fase C2) ============
 # Kill switch para gerar docs/data/latest.json a cada scan.
-DASHBOARD_ENABLED = True
+DASHBOARD_ENABLED = False
