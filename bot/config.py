@@ -54,6 +54,11 @@ INDICATORS = {
 # True = aplica filtros 4h (tendencia) + 15m (pullback) no evaluate_signal
 # False = comportamento legado (so 1h). Kill switch seguro.
 MTF_ENABLED = True
+# Fase 2c.1: paralelizacao dos 3 timeframes via ThreadPoolExecutor.
+# Reduz tempo de fetch_multi_tf de ~15s para ~5-6s por ativo.
+# Desligue (False) se observar rate-limit ou bugs intermitentes.
+MTF_PARALLEL_FETCH = True
+
 
 # ============ ANTI-SPAM ============
 # Não reenvia o mesmo sinal antes desse cooldown (em horas).
