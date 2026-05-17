@@ -19,6 +19,6 @@
   "timezone": "America/Bahia",
   "paused": false,
   "last_scan_utc": null,
-  "_updated_at_utc": null,
-  "_updated_by": "init"
+  "_updated_at_utc": "2026-05-17T05:31:15.154775+00:00",
+  "_updated_by": "telegram"
 }
