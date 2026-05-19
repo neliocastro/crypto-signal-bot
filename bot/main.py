@@ -118,6 +118,16 @@ def scan_symbol(symbol: str) -> dict[str, Any]:
                 log.warning("[MTF] %s: fetch_multi_tf falhou (%s) - degradando p/ 1h puro",
                             symbol, str(e)[:100])
 
+        # Fase 2b.3: expõe contexto MTF no diag p/ visual no Telegram (aditivo, custo zero)
+        try:
+            from . import strategies as _strat
+            diag["trend_4h"]     = _strat._check_trend_4h(df_4h) if df_4h is not None else None
+            diag["pullback_15m"] = _strat._check_pullback_15m(df_15m) if df_15m is not None else None
+        except Exception as _e_mtf:
+            log.warning("[MTF-UI] %s: falha ao expor contexto MTF (%s)", symbol, _e_mtf)
+            diag["trend_4h"]     = None
+            diag["pullback_15m"] = None
+
         sig = evaluate_signal(df, symbol=symbol, timeframe=TIMEFRAME,
                               df_4h=df_4h, df_15m=df_15m)
         diag["signal"] = sig
