@@ -287,7 +287,8 @@ def format_scan_summary(
             vol_suffix = ""
 
         item = {"sym": sym, "price": price, "rsi": rsi, "macd": macd,
-                "ema200": ema200, "signal": signal}
+                "ema200": ema200, "signal": signal,
+                "trend_4h": d.get("trend_4h"), "pullback_15m": d.get("pullback_15m")}
 
         if signal:
             pronto.append(item)
@@ -318,6 +319,27 @@ def format_scan_summary(
         else:
             item["reason"] = "Acima da EMA200 - aguardando confluencia"
         observacao.append(item)
+
+    def _mtf_tag(it) -> str:
+        """Prefixo visual indicando alinhamento 4h. Vazio se desconhecido."""
+        trend = it.get("trend_4h")
+        if trend is True:
+            return "⬆️4h "
+        if trend is False:
+            return "⬇️4h "
+        return ""
+
+    def _fmt_quase_la(it):
+        """Mesmo layout do _fmt_full mas com tag MTF prefixando o símbolo."""
+        rsi_s  = f"{it['rsi']:.1f}"  if it['rsi']  is not None else "-"
+        macd_s = f"{it['macd']:.2f}" if it['macd'] is not None else "-"
+        ema_s  = _fmt_price(it['ema200']) if it['ema200'] is not None else "-"
+        mtf    = _mtf_tag(it)
+        return (
+            f"{mtf}`{it['sym']}`  {_fmt_price(it['price'])}\n"
+            f"  RSI `{rsi_s}` ▸ MACD `{macd_s}` ▸ EMA200 {ema_s}\n"
+            f"  └ _{it['reason']}_"
+        )
 
     def _fmt_full(it):
         rsi_s  = f"{it['rsi']:.1f}"  if it['rsi']  is not None else "-"
@@ -356,7 +378,7 @@ def format_scan_summary(
 
     parts = []
     parts.append(_section("🟢", "PRONTO PARA OPERAR", pronto,     _fmt_pronto))
-    parts.append(_section("🟡", "QUASE LA",            quase_la,   _fmt_full))
+    parts.append(_section("🟡", "QUASE LA",            quase_la,   _fmt_quase_la))
     parts.append(_section("🔵", "OBSERVACAO",          observacao, _fmt_full))
     parts.append(_section("🔴", "RISCO",               risco,      _fmt_full))
 
