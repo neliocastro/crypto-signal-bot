@@ -47,7 +47,7 @@ log = logging.getLogger("backtest_macd")
 # ────────────────────────────────────────────────────────────────────────────
 # Parâmetros do backtest
 # ────────────────────────────────────────────────────────────────────────────
-CANDLES_LIMIT       = 720    # ~30 dias de 1h
+CANDLES_LIMIT       = 2160   # ~90 dias de 1h
 SL_ATR_MULT         = 1.5
 TP_ATR_MULT         = 3.0
 TIMEOUT_BARS        = 48     # ~2 dias
