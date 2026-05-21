@@ -102,7 +102,7 @@ RISK_PROFILES = {
         "min_confidence":    8,
     },
 }
-ACTIVE_PROFILE = "balanceado"   # troque para "agressivo" para ativar LINK+HYPE em MACD-only
+ACTIVE_PROFILE = "agressivo"   # troque para "agressivo" para ativar LINK+HYPE em MACD-only ou volte para "balanceado"
 
 
 # ============ DASHBOARD (Fase C2) ============
