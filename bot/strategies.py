@@ -172,6 +172,94 @@ def _check_tendencia_macd_long(prev, curr) -> Optional[List[str]]:
     return reasons
 
 # ---------- funcao principal ----------
+def _check_aggressive_macd(df: pd.DataFrame, symbol: str, timeframe: str, exchange: str) -> Optional[Dict[str, Any]]:
+    """
+    Fase A: gatilho MACD-only (perfil agressivo).
+
+    Entrada (validada por backtest 90d em LINK & HYPE):
+      - MACD line cruzou ACIMA do signal na vela fechada
+      - preco > EMA200 (filtro de tendencia minimo)
+      - 40 <= RSI <= 70
+
+    Saida no mesmo formato de evaluate_signal (compativel com telegram_sender).
+    Confidence fixado em 5 (perfil agressivo).
+    """
+    try:
+        curr = df.iloc[-2]
+        prev = df.iloc[-3]
+    except Exception:
+        return None
+
+    try:
+        macd_prev   = float(prev["macd"])
+        signal_prev = float(prev["macd_signal"])
+        macd_curr   = float(curr["macd"])
+        signal_curr = float(curr["macd_signal"])
+        close_curr  = float(curr["close"])
+        ema200_curr = float(curr["ema200"])
+        rsi_curr    = float(curr["rsi"])
+        atr_curr    = float(curr.get("atr", float("nan")))
+        ema21_v     = float(curr["ema21"]) if not _is_nan(curr.get("ema21", float("nan"))) else close_curr
+    except (KeyError, ValueError, TypeError):
+        return None
+
+    if any(_is_nan(v) for v in (macd_prev, signal_prev, macd_curr, signal_curr,
+                                  close_curr, ema200_curr, rsi_curr, atr_curr)):
+        return None
+    if atr_curr <= 0:
+        return None
+
+    crossed_above = (macd_prev <= signal_prev) and (macd_curr > signal_curr)
+    above_ema200  = close_curr > ema200_curr
+    rsi_ok        = 40.0 <= rsi_curr <= 70.0
+
+    if not (crossed_above and above_ema200 and rsi_ok):
+        return None
+
+    entry = close_curr
+    stop  = entry - 1.5 * atr_curr
+    tp2   = entry + 3.0 * atr_curr   # R:R 1:2
+    tp3   = entry + 4.5 * atr_curr   # R:R 1:3
+    risk   = abs(entry - stop)
+    reward = abs(tp2 - entry)
+    risk_reward = round(reward / risk, 2) if risk > 0 else None
+
+    dist_pct = (abs(entry - ema21_v) / entry * 100.0) if entry else 0.0
+    if dist_pct <= 0.3:
+        order_type = "Limit"
+    elif dist_pct <= 1.0:
+        order_type = "Market"
+    else:
+        order_type = "Stop-Limit"
+
+    ts = curr["timestamp"] if "timestamp" in df.columns else df.index[-2]
+    ts = ts.isoformat() if hasattr(ts, "isoformat") else str(ts)
+
+    return {
+        "symbol":       symbol,
+        "side":         "LONG",
+        "strategy":     "MACD-only (Agressivo)",
+        "entry":        round(entry, 8),
+        "stop":         round(stop, 8),
+        "tp2":          round(tp2, 8),
+        "tp3":          round(tp3, 8),
+        "targets":      [round(tp2, 8), round(tp3, 8)],
+        "risk_reward":  risk_reward,
+        "order_type":   order_type,
+        "timeframe":    timeframe or "1h",
+        "exchange":     exchange or "",
+        "confidence":   5,
+        "reasons":      [
+            "[Perfil AGRESSIVO]",
+            "MACD cruzou acima do sinal (vela fechada)",
+            f"Preco > EMA200 ({close_curr:.2f} > {ema200_curr:.2f})",
+            f"RSI saudavel ({rsi_curr:.1f})",
+        ],
+        "timestamp":    ts,
+        "profile":      "agressivo",
+    }
+
+
 def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
     """
     Avalia 1 ativo nas 2 estrategias (LONG only). Retorna dict com sinal ou None.
@@ -194,6 +282,21 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         return None
     if not symbol:
         symbol = "UNKNOWN"
+
+    # Fase A: fast-path do perfil agressivo (MACD-only).
+    # Se ACTIVE_PROFILE == "agressivo" e o ativo esta na whitelist,
+    # usa apenas o gatilho MACD cross above. NAO faz fallback para o
+    # caminho normal (modo agressivo e exclusivo). Falha silenciosa em
+    # qualquer Exception -> cai para o caminho normal.
+    try:
+        from .config import RISK_PROFILES, ACTIVE_PROFILE
+        _profile = RISK_PROFILES.get(ACTIVE_PROFILE) or RISK_PROFILES.get("balanceado", {})
+        if _profile.get("macd_cross_enough"):
+            _approved = _profile.get("approved_symbols") or []
+            if symbol in _approved:
+                return _check_aggressive_macd(df, symbol, timeframe, exchange)
+    except Exception:
+        pass  # degradacao segura: cai para o caminho normal
 
     # vela fechada (penultima) e a anterior para detectar cruzamentos
     curr = df.iloc[-2]
