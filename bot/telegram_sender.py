@@ -236,14 +236,23 @@ def format_scan_summary(
     """Resumo do scan - visual v2 (Format Inteligente)."""
     _fg_s, _fg_l, _fg_e = _fg_parts(fg)
     regime_label, regime_emoji, regime_arrow = _market_regime(_fg_s)
+    # Fase A: tag do perfil ativo (so aparece quando ACTIVE_PROFILE != balanceado)
+    _profile_tag = ""
+    try:
+        from .config import ACTIVE_PROFILE  # type: ignore
+        if ACTIVE_PROFILE and ACTIVE_PROFILE != "balanceado":
+            _profile_tag = f" · 🔥 modo *{ACTIVE_PROFILE.upper()}*"
+    except Exception:
+        _profile_tag = ""
+
     if _fg_s is not None:
         header_2 = (
             f"{regime_emoji} *{regime_label}* {regime_arrow} ▸ "
             f"{_fg_e} F&G: {_fg_s} ({_fg_l}) ▸ "
-            f"⏱️ `{timeframe}` ▸ {exchange}"
+            f"⏱️ `{timeframe}` ▸ {exchange}{_profile_tag}"
         )
     else:
-        header_2 = f"⏱️ `{timeframe}` ▸ {exchange}"
+        header_2 = f"⏱️ `{timeframe}` ▸ {exchange}{_profile_tag}"
 
     head = (
         f"🤖 *Crypto Signal Bot*\n"
