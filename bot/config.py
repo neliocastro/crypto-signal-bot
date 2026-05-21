@@ -76,6 +76,35 @@ COOLDOWN_HOURS   = SIGNAL_COOLDOWN_HOURS
 RISK_PROFILE     = PROFILE
 INDICATOR_CONFIG = INDICATORS
 
+# ============ PERFIS DE RISCO (Fase A — MACD-only candidato) ============
+# Default: "balanceado" = comportamento atual (zero mudanca).
+# Para ativar modo agressivo (MACD-only nos ativos validados pelo backtest 90d):
+#   ACTIVE_PROFILE = "agressivo"
+# E faca git push. Para reverter, troque de volta para "balanceado".
+#
+# Validacao backtest 90d (2026-05-21):
+#   LINK/USDT: 12 trades, 66.7% WR, PF 3.26  (approved)
+#   HYPE/USDT:  9 trades, 55.6% WR, PF 3.45  (approved)
+RISK_PROFILES = {
+    "balanceado": {
+        "macd_cross_enough": False,
+        "approved_symbols":  None,
+        "min_confidence":    6,
+    },
+    "agressivo": {
+        "macd_cross_enough": True,
+        "approved_symbols":  ["LINK/USDT", "HYPE/USDT"],
+        "min_confidence":    5,
+    },
+    "conservador": {
+        "macd_cross_enough": False,
+        "approved_symbols":  None,
+        "min_confidence":    8,
+    },
+}
+ACTIVE_PROFILE = "balanceado"   # troque para "agressivo" para ativar LINK+HYPE em MACD-only
+
+
 # ============ DASHBOARD (Fase C2) ============
 # Kill switch para gerar docs/data/latest.json a cada scan.
 DASHBOARD_ENABLED = False
