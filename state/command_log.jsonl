@@ -2,3 +2,4 @@
 {"event": "command", "chat_id": 537605053, "username": "neliocastro", "cmd": "/ajuda", "changed": false, "ts": "2026-05-16T21:58:57.254396+00:00"}
 {"event": "command", "chat_id": 537605053, "username": "neliocastro", "cmd": "/ajuda", "changed": false, "ts": "2026-05-17T01:31:09.628781+00:00"}
 {"event": "command", "chat_id": 537605053, "username": "neliocastro", "cmd": "/intervalo 15", "changed": true, "ts": "2026-05-17T05:31:15.154157+00:00"}
+{"event": "command", "chat_id": 537605053, "username": "neliocastro", "cmd": "/add ONDO", "changed": true, "ts": "2026-05-27T01:30:53.287042+00:00"}

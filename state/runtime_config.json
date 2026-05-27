@@ -10,7 +10,8 @@
     "LINK/USDT",
     "HYPE/USDT",
     "AAVE/USDT",
-    "PAXG/USDT"
+    "PAXG/USDT",
+    "ONDO/USDT"
   ],
   "dnd_enabled": false,
   "dnd_start_hour_local": 23,
@@ -19,6 +20,6 @@
   "timezone": "America/Bahia",
   "paused": false,
   "last_scan_utc": null,
-  "_updated_at_utc": "2026-05-17T05:31:15.154775+00:00",
+  "_updated_at_utc": "2026-05-27T01:30:53.287560+00:00",
   "_updated_by": "telegram"
 }
