@@ -1,9 +1,22 @@
 name: backtest
 
-# Backtest manual do sinal MACD-only (modo agressivo candidato).
-# Roda apenas via "Run workflow" — não tem schedule.
+# Backtest manual. Escolha o script no "Run workflow".
+#   - backtest_macd          : sinal MACD-only (Fase A) -> grava relatorio em docs/state
+#   - backtest_super_agressivo: EMA9>21>50 + MACD>signal + RSI 40-69 -> imprime no log
 on:
   workflow_dispatch:
+    inputs:
+      script:
+        description: "Qual backtest rodar"
+        type: choice
+        default: backtest_macd
+        options:
+          - backtest_macd
+          - backtest_super_agressivo
+      args:
+        description: "Args extras (ex: --compare --days 90)"
+        type: string
+        default: "--compare"
 
 permissions:
   contents: write
@@ -28,16 +41,20 @@ jobs:
 
       - name: Run backtest
         run: |
-          python -m scripts.backtest_macd
+          if [ "${{ github.event.inputs.script }}" = "backtest_super_agressivo" ]; then
+            python -m scripts.backtest_super_agressivo ${{ github.event.inputs.args }}
+          else
+            python -m scripts.backtest_macd
+          fi
 
       - name: Commit results
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/backtest_results.json docs/backtest_report.md
+          git add state/backtest_results.json docs/backtest_report.md 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "Nenhuma mudança no relatório."
+            echo "Nenhuma mudanca no relatorio."
           else
-            git commit -m "chore(backtest): atualiza resultados MACD [skip ci]"
+            git commit -m "chore(backtest): atualiza resultados [skip ci]"
             git push
           fi
