@@ -1,8 +1,9 @@
 name: backtest
 
 # Backtest manual. Escolha o script no "Run workflow".
-#   - backtest_macd          : sinal MACD-only (Fase A) -> grava relatorio em docs/state
+#   - backtest_macd           : sinal MACD-only (Fase A) -> grava relatorio em state/docs
 #   - backtest_super_agressivo: EMA9>21>50 + MACD>signal + RSI 40-69 -> imprime no log
+#   - backtest_meanrev_paxg   : RSI<30 & banda inf. Bollinger -> saida SMA20 (reversao) -> log
 on:
   workflow_dispatch:
     inputs:
@@ -13,10 +14,11 @@ on:
         options:
           - backtest_macd
           - backtest_super_agressivo
+          - backtest_meanrev_paxg
       args:
-        description: "Args extras (ex: --compare --days 90)"
+        description: "Args extras (ex: --compare | --rsi 25 --bb-std 2.5)"
         type: string
-        default: "--compare"
+        default: ""
 
 permissions:
   contents: write
@@ -41,11 +43,17 @@ jobs:
 
       - name: Run backtest
         run: |
-          if [ "${{ github.event.inputs.script }}" = "backtest_super_agressivo" ]; then
-            python -m scripts.backtest_super_agressivo ${{ github.event.inputs.args }}
-          else
-            python -m scripts.backtest_macd
-          fi
+          case "${{ github.event.inputs.script }}" in
+            backtest_super_agressivo)
+              python -m scripts.backtest_super_agressivo ${{ github.event.inputs.args }}
+              ;;
+            backtest_meanrev_paxg)
+              python -m scripts.backtest_meanrev_paxg ${{ github.event.inputs.args }}
+              ;;
+            *)
+              python -m scripts.backtest_macd ${{ github.event.inputs.args }}
+              ;;
+          esac
 
       - name: Commit results
         run: |
