@@ -13,13 +13,13 @@ Saida: ATR — SL = entry - 1.5*ATR | TP = entry + 3.0*ATR (R:R 1:2),
 --compare tambem roda o gatilho MACD-only (Fase A) lado a lado.
 
 Uso:
-  python scripts/backtest_super_agressivo.py --compare
-  python scripts/backtest_super_agressivo.py --days 90 --symbols LINK/USDT,HYPE/USDT
+  python -m scripts.backtest_super_agressivo --compare
+  python -m scripts.backtest_super_agressivo --days 90 --symbols LINK/USDT,HYPE/USDT
 """
 from __future__ import annotations
-import argparse, sys
+import argparse, sys, time
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 try:
     import ccxt, pandas as pd, numpy as np
@@ -32,6 +32,8 @@ TIMEFRAME, DEFAULT_DAYS = "1h", 90
 EXCHANGES = ["gateio","binance","bybit"]
 ATR_SL_MULT, ATR_TP_MULT, TIMEOUT_BARS = 1.5, 3.0, 48
 RSI_MIN, RSI_MAX = 40.0, 69.0
+WARMUP = 220                      # candles extras p/ EMA200 estabilizar
+MS_H = 3600*1000
 
 def ema(s, span): return s.ewm(span=span, adjust=False).mean()
 def rsi(s, p=14):
@@ -52,22 +54,39 @@ def enrich(df):
     return df
 
 def fetch_ohlcv(symbol, days):
-    limit=days*24+220
+    """Paginacao robusta: muitas exchanges limitam ~1000/req (gateio devolve 999).
+    Para SO quando o cursor nao avanca ou o alvo e atingido — nunca por len(batch)."""
+    needed = days*24 + WARMUP
     for ex_name in EXCHANGES:
         try:
             ex=getattr(ccxt,ex_name)({"enableRateLimit":True}); ex.load_markets()
             if symbol not in ex.markets: continue
-            since=ex.milliseconds()-limit*3600*1000; rows=[]; cur=since
-            while len(rows)<limit:
-                b=ex.fetch_ohlcv(symbol,TIMEFRAME,since=cur,limit=1000)
-                if not b: break
-                rows+=b; cur=b[-1][0]+3600*1000
-                if len(b)<1000: break
-            if len(rows)<250: continue
-            df=pd.DataFrame(rows,columns=["timestamp","open","high","low","close","volume"])
+            cursor = ex.milliseconds() - needed*MS_H
+            rows=[]; last_ts=None; stalls=0; guard=0
+            while len(rows) < needed and guard < 20:
+                guard+=1
+                batch=ex.fetch_ohlcv(symbol,TIMEFRAME,since=cursor,limit=1000)
+                if not batch: break
+                rows += batch
+                new_cursor = batch[-1][0] + MS_H
+                if last_ts is not None and batch[-1][0] <= last_ts:
+                    stalls += 1
+                    if stalls >= 2: break          # API parou de avancar
+                else:
+                    stalls = 0
+                last_ts = batch[-1][0]
+                cursor = new_cursor
+                time.sleep(ex.rateLimit/1000)
+            seen=set(); uniq=[]
+            for rr in rows:
+                if rr[0] not in seen: seen.add(rr[0]); uniq.append(rr)
+            uniq.sort(key=lambda x:x[0])
+            if len(uniq) < 250: continue
+            df=pd.DataFrame(uniq,columns=["timestamp","open","high","low","close","volume"])
             df["timestamp"]=pd.to_datetime(df["timestamp"],unit="ms",utc=True)
-            df=df.drop_duplicates("timestamp").reset_index(drop=True)
-            print(f"  [{symbol}] {len(df)} candles via {ex_name}"); return df
+            df=df.reset_index(drop=True)
+            span=(uniq[-1][0]-uniq[0][0])/MS_H/24
+            print(f"  [{symbol}] {len(df)} candles via {ex_name} (~{span:.0f}d)"); return df
         except Exception as e:
             print(f"  [{symbol}] {ex_name} falhou: {str(e)[:60]}"); continue
     print(f"  [{symbol}] SEM DADOS"); return None
