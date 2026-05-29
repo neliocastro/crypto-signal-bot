@@ -83,3 +83,37 @@ Testados como controle — NÃO promovidos:
 
 A estratégia breakout NÃO generaliza para todos os ativos — é específica para
 perfis de alta tendência como o HYPE. ETH fica como candidato futuro.
+
+## PAXG/USDT — Acúmulo por sobrevenda (BUY only) em 2026-05-29
+
+Ouro digital tratado como reserva de valor: estratégia de ACÚMULO (DCA
+inteligente), não de trade. Comprar fraqueza, sem alvo de venda nem stop.
+
+### Histórico
+- PAXG já havia sido REMOVIDO da watchlist (commit adf02d3): reprovou em 3
+  backtests de trend/momentum. Motivo: ouro é lateral, sem tendência a capturar.
+- Reintroduzido APENAS para acúmulo — categoria oposta (mean/sobrevenda),
+  alinhada à natureza do ativo. NÃO volta para o trend (fast-path dedicado).
+
+### Configuração (decidida com o usuário)
+- **Timeframe:** 4h (sinais raros e significativos; evita ruído do 1h).
+- **Gatilho:** RSI CRUZA para baixo de 30 (entrada na zona de sobrevenda).
+  Dispara só no cruzamento — não a cada vela presa abaixo de 30 (anti-spam).
+- **Sobrevenda extrema:** RSI < 20 → destaque "ACÚMULO EXTREMO" (oportunidade rara).
+- **Cooldown:** 24h (máx. 1 alerta por dia por ativo). Estado persistido em
+  `state/accumulation_signals.json`.
+- **BUY only:** sem stop e sem take-profit — é hold/acúmulo, não trade.
+
+### Roteamento e segurança
+- Fast-path dedicado `_check_accumulation` em `evaluate_signal`: PAXG vai SÓ
+  para o acúmulo, nunca cai no caminho de trend. Envolto em try/except (degrada seguro).
+- Mensagem dedicada no Telegram (`_format_accumulation`): sem alvos de venda,
+  com variação normal (RSI<30) e extrema (RSI<20).
+- **Kill switch:** `ACCUMULATION_ENABLED=False` desliga só o acúmulo do PAXG.
+
+### Validação
+- Testes unitários 4/4: cruzamento dispara, cooldown bloqueia reenvio,
+  "preso abaixo de 30" não dispara, RSU<20 marca extremo.
+- Scan #204 (2026-05-29) verde em produção com PAXG na watchlist.
+
+---
