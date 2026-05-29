@@ -118,10 +118,58 @@ send_message = send
 # ---------------------------------------------------------------------------
 # formatação de sinal
 # ---------------------------------------------------------------------------
+def _format_accumulation(sig: Any, fg: Optional[int] = None) -> str:
+    """Mensagem dedicada de ACUMULO (sem stop/alvo de venda)."""
+    symbol    = _get(sig, "symbol", "—")
+    price     = _get(sig, "entry")
+    rsi_v     = _get(sig, "rsi")
+    tf        = _get(sig, "timeframe", "")
+    extreme   = bool(_get(sig, "extreme", False))
+    strategy  = _get(sig, "strategy", "")
+    reasons   = _get(sig, "reasons") or []
+    timestamp = _get(sig, "timestamp", "")
+
+    _fg_s, _fg_l, _fg_e = _fg_parts(fg)
+    fg_line = f"\n🌡️ *F&G:* {_fg_s} ({_fg_l}) {_fg_e}" if _fg_s is not None else ""
+
+    reasons_block = "\n".join(f"  ✓ {r}" for r in reasons) if reasons else ""
+    reasons_section = f"\n🧠 *Contexto:*\n{reasons_block}\n" if reasons_block else ""
+
+    rsi_str = f"{rsi_v:.1f}" if isinstance(rsi_v, (int, float)) else "—"
+
+    if extreme:
+        header   = f"🥇🔥 *ACÚMULO EXTREMO — {symbol}*"
+        rsi_line = f"📉 *RSI em sobrevenda EXTREMA:* `{rsi_str}` ({tf})"
+        note     = "💎 _Sobrevenda rara em ouro digital — oportunidade forte de DCA_"
+    else:
+        header   = f"🥇 *ACÚMULO — {symbol}*"
+        rsi_line = f"📉 *RSI sobrevendido:* `{rsi_str}` ({tf})"
+        note     = "🧠 _Ouro digital em sobrevenda — oportunidade de DCA_"
+
+    strat_line = f"📐 *Estratégia:* `{strategy}`\n" if strategy else ""
+
+    msg = (
+        f"{header}\n"
+        f"{strat_line}"
+        f"{rsi_line}{fg_line}\n"
+        f"\n"
+        f"💰 *Preço:* `{_fmt_price(price)}`\n"
+        f"🎯 _Zona de compra para acúmulo (sem alvo de venda)_\n"
+        f"{note}\n"
+        f"{reasons_section}"
+        f"\n"
+        f"🕒 _{timestamp}_"
+    )
+    return msg
+
+
 def format_signal(sig: Any, fg: Optional[int] = None) -> str:
     """
     `sig` pode ser dict (vindo do strategies.evaluate_signal) ou dataclass.
     """
+    if _get(sig, "signal_type") == "accumulation":
+        return _format_accumulation(sig, fg)
+
     symbol     = _get(sig, "symbol", "—")
     side       = _get(sig, "side", "—")
     strategy   = _get(sig, "strategy", "")
