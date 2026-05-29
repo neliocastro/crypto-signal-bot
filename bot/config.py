@@ -58,6 +58,16 @@ MTF_ENABLED = True
 # Desligue (False) se observar rate-limit ou bugs intermitentes.
 MTF_PARALLEL_FETCH = True
 
+# ============ SCAN PARALELO (Fase D) ============
+# Paraleliza o scan dos ATIVOS (nao so dos timeframes). Maior ganho de
+# velocidade: scan de ~3min (10+ ativos sequenciais) cai p/ ~30-45s.
+# SCAN_PARALLEL=False -> volta ao loop sequencial (kill switch seguro).
+# SCAN_MAX_WORKERS    -> ativos simultaneos. Cuidado: cada ativo dispara
+#   ate 3 fetches (MTF), entao workers altos podem gerar rate-limit na
+#   exchange. 5 e um equilibrio seguro p/ a watchlist atual.
+SCAN_PARALLEL = True
+SCAN_MAX_WORKERS = 5
+
 
 # ============ ANTI-SPAM ============
 # Não reenvia o mesmo sinal antes desse cooldown (em horas).
