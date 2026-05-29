@@ -1,5 +1,5 @@
 {
-  "scan_interval_min": 15,
+  "scan_interval_min": 5,
   "watchlist": [
     "BTC/USDT",
     "ETH/USDT",
@@ -10,7 +10,6 @@
     "LINK/USDT",
     "HYPE/USDT",
     "AAVE/USDT",
-    "PAXG/USDT",
     "ONDO/USDT"
   ],
   "dnd_enabled": false,
@@ -20,6 +19,6 @@
   "timezone": "America/Bahia",
   "paused": false,
   "last_scan_utc": null,
-  "_updated_at_utc": "2026-05-27T01:30:53.287560+00:00",
-  "_updated_by": "telegram"
+  "_updated_at_utc": "2026-05-29T01:37:31.678030+00:00",
+  "_updated_by": "assistant:speedup"
 }
