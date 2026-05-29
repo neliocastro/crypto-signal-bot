@@ -20,6 +20,7 @@ WATCHLIST = [
     "LINK/USDT",
     "HYPE/USDT",
     "AAVE/USDT",
+    "PAXG/USDT",       # acumulo RSI 4h (ouro digital) - sem alvo de venda
 ]
 
 # ============ TIMEFRAME ============
@@ -130,6 +131,25 @@ BREAKOUT_SHADOW_MODE = True
 BREAKOUT_SYMBOLS = {
     "HYPE/USDT": {"lookback": 30, "atr_mult": 2.5},
 }
+
+
+# ============ ACUMULACAO (PAXG - ouro digital) ============
+# Estrategia de ACUMULO por sobrevenda (BUY only, sem stop nem alvo de venda).
+# Dispara quando o RSI CRUZA p/ baixo do threshold no timeframe definido
+# (entrada na zona de sobrevenda). Cooldown evita spam enquanto o RSI fica
+# preso na zona. Pensado p/ ativo de reserva de valor: DCA inteligente.
+#   rsi_extreme -> destaque "sobrevenda extrema" (oportunidade rara).
+# ACCUMULATION_ENABLED=False -> kill switch (PAXG fica sem sinal de acumulo).
+ACCUMULATION_ENABLED = True
+ACCUMULATION_SYMBOLS = {
+    "PAXG/USDT": {
+        "timeframe":      "4h",
+        "rsi_threshold":  30.0,
+        "rsi_extreme":    20.0,
+        "cooldown_hours": 24,
+    },
+}
+ACCUMULATION_STATE_FILE = "state/accumulation_signals.json"
 
 
 # ============ DASHBOARD (Fase C2) ============
