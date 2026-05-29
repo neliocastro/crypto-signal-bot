@@ -93,7 +93,7 @@ RISK_PROFILES = {
     },
     "agressivo": {
         "macd_cross_enough": True,
-        "approved_symbols":  ["LINK/USDT", "HYPE/USDT"],
+        "approved_symbols":  ["LINK/USDT"],  # HYPE migrado p/ estrategia Breakout/Tendencia
         "min_confidence":    5,
     },
     "conservador": {
@@ -103,6 +103,24 @@ RISK_PROFILES = {
     },
 }
 ACTIVE_PROFILE = "agressivo"   # troque para "agressivo" para ativar LINK+HYPE em MACD-only ou volte para "balanceado"
+
+
+# ============ BREAKOUT / TREND-FOLLOWING (HYPE) ============
+# Estrategia de tendencia validada por teste de robustez (2026-05-28):
+#   HYPE/USDT lb=30 atr=2.5 -> PF 2.55, +67% em ~150d, MDD -16.9%.
+#   Robusto a parametros (9/9 configs PF>1.3); 2/3 janelas lucrativas.
+#   Risco: retorno concentrado em 2-3 trades grandes (natureza trend-following).
+# Entrada: EMA9>EMA21>EMA50 + rompe maxima de `lookback` velas + RSI>50.
+# Saida: stop largo atr_mult*ATR + trailing stop manual (deixa correr).
+#
+# BREAKOUT_SHADOW_MODE=True -> sinal marcado [SHADOW] para observacao
+#   (2-4 semanas) antes de confiar 100%. Troque para False para operar valendo.
+# BREAKOUT_ENABLED=False    -> kill switch: desliga o breakout (HYPE fica sem sinal).
+BREAKOUT_ENABLED = True
+BREAKOUT_SHADOW_MODE = True
+BREAKOUT_SYMBOLS = {
+    "HYPE/USDT": {"lookback": 30, "atr_mult": 2.5},
+}
 
 
 # ============ DASHBOARD (Fase C2) ============
