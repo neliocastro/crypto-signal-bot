@@ -127,9 +127,10 @@ def format_signal(sig: Any, fg: Optional[int] = None) -> str:
     strategy   = _get(sig, "strategy", "")
     entry      = _get(sig, "entry")
     stop       = _get(sig, "stop") or _get(sig, "stop_loss")
+    tp1        = _get(sig, "tp1")
     tp2        = _get(sig, "tp2") or _get(sig, "take_profit_2")
     tp3        = _get(sig, "tp3")
-    targets    = _get(sig, "targets") or [t for t in (tp2, tp3) if t is not None]
+    targets    = _get(sig, "targets") or [t for t in (tp1, tp2, tp3) if t is not None]
     order_type = _get(sig, "order_type", "")
     risk_reward= _get(sig, "risk_reward")
     confidence = _get(sig, "confidence", 0)
@@ -140,8 +141,8 @@ def format_signal(sig: Any, fg: Optional[int] = None) -> str:
     side_emoji = "🟢 LONG" if side == "LONG" else "🔴 SHORT"
 
     # alvos (2 TPs: R:R 1:2 e 1:3)
-    _rr_labels = ["1:2", "1:3"]
-    _tp_labels = ["TP2", "TP3"]
+    _rr_labels = ["1:1", "1:2", "1:3"]
+    _tp_labels = ["TP1", "TP2", "TP3"]
     targets_lines = []
     for i, t in enumerate(targets):
         lab = _tp_labels[i] if i < len(_tp_labels) else f"TP{i+2}"
