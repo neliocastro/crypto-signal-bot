@@ -305,7 +305,7 @@ def format_scan_summary(
     head = (
         f"🤖 *Crypto Signal Bot*\n"
         f"{header_2}\n"
-        f"━━━━━━━━━━━━━━\n"
+        f"----------\n"
         f"🎯 *Sinais qualificados:* {signals_count}\n"
     )
 
@@ -429,7 +429,7 @@ def format_scan_summary(
             return ""
         body = "\n\n".join(fmt_fn(it) for it in items)
         return (
-            f"\n─────────────\n\n"
+            f"\n··········\n\n"
             f"{emoji} *{title}* ({len(items)})\n\n{body}\n"
         )
 
@@ -442,7 +442,7 @@ def format_scan_summary(
     if inativo:
         names = " ▸ ".join(f"`{it['sym'].split('/')[0]}`" for it in inativo)
         parts.append(
-            f"\n─────────────\n\n"
+            f"\n··········\n\n"
             f"⚪️ *INATIVOS* ({len(inativo)})\n{names}\n"
             f"  └ _Preco abaixo da EMA200 (filtro base bloqueia LONG)_\n"
         )
@@ -450,7 +450,7 @@ def format_scan_summary(
     if erros:
         err_body = "\n".join(f"⚠️ `{s}` - {msg}" for s, msg in erros)
         parts.append(
-            f"\n─────────────\n\n"
+            f"\n··········\n\n"
             f"⚠️ *Erros* ({len(erros)})\n{err_body}\n"
         )
 
