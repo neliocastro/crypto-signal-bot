@@ -261,6 +261,98 @@ def _check_aggressive_macd(df: pd.DataFrame, symbol: str, timeframe: str, exchan
 
 
 # ---------- estrategia D: Breakout / Trend-following (HYPE) ----------
+def _check_accumulation(df_tf, symbol: str, exchange: str,
+                        timeframe: str = "4h",
+                        rsi_threshold: float = 30.0,
+                        rsi_extreme: float = 20.0,
+                        cooldown_hours: float = 24.0,
+                        state_file: str = "state/accumulation_signals.json"
+                        ) -> Optional[Dict[str, Any]]:
+    """
+    Estrategia de ACUMULO por sobrevenda (BUY only, sem stop nem alvo de venda).
+
+    Dispara quando o RSI CRUZA para baixo do `rsi_threshold` (entrada na zona de
+    sobrevenda) no timeframe definido. Um cooldown evita spam enquanto o RSI fica
+    preso abaixo do threshold. Pensado p/ ouro digital (PAXG): DCA inteligente.
+    Sem stop e sem take-profit -> e acumulo (hold), nao trade.
+    """
+    if df_tf is None or not isinstance(df_tf, pd.DataFrame) or len(df_tf) < 3:
+        return None
+    try:
+        curr = df_tf.iloc[-2]   # ultima vela FECHADA
+        prev = df_tf.iloc[-3]
+        rsi_curr = float(curr["rsi"])
+        rsi_prev = float(prev["rsi"])
+        price    = float(curr["close"])
+    except (KeyError, ValueError, TypeError, IndexError):
+        return None
+    if any(_is_nan(v) for v in (rsi_curr, rsi_prev, price)):
+        return None
+
+    # gatilho: cruzou para BAIXO do threshold (entrada na zona)
+    crossed_down = (rsi_prev >= rsi_threshold) and (rsi_curr < rsi_threshold)
+    if not crossed_down:
+        return None
+
+    # cooldown anti-spam (persistido em state_file; o workflow commita state/)
+    import json, os as _os
+    from datetime import datetime, timezone, timedelta
+    now = datetime.now(timezone.utc)
+    _state = {}
+    try:
+        if _os.path.exists(state_file):
+            with open(state_file, "r", encoding="utf-8") as fh:
+                _state = json.load(fh) or {}
+        last_iso = _state.get(symbol)
+        if last_iso:
+            last_dt = datetime.fromisoformat(last_iso)
+            if last_dt.tzinfo is None:
+                last_dt = last_dt.replace(tzinfo=timezone.utc)
+            if now - last_dt < timedelta(hours=float(cooldown_hours)):
+                return None  # ainda em cooldown -> nao reenvia
+    except Exception:
+        _state = {}  # estado corrompido -> trata como sem cooldown
+
+    extreme = rsi_curr < float(rsi_extreme)
+
+    # grava o disparo (best-effort; nunca quebra o scan)
+    try:
+        _dir = _os.path.dirname(state_file)
+        if _dir:
+            _os.makedirs(_dir, exist_ok=True)
+        _state[symbol] = now.isoformat()
+        with open(state_file, "w", encoding="utf-8") as fh:
+            json.dump(_state, fh, indent=2)
+    except Exception:
+        pass
+
+    ts = curr["timestamp"] if "timestamp" in df_tf.columns else df_tf.index[-2]
+    ts = ts.isoformat() if hasattr(ts, "isoformat") else str(ts)
+
+    reasons = [
+        f"RSI {timeframe} caiu para {rsi_curr:.1f} (< {rsi_threshold:.0f}) - sobrevenda",
+        "Reserva de valor (ouro digital): acumular na fraqueza",
+        "Sem stop/alvo de venda - estrategia de DCA (hold)",
+    ]
+    if extreme:
+        reasons.insert(1, f"Sobrevenda EXTREMA (RSI < {rsi_extreme:.0f}) - oportunidade rara")
+
+    return {
+        "symbol":      symbol,
+        "side":        "BUY",
+        "signal_type": "accumulation",
+        "strategy":    "Acumulo (RSI sobrevenda)",
+        "entry":       round(price, 6),
+        "rsi":         round(rsi_curr, 2),
+        "timeframe":   timeframe,
+        "extreme":     extreme,
+        "exchange":    exchange,
+        "confidence":  9 if extreme else 7,
+        "reasons":     reasons,
+        "timestamp":   ts,
+    }
+
+
 def _check_breakout_trend(df: pd.DataFrame, symbol: str, timeframe: str, exchange: str,
                           lookback: int = 30, atr_mult: float = 2.5,
                           shadow: bool = False) -> Optional[Dict[str, Any]]:
@@ -398,6 +490,31 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
                 lookback=int(_bp.get("lookback", 30)),
                 atr_mult=float(_bp.get("atr_mult", 2.5)),
                 shadow=bool(BREAKOUT_SHADOW_MODE),
+            )
+    except Exception:
+        pass  # degradacao segura
+
+    # Fase E: fast-path ACUMULACAO (ex.: PAXG - ouro digital).
+    # Ativo dedicado: RSI sobrevendido (cruza p/ baixo) no TF definido ->
+    # sinal de COMPRA p/ acumulo (sem stop/alvo). Usa o df do TF (4h via MTF).
+    # Falha segura via except (cai para o caminho normal).
+    try:
+        from .config import ACCUMULATION_ENABLED, ACCUMULATION_SYMBOLS
+        if ACCUMULATION_ENABLED and symbol in (ACCUMULATION_SYMBOLS or {}):
+            _ap = ACCUMULATION_SYMBOLS[symbol]
+            _acc_tf = _ap.get("timeframe", "4h")
+            _df_acc = df_4h if _acc_tf == "4h" else df
+            try:
+                from .config import ACCUMULATION_STATE_FILE as _acc_state
+            except Exception:
+                _acc_state = "state/accumulation_signals.json"
+            return _check_accumulation(
+                _df_acc, symbol, exchange,
+                timeframe=_acc_tf,
+                rsi_threshold=float(_ap.get("rsi_threshold", 30.0)),
+                rsi_extreme=float(_ap.get("rsi_extreme", 20.0)),
+                cooldown_hours=float(_ap.get("cooldown_hours", 24.0)),
+                state_file=_acc_state,
             )
     except Exception:
         pass  # degradacao segura
