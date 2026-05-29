@@ -260,6 +260,109 @@ def _check_aggressive_macd(df: pd.DataFrame, symbol: str, timeframe: str, exchan
     }
 
 
+# ---------- estrategia D: Breakout / Trend-following (HYPE) ----------
+def _check_breakout_trend(df: pd.DataFrame, symbol: str, timeframe: str, exchange: str,
+                          lookback: int = 30, atr_mult: float = 2.5,
+                          shadow: bool = False) -> Optional[Dict[str, Any]]:
+    """
+    Estrategia BREAKOUT + TREND-FOLLOWING (LONG only).
+
+    Validada por teste de robustez (2026-05-28) em HYPE/USDT:
+      lb=30 atr=2.5 -> PF 2.55, +67% em ~150d, MDD -16.9%.
+      Robusto a parametros (9/9 configs PF>1.3); 2/3 janelas lucrativas.
+      Risco conhecido: retorno concentrado em 2-3 trades grandes.
+
+    Entrada (vela fechada):
+      - EMA9 > EMA21 > EMA50            (tendencia empilhada de alta)
+      - close rompe a maxima das ultimas `lookback` velas anteriores
+      - RSI > 50                        (momentum, sem teto -> deixa correr)
+    Saida: stop inicial = entry - atr_mult*ATR (largo). Usar TRAILING STOP
+      manual; alvos R:R 1:2 e 1:3 sao apenas informativos (deixa correr).
+    """
+    try:
+        curr = df.iloc[-2]
+    except Exception:
+        return None
+    try:
+        close_c = float(curr["close"])
+        ema9_c  = float(curr["ema9"])
+        ema21_c = float(curr["ema21"])
+        ema50_c = float(curr["ema50"])
+        rsi_c   = float(curr["rsi"])
+        atr_c   = float(curr.get("atr", float("nan")))
+    except (KeyError, ValueError, TypeError):
+        return None
+    if any(_is_nan(v) for v in (close_c, ema9_c, ema21_c, ema50_c, rsi_c, atr_c)):
+        return None
+    if atr_c <= 0:
+        return None
+
+    # maxima das `lookback` velas ANTERIORES a vela de sinal (sem lookahead)
+    try:
+        hh = float(df["high"].astype(float).rolling(int(lookback)).max().shift(1).iloc[-2])
+    except Exception:
+        return None
+    if _is_nan(hh):
+        return None
+
+    stacked  = ema9_c > ema21_c > ema50_c
+    breakout = close_c > hh
+    momentum = rsi_c > 50.0
+    if not (stacked and breakout and momentum):
+        return None
+
+    entry = close_c
+    stop  = entry - atr_mult * atr_c
+    tp2   = entry + (2.0 * atr_mult) * atr_c   # R:R 1:2 (informativo)
+    tp3   = entry + (3.0 * atr_mult) * atr_c   # R:R 1:3 (informativo)
+    risk   = abs(entry - stop)
+    reward = abs(tp2 - entry)
+    risk_reward = round(reward / risk, 2) if risk > 0 else None
+
+    dist_pct = (abs(entry - ema21_c) / entry * 100.0) if entry else 0.0
+    if dist_pct <= 0.3:
+        order_type = "Limit"
+    elif dist_pct <= 1.0:
+        order_type = "Market"
+    else:
+        order_type = "Stop-Limit"
+
+    ts = curr["timestamp"] if "timestamp" in df.columns else df.index[-2]
+    ts = ts.isoformat() if hasattr(ts, "isoformat") else str(ts)
+
+    tag = "[SHADOW] " if shadow else ""
+    reasons = [
+        f"{tag}[Perfil TENDENCIA / Breakout]",
+        "EMA9 > EMA21 > EMA50 (tendencia empilhada)",
+        f"Rompeu maxima das ultimas {lookback} velas ({close_c:.4f} > {hh:.4f})",
+        f"RSI com momentum ({rsi_c:.1f} > 50)",
+        f"Stop largo {atr_mult}xATR; usar TRAILING STOP (deixa o lucro correr)",
+    ]
+    if shadow:
+        reasons.append("MODO OBSERVACAO: shadow 2-4 semanas antes de operar valendo")
+
+    return {
+        "symbol":        symbol,
+        "side":          "LONG",
+        "strategy":      "Breakout/Tendencia (HYPE)" + (" [SHADOW]" if shadow else ""),
+        "entry":         round(entry, 8),
+        "stop":          round(stop, 8),
+        "tp2":           round(tp2, 8),
+        "tp3":           round(tp3, 8),
+        "targets":       [round(tp2, 8), round(tp3, 8)],
+        "risk_reward":   risk_reward,
+        "order_type":    order_type,
+        "timeframe":     timeframe or "1h",
+        "exchange":      exchange or "",
+        "confidence":    6,
+        "reasons":       reasons,
+        "timestamp":     ts,
+        "profile":       "tendencia",
+        "shadow":        bool(shadow),
+        "trailing_stop": True,
+    }
+
+
 def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
     """
     Avalia 1 ativo nas 2 estrategias (LONG only). Retorna dict com sinal ou None.
@@ -282,6 +385,22 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         return None
     if not symbol:
         symbol = "UNKNOWN"
+
+    # Fase D: fast-path BREAKOUT / TREND-FOLLOWING (ex.: HYPE).
+    # Ativo dedicado: se BREAKOUT_ENABLED e o simbolo esta em BREAKOUT_SYMBOLS,
+    # usa SO o breakout (nao cai para o caminho normal). Falha segura via except.
+    try:
+        from .config import BREAKOUT_ENABLED, BREAKOUT_SYMBOLS, BREAKOUT_SHADOW_MODE
+        if BREAKOUT_ENABLED and symbol in (BREAKOUT_SYMBOLS or {}):
+            _bp = BREAKOUT_SYMBOLS[symbol]
+            return _check_breakout_trend(
+                df, symbol, timeframe, exchange,
+                lookback=int(_bp.get("lookback", 30)),
+                atr_mult=float(_bp.get("atr_mult", 2.5)),
+                shadow=bool(BREAKOUT_SHADOW_MODE),
+            )
+    except Exception:
+        pass  # degradacao segura
 
     # Fase A: fast-path do perfil agressivo (MACD-only).
     # Se ACTIVE_PROFILE == "agressivo" e o ativo esta na whitelist,
