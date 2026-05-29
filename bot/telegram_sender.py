@@ -163,7 +163,7 @@ def format_signal(sig: Any, fg: Optional[int] = None) -> str:
     # linhas opcionais
     strat_line = f"📐 *Estratégia:* `{strategy}`\n" if strategy else ""
     order_suffix = f"  _[{order_type}]_" if order_type else ""
-    rr_line = f"📊 *R/R (TP1 / 1:2):* `{risk_reward}:1`\n" if risk_reward else ""
+    rr_line = "📊 *Risco/Retorno:* `1:2` (arrisca 1 p/ ganhar 2)\n" if risk_reward else ""
 
     msg = (
         f"🤖 *Sinal {side_emoji}*\n"
