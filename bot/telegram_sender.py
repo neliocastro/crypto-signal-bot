@@ -307,6 +307,7 @@ def format_scan_summary(
         f"{header_2}\n"
         f"----------\n"
         f"🎯 *Sinais qualificados:* {signals_count}\n"
+        f"----------\n"
     )
 
     pronto, quase_la, observacao, risco, inativo, erros = [], [], [], [], [], []
@@ -454,6 +455,12 @@ def format_scan_summary(
             f"⚠️ *Erros* ({len(erros)})\n{err_body}\n"
         )
 
+    parts = [p for p in parts if p]
+    if parts:
+        first = parts[0].lstrip("\n")
+        if first.startswith("·" * 10):
+            first = first[10:].lstrip("\n")
+        parts[0] = "\n" + first
     body_str = "".join(parts) if parts else "\n_Sem dados._\n"
     foot = f"\n🕐 _{_local_time_str()}_"
     return head + body_str + foot
