@@ -9,8 +9,7 @@
     "BNB/USDT",
     "LINK/USDT",
     "HYPE/USDT",
-    "AAVE/USDT",
-    "ONDO/USDT"
+    "AAVE/USDT"
   ],
   "dnd_enabled": false,
   "dnd_start_hour_local": 23,
@@ -19,6 +18,6 @@
   "timezone": "America/Bahia",
   "paused": false,
   "last_scan_utc": null,
-  "_updated_at_utc": "2026-05-29T01:37:31.678030+00:00",
-  "_updated_by": "assistant:speedup"
+  "_updated_at_utc": "2026-05-29T01:49:59.959365+00:00",
+  "_updated_by": "assistant:remove-ondo"
 }
