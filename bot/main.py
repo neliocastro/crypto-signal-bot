@@ -167,15 +167,42 @@ def main() -> int:
         fg = None
 
     # 2) Scan de todos os ativos
-    diagnostics: list[dict[str, Any]] = []
-    qualified_signals = []
+    # Fase D: scan paralelo por ativo (ThreadPoolExecutor).
+    # Antes: loop sequencial -> N ativos x ~3 fetches de rede em fila.
+    # Agora: ativos processados em paralelo. Kill switch: config.SCAN_PARALLEL.
+    # scan_symbol() ja e self-contained e tolerante a excecao (cada um instancia
+    # sua propria exchange ccxt), portanto e seguro rodar em threads.
+    try:
+        from .config import SCAN_PARALLEL, SCAN_MAX_WORKERS
+    except ImportError:
+        SCAN_PARALLEL, SCAN_MAX_WORKERS = True, 5
 
-    for sym in effective_symbols:
-        log.info("🔎 Analisando %s...", sym)
-        d = scan_symbol(sym)
-        diagnostics.append(d)
-        if d.get("signal"):
-            qualified_signals.append(d["signal"])
+    diagnostics: list[dict[str, Any]] = []
+
+    if SCAN_PARALLEL and len(effective_symbols) > 1:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        workers = min(int(SCAN_MAX_WORKERS), len(effective_symbols))
+        log.info("⚡ Scan PARALELO | %d ativos | %d workers", len(effective_symbols), workers)
+        results_map: dict[str, dict[str, Any]] = {}
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            fut_to_sym = {pool.submit(scan_symbol, s): s for s in effective_symbols}
+            for fut in as_completed(fut_to_sym):
+                s = fut_to_sym[fut]
+                try:
+                    results_map[s] = fut.result()
+                except Exception as e:                                   # noqa: BLE001
+                    log.exception("Falha no scan paralelo de %s", s)
+                    results_map[s] = {"symbol": s, "signal": None,
+                                      "error": f"{type(e).__name__}: {e}"}
+        # preserva a ordem original da watchlist no resumo
+        diagnostics = [results_map[s] for s in effective_symbols if s in results_map]
+    else:
+        log.info("🐢 Scan SEQUENCIAL | %d ativos", len(effective_symbols))
+        for sym in effective_symbols:
+            log.info("🔎 Analisando %s...", sym)
+            diagnostics.append(scan_symbol(sym))
+
+    qualified_signals = [d["signal"] for d in diagnostics if d.get("signal")]
 
     # 3) Envia sinais qualificados (1 msg cada)
     for sig in qualified_signals:
