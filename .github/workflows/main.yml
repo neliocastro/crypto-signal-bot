@@ -8,6 +8,12 @@ on:
 permissions:
   contents: write
 
+# Evita runs simultaneos (cron 5min + dispatch) empurrando ao mesmo tempo.
+# cancel-in-progress:false -> enfileira em vez de cancelar (nao perde scan).
+concurrency:
+  group: scan-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   scan:
     runs-on: ubuntu-latest
@@ -36,6 +42,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/last_signals.json docs/data/ || true
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: update signal state + dashboard [skip ci]"
-          git push || true
+          # inclui runtime_config.json (last_scan_utc) + estado + dashboard
+          git add -A state/ docs/data/ 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "Sem mudancas de estado para commitar."
+          else
+            git commit -m "chore: update signal state + dashboard [skip ci]"
+            # rebase antes do push p/ tolerar corrida concorrente
+            git pull --rebase --autostash origin main || true
+            git push || echo "push falhou (corrida concorrente) — proximo scan reenvia"
+          fi
