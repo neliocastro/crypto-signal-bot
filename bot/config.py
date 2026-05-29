@@ -20,7 +20,6 @@ WATCHLIST = [
     "LINK/USDT",
     "HYPE/USDT",
     "AAVE/USDT",
-    "PAXG/USDT",
 ]
 
 # ============ TIMEFRAME ============
