@@ -15,6 +15,7 @@ on:
           - backtest_macd
           - backtest_super_agressivo
           - backtest_meanrev_paxg
+          - backtest_breakout_hype
       args:
         description: "Args extras (ex: --compare | --rsi 25 --bb-std 2.5)"
         type: string
@@ -49,6 +50,9 @@ jobs:
               ;;
             backtest_meanrev_paxg)
               python -m scripts.backtest_meanrev_paxg ${{ github.event.inputs.args }}
+              ;;
+            backtest_breakout_hype)
+              python -m scripts.backtest_breakout_hype ${{ github.event.inputs.args }}
               ;;
             *)
               python -m scripts.backtest_macd ${{ github.event.inputs.args }}
