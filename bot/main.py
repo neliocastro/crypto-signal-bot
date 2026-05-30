@@ -42,6 +42,17 @@ except ImportError:
     _DASHBOARD_AVAILABLE = False
     write_dashboard_state = None  # type: ignore
 
+# Fase 1: camada de execucao (dry-run) + avaliacao (paper trading).
+# Graceful import: se faltar qualquer modulo, vira inerte (nao quebra o scan).
+try:
+    from . import executor as _executor
+except Exception:
+    _executor = None
+try:
+    from . import paper_evaluator as _paper_eval
+except Exception:
+    _paper_eval = None
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-7s | %(message)s",
@@ -212,6 +223,50 @@ def main() -> int:
             log.info("Sinal %s enviado: %s", sig.symbol, ok)
         except Exception:
             log.error("Falha ao enviar sinal %s\n%s", sig, traceback.format_exc())
+
+    # 3.5) FASE 1 - Execucao dry-run (paper trading) + avaliacao.
+    # Plug cirurgico: para cada sinal de COMPRA, registra a "intencao" via
+    # executor (HMAC + relay; em dry-run so loga em state/paper_trades.jsonl) e
+    # atualiza o paper_evaluator (P&L hipotetico, win-rate, slippage). TUDO
+    # envolto em try/except -> NUNCA derruba o scan. Kill switches em config.py:
+    # EXECUTION_ENABLED (executor) e PAPER_EVAL_ENABLED (avaliacao).
+    try:
+        from .config import EXECUTION_PAPER_BALANCE as _paper_balance
+    except Exception:
+        _paper_balance = 1000.0
+
+    if _executor is not None:
+        for sig in qualified_signals:
+            try:
+                res = _executor.maybe_execute(sig, _paper_balance)
+                if res:
+                    log.info("\U0001f9ea [dry-run] intencao registrada: %s -> %s",
+                             sig.get("symbol"),
+                             (res.get("result") or {}).get("status"))
+            except Exception:
+                log.error("Falha no executor (ignorada):\n%s", traceback.format_exc())
+
+    try:
+        from .config import PAPER_EVAL_ENABLED as _eval_on
+    except Exception:
+        _eval_on = False
+
+    if _paper_eval is not None and _eval_on:
+        # abre/atualiza posicoes-papel e simula saidas com o preco atual do scan
+        try:
+            summ = _paper_eval.update(diagnostics, paper_balance=_paper_balance)
+            log.info("\U0001f4ca paper_evaluator: %d aberta(s) / %d fechada(s)",
+                     summ.get("open", 0), summ.get("closed", 0))
+        except Exception:
+            log.error("Falha no paper_evaluator.update (ignorada):\n%s",
+                      traceback.format_exc())
+        # relatorio semanal no Telegram (so dispara no intervalo configurado)
+        try:
+            if _paper_eval.maybe_send_weekly_report(send):
+                log.info("\U0001f4e8 Relatorio semanal de paper trading enviado.")
+        except Exception:
+            log.error("Falha no relatorio semanal (ignorada):\n%s",
+                      traceback.format_exc())
 
     # 4) Envia resumo do scan (sempre)
     try:

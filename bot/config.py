@@ -155,3 +155,36 @@ ACCUMULATION_STATE_FILE = "state/accumulation_signals.json"
 # ============ DASHBOARD (Fase C2) ============
 # Kill switch para gerar docs/data/latest.json a cada scan.
 DASHBOARD_ENABLED = False
+
+
+# ============ EXECUCAO (Fase 1 - DRY-RUN / paper trading) ============
+# Camada de execucao agnostica de estrategia. Em Fase 1 NADA e executado de
+# verdade: executor.py monta a "intencao", assina com HMAC e (se houver relay)
+# envia ao PHP, que tambem esta em dry-run. Sem relay configurado, so registra
+# a intencao em state/paper_trades.jsonl. Cinto duplo de seguranca:
+#   EXECUTION_DRY_RUN=True  +  EXECUTION_RELAY_URL vazio  -> ordem real impossivel.
+#
+# Kill switches:
+#   EXECUTION_ENABLED       -> liga/desliga a camada inteira (False = inerte).
+#   EXECUTION_DRY_RUN       -> True na Fase 1 (jamais envia ordem real).
+#   EXECUTION_PCT           -> fracao do saldo USDT por ordem (0.10 = 10%).
+#   EXECUTION_RELAY_URL     -> URL https do braco PHP (vazio = so loga local).
+#   EXECUTION_PAPER_BALANCE -> saldo USDT assumido p/ dimensionar no dry-run.
+EXECUTION_ENABLED       = True
+EXECUTION_DRY_RUN       = True
+EXECUTION_PCT           = 0.10
+EXECUTION_RELAY_URL     = ""        # Fase 2: preencher com a URL do execute.php
+EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
+
+# Arquivo da "intencao" (lado cerebro). O HMAC secret vem de env
+# (GitHub Secret EXECUTION_HMAC_SECRET); NUNCA fica no codigo.
+PAPER_TRADES_FILE = "state/paper_trades.jsonl"
+
+# ============ AVALIACAO DO DRY-RUN (paper_evaluator) ============
+# Mede o que TERIA acontecido (P&L hipotetico, win-rate, slippage) ESPELHANDO
+# a estrategia de cada sinal. Relatorio automatico no Telegram a cada N dias.
+#   PAPER_EVAL_ENABLED         -> kill switch da avaliacao.
+#   PAPER_REPORT_INTERVAL_DAYS -> cadencia do relatorio (dias).
+PAPER_EVAL_ENABLED         = True
+PAPER_REPORT_INTERVAL_DAYS = 7
+PAPER_POSITIONS_FILE       = "state/paper_positions.json"
