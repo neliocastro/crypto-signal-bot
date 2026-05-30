@@ -127,7 +127,7 @@ ACTIVE_PROFILE = "agressivo"   # troque para "agressivo" para ativar LINK+HYPE e
 #   (2-4 semanas) antes de confiar 100%. Troque para False para operar valendo.
 # BREAKOUT_ENABLED=False    -> kill switch: desliga o breakout (HYPE fica sem sinal).
 BREAKOUT_ENABLED = True
-BREAKOUT_SHADOW_MODE = True
+BREAKOUT_SHADOW_MODE = False
 BREAKOUT_SYMBOLS = {
     "HYPE/USDT": {"lookback": 30, "atr_mult": 2.5},
 }
