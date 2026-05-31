@@ -83,6 +83,28 @@ def _get(obj: Any, key: str, default=None):
 # ---------------------------------------------------------------------------
 # envio
 # ---------------------------------------------------------------------------
+# strategy -> hint curto (1 linha) exibido junto ao nome no sinal
+_STRATEGY_HINTS = {
+    "Integrada (Curto Prazo)":        "VWAP + EMAs(9/21/50) + MACD + RSI + pullback",
+    "Tendência MACD — Agressivo":     "MACD-only: cruzamento acima do sinal (perfil agressivo)",
+    "Tendência MACD":                 "EMA200 + cruzamento do MACD abaixo da linha zero",
+    "Integrada + MACD (Confluência)": "as duas estratégias confirmaram juntas (sinal forte)",
+    "Breakout / Tendência":           "EMA9>21>50 + rompe máx. de 30 velas + RSI>50 (deixa correr)",
+    "Acúmulo (RSI sobrevenda)":       "RSI sobrevendido no 4h — zona de DCA (sem alvo de venda)",
+}
+
+def _strategy_hint(strategy: Any) -> str:
+    """Retorna uma explicacao curta da estrategia (robusto a sufixo [SHADOW])."""
+    if not strategy:
+        return ""
+    s = str(strategy).replace(" [SHADOW]", "").strip()
+    if s in _STRATEGY_HINTS:
+        return _STRATEGY_HINTS[s]
+    for k, v in _STRATEGY_HINTS.items():
+        if s.startswith(k):
+            return v
+    return ""
+
 def send(text: str, parse_mode: str = "Markdown") -> bool:
     token, chat_id = _get_credentials()
     if not token or not chat_id:
@@ -146,7 +168,11 @@ def _format_accumulation(sig: Any, fg: Optional[int] = None) -> str:
         rsi_line = f"📉 *RSI sobrevendido:* `{rsi_str}` ({tf})"
         note     = "🧠 _Ouro digital em sobrevenda — oportunidade de DCA_"
 
-    strat_line = f"📐 *Estratégia:* `{strategy}`\n" if strategy else ""
+    _hint = _strategy_hint(strategy)
+    strat_line = (
+        f"📐 *Estratégia:* `{strategy}`\n"
+        + (f"   _{_hint}_\n" if _hint else "")
+    ) if strategy else ""
 
     msg = (
         f"{header}\n"
@@ -209,7 +235,11 @@ def format_signal(sig: Any, fg: Optional[int] = None) -> str:
     fg_line = f"\n🌡️ *F&G:* {_fg_s} ({_fg_l}) {_fg_e}" if _fg_s is not None else ""
 
     # linhas opcionais
-    strat_line = f"📐 *Estratégia:* `{strategy}`\n" if strategy else ""
+    _hint = _strategy_hint(strategy)
+    strat_line = (
+        f"📐 *Estratégia:* `{strategy}`\n"
+        + (f"   _{_hint}_\n" if _hint else "")
+    ) if strategy else ""
     order_suffix = f"  _[{order_type}]_" if order_type else ""
     rr_line = "📊 *Risco/Retorno:* `1:2` (arrisca 1 p/ ganhar 2)\n" if risk_reward else ""
 
