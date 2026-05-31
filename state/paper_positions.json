@@ -6,10 +6,10 @@
       "strategy": "Breakout/Tendencia (HYPE)",
       "exit_kind": "trailing",
       "entry": 69.468,
-      "stop": 66.77209553,
+      "stop": 67.16909552999999,
       "risk_dist": 2.7349044700000036,
       "tp": 74.93780893,
-      "peak": 69.507,
+      "peak": 69.904,
       "opened_at": "2026-05-31T00:00:00+00:00",
       "opened_scan_utc": "2026-05-31T01:38:28.937722+00:00"
     }
