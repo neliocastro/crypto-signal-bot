@@ -211,6 +211,7 @@ def _check_aggressive_macd(df: pd.DataFrame, symbol: str, timeframe: str, exchan
 
     entry = close_curr
     stop  = entry - 1.5 * atr_curr
+    tp1   = entry + 1.5 * atr_curr   # R:R 1:1
     tp2   = entry + 3.0 * atr_curr   # R:R 1:2
     tp3   = entry + 4.5 * atr_curr   # R:R 1:3
     risk   = abs(entry - stop)
@@ -234,9 +235,10 @@ def _check_aggressive_macd(df: pd.DataFrame, symbol: str, timeframe: str, exchan
         "strategy":     "MACD-only (Agressivo)",
         "entry":        round(entry, 8),
         "stop":         round(stop, 8),
+        "tp1":          round(tp1, 8),
         "tp2":          round(tp2, 8),
         "tp3":          round(tp3, 8),
-        "targets":      [round(tp2, 8), round(tp3, 8)],
+        "targets":      [round(tp1, 8), round(tp2, 8), round(tp3, 8)],
         "risk_reward":  risk_reward,
         "order_type":   order_type,
         "timeframe":    timeframe or "1h",
@@ -398,6 +400,7 @@ def _check_breakout_trend(df: pd.DataFrame, symbol: str, timeframe: str, exchang
 
     entry = close_c
     stop  = entry - atr_mult * atr_c
+    tp1   = entry + (1.0 * atr_mult) * atr_c   # R:R 1:1 (informativo)
     tp2   = entry + (2.0 * atr_mult) * atr_c   # R:R 1:2 (informativo)
     tp3   = entry + (3.0 * atr_mult) * atr_c   # R:R 1:3 (informativo)
     risk   = abs(entry - stop)
@@ -432,9 +435,10 @@ def _check_breakout_trend(df: pd.DataFrame, symbol: str, timeframe: str, exchang
         "strategy":      "Breakout/Tendencia (HYPE)" + (" [SHADOW]" if shadow else ""),
         "entry":         round(entry, 8),
         "stop":          round(stop, 8),
+        "tp1":           round(tp1, 8),
         "tp2":           round(tp2, 8),
         "tp3":           round(tp3, 8),
-        "targets":       [round(tp2, 8), round(tp3, 8)],
+        "targets":       [round(tp1, 8), round(tp2, 8), round(tp3, 8)],
         "risk_reward":   risk_reward,
         "order_type":    order_type,
         "timeframe":     timeframe or "1h",
@@ -457,7 +461,7 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         "symbol", "side": "LONG",
         "strategy": "Integrada Curto Prazo" | "Tendencia MACD" | "Integrada + MACD",
         "entry", "stop",
-        "tp2", "tp3", "targets": [tp2, tp3],
+        "tp1", "tp2", "tp3", "targets": [tp1, tp2, tp3],
         "risk_reward", "order_type",
         "timeframe", "exchange",
         "confidence" (0-10), "reasons" (list[str]),
@@ -575,12 +579,13 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         reasons = reasons + ["--- MTF ---"] + mtf_reasons
     confidence = min(10, confidence + mtf_bonus)
 
-    # ---------- TP/SL via ATR (SEMPRE definidos: SL 1.5xATR, TP 1:2 e 1:3) ----------
+    # ---------- TP/SL via ATR (SEMPRE definidos: SL 1.5xATR, TP1 1:1 / TP2 1:2 / TP3 1:3) ----------
     entry = float(curr["close"])
     _atr_raw = _safe(curr, "atr")
     atr_v = float(_atr_raw) if (not _is_nan(_atr_raw) and _atr_raw > 0) else entry * 0.01
 
     stop = entry - 1.5 * atr_v
+    tp1  = entry + 1.5 * atr_v   # R:R 1:1
     tp2  = entry + 3.0 * atr_v   # R:R 1:2
     tp3  = entry + 4.5 * atr_v   # R:R 1:3
 
@@ -608,9 +613,10 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         "strategy":    strategy_name,
         "entry":       round(entry, 6),
         "stop":        round(stop, 6),
+        "tp1":         round(tp1, 6),
         "tp2":         round(tp2, 6),
         "tp3":         round(tp3, 6),
-        "targets":     [round(tp2, 6), round(tp3, 6)],
+        "targets":     [round(tp1, 6), round(tp2, 6), round(tp3, 6)],
         "risk_reward": risk_reward,
         "order_type":  order_type,
         "timeframe":   timeframe,
