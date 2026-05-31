@@ -7,7 +7,7 @@ Estrategias implementadas:
   1) Integrada Curto Prazo  -> VWAP + EMAs(9/21/50) + MACD + RSI + pullback
   2) Tendencia MACD         -> EMA200 + MACD crossover abaixo da linha zero
 
-Filtro direcional (transversal): so opera LONG se preco > VWAP.
+Filtro VWAP (preco > VWAP) aplica-se APENAS a estrategia Integrada Curto Prazo.
 
 Aceita chamadas em qualquer ordem/forma para evitar
 "got multiple values for argument".
@@ -129,14 +129,12 @@ def _check_integrada_long(prev, curr) -> Optional[List[str]]:
 def _check_tendencia_macd_long(prev, curr) -> Optional[List[str]]:
     """
     LONG se:
-      - preco > EMA200
-      - preco > VWAP (filtro direcional transversal)
+      - preco > EMA200 (tendencia de alta confirmada)
       - MACD: linha cruzou acima do sinal NA VELA ATUAL
       - cruzamento ocorreu abaixo da linha zero (ou MACD ainda <0 na vela atual)
     """
     price  = _safe(curr, "close")
     ema200 = _safe(curr, "ema200")
-    vwap   = _safe(curr, "vwap")
     macd_c = _safe(curr, "macd")
     sig_c  = _safe(curr, "macd_signal")
     macd_p = _safe(prev, "macd")
@@ -144,12 +142,7 @@ def _check_tendencia_macd_long(prev, curr) -> Optional[List[str]]:
 
     reasons: List[str] = []
 
-    # VWAP transversal
-    if _is_nan(vwap) or price <= vwap:
-        return None
-    reasons.append(f"Preco acima do VWAP ({price:.4f} > {vwap:.4f})")
-
-    # EMA200
+    # EMA200 (tendencia de alta confirmada)
     if _is_nan(ema200) or price <= ema200:
         return None
     reasons.append(f"Preco acima da EMA200 ({price:.4f} > {ema200:.4f})")
@@ -582,9 +575,10 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
         reasons = reasons + ["--- MTF ---"] + mtf_reasons
     confidence = min(10, confidence + mtf_bonus)
 
-    # ---------- TP/SL via ATR (2 TPs apenas: R:R 1:2 e 1:3) ----------
+    # ---------- TP/SL via ATR (SEMPRE definidos: SL 1.5xATR, TP 1:2 e 1:3) ----------
     entry = float(curr["close"])
-    atr_v = float(curr["atr"]) if not _is_nan(curr["atr"]) else entry * 0.01
+    _atr_raw = _safe(curr, "atr")
+    atr_v = float(_atr_raw) if (not _is_nan(_atr_raw) and _atr_raw > 0) else entry * 0.01
 
     stop = entry - 1.5 * atr_v
     tp2  = entry + 3.0 * atr_v   # R:R 1:2
@@ -595,7 +589,8 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
     risk_reward = round(reward / risk, 2) if risk > 0 else None
 
     # ---------- order_type por distancia da EMA21 ----------
-    ema21_v = float(curr["ema21"]) if not _is_nan(curr["ema21"]) else entry
+    _ema21_raw = _safe(curr, "ema21")
+    ema21_v = float(_ema21_raw) if not _is_nan(_ema21_raw) else entry
     dist_pct = (abs(entry - ema21_v) / entry * 100.0) if entry else 0.0
     if dist_pct <= 0.3:
         order_type = "Limit"
