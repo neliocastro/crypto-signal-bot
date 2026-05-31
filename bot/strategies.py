@@ -231,7 +231,7 @@ def _check_aggressive_macd(df: pd.DataFrame, symbol: str, timeframe: str, exchan
     return {
         "symbol":       symbol,
         "side":         "LONG",
-        "strategy":     "MACD-only (Agressivo)",
+        "strategy":     "Tendência MACD — Agressivo",
         "entry":        round(entry, 8),
         "stop":         round(stop, 8),
         "tp1":          round(tp1, 8),
@@ -334,7 +334,7 @@ def _check_accumulation(df_tf, symbol: str, exchange: str,
         "symbol":      symbol,
         "side":        "BUY",
         "signal_type": "accumulation",
-        "strategy":    "Acumulo (RSI sobrevenda)",
+        "strategy":    "Acúmulo (RSI sobrevenda)",
         "entry":       round(price, 6),
         "rsi":         round(rsi_curr, 2),
         "timeframe":   timeframe,
@@ -429,7 +429,7 @@ def _check_breakout_trend(df: pd.DataFrame, symbol: str, timeframe: str, exchang
     return {
         "symbol":        symbol,
         "side":          "LONG",
-        "strategy":      "Breakout/Tendencia (HYPE)" + (" [SHADOW]" if shadow else ""),
+        "strategy":      "Breakout / Tendência" + (" [SHADOW]" if shadow else ""),
         "entry":         round(entry, 8),
         "stop":          round(stop, 8),
         "tp1":           round(tp1, 8),
@@ -455,7 +455,7 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
     Dict retornado:
       {
         "symbol", "side": "LONG",
-        "strategy": "Integrada Curto Prazo" | "Tendencia MACD" | "Integrada + MACD",
+        "strategy": "Integrada (Curto Prazo)" | "Tendência MACD" | "Integrada + MACD (Confluência)",
         "entry", "stop",
         "tp1", "tp2", "targets": [tp1, tp2],
         "risk_reward", "order_type",
@@ -558,15 +558,15 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
 
     # Confluencia: as 2 estrategias dispararam (decisao Q)
     if r1 and r2:
-        strategy_name = "Integrada + MACD"
+        strategy_name = "Integrada + MACD (Confluência)"
         reasons = ["[Confluencia das 2 estrategias]"] + r1 + ["---"] + r2
         confidence = 10
     elif r1:
-        strategy_name = "Integrada Curto Prazo"
+        strategy_name = "Integrada (Curto Prazo)"
         reasons = r1
         confidence = 8
     else:
-        strategy_name = "Tendencia MACD"
+        strategy_name = "Tendência MACD"
         reasons = r2
         confidence = 7
 
