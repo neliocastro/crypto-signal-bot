@@ -4,3 +4,5 @@
 {"event": "relay_response", "signal_id": "70c7b2830c4ecda8", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-05-31T22:41:38.047266+00:00"}
 {"event": "intent", "signal_id": "76b0ff5ee0898320", "symbol": "HYPE/USDT", "side": "buy", "type": "market", "strategy": "Breakout / Tendência", "notional_usdt": 100.0, "qty": 1.3772776729516438, "ref_price": 72.607, "dry_run": true, "ts": "2026-05-31T23:44:20.883945+00:00"}
 {"event": "relay_response", "signal_id": "76b0ff5ee0898320", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-05-31T23:44:20.884105+00:00"}
+{"event": "intent", "signal_id": "a4fe4e63eb475680", "symbol": "HYPE/USDT", "side": "buy", "type": "market", "strategy": "Breakout / Tendência", "notional_usdt": 100.0, "qty": 1.3492545368683804, "ref_price": 74.115, "dry_run": true, "ts": "2026-06-03T19:54:56.898983+00:00"}
+{"event": "relay_response", "signal_id": "a4fe4e63eb475680", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-03T19:54:56.899133+00:00"}
