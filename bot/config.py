@@ -103,7 +103,11 @@ RISK_PROFILES = {
     },
     "agressivo": {
         "macd_cross_enough": True,
-        "approved_symbols":  ["LINK/USDT"],  # HYPE migrado p/ estrategia Breakout/Tendencia
+        # None = TODOS os ativos da watchlist usam MACD-only.
+        # Excecoes ja sao interceptadas ANTES no evaluate_signal:
+        #   HYPE -> Breakout (fast-path 1)  |  PAXG -> Acumulacao (fast-path 2)
+        # Alem disso, MACD_ONLY_EXCLUDE garante que PAXG nunca caia aqui.
+        "approved_symbols":  None,
         "min_confidence":    5,
     },
     "conservador": {
@@ -112,7 +116,11 @@ RISK_PROFILES = {
         "min_confidence":    8,
     },
 }
-ACTIVE_PROFILE = "agressivo"   # troque para "agressivo" para ativar LINK+HYPE em MACD-only ou volte para "balanceado"
+ACTIVE_PROFILE = "agressivo"   # "agressivo" = MACD-only em TODOS (exceto exclusoes); "balanceado" reverte
+
+# Ativos que NUNCA usam MACD-only mesmo com approved_symbols=None.
+# PAXG e ouro digital: estrategia propria de Acumulacao RSI 4h (compra-only).
+MACD_ONLY_EXCLUDE = {"PAXG/USDT"}
 
 
 # ============ BREAKOUT / TREND-FOLLOWING (HYPE) ============
