@@ -117,3 +117,38 @@ inteligente), não de trade. Comprar fraqueza, sem alvo de venda nem stop.
 - Scan #204 (2026-05-29) verde em produção com PAXG na watchlist.
 
 ---
+
+
+---
+
+## 2026-06-12 — EXPANSAO: MACD-only Agressivo para TODA a watchlist (exceto PAXG)
+
+Decisao do operador: ligar o MACD-only Agressivo para todos os ativos,
+mantendo HYPE no Breakout e PAXG na Acumulacao.
+
+### Implementacao
+- `RISK_PROFILES["agressivo"]["approved_symbols"] = None`  -> None = todos.
+- `MACD_ONLY_EXCLUDE = {"PAXG/USDT"}` (cinto extra de protecao).
+- `evaluate_signal` ja intercepta antes: HYPE -> Breakout, PAXG -> Acumulacao.
+
+### Mapa de roteamento (ordem de prioridade)
+1. HYPE  -> Breakout/Tendencia
+2. PAXG  -> Acumulacao RSI 4h (compra-only)
+3. resto -> MACD-only Agressivo
+
+| Ativo | Estrategia |
+|---|---|
+| HYPE | Breakout/Tendencia |
+| PAXG | Acumulacao RSI 4h |
+| BTC, ETH, SOL, XRP, TRX, BNB, LINK, AAVE | MACD-only Agressivo |
+
+### Risco registrado
+- 6 ativos novos no MACD-only (BTC, ETH, SOL, XRP, TRX, BNB, AAVE) entraram
+  SEM backtest dedicado. Apenas LINK e HYPE foram validados nos 90d.
+- Mitigacao: bot em EXECUTION_DRY_RUN=True (paper trading) -> nenhuma ordem
+  real. Observar via paper_evaluator (relatorio a cada 7 dias) antes de
+  considerar execucao real desses 6 ativos.
+
+### Commits
+- config.py: d33ff8d (approved_symbols=None + MACD_ONLY_EXCLUDE)
+- strategies.py: a2e69a0 (fast-path aceita None + respeita exclude)
