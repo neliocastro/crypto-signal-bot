@@ -519,10 +519,15 @@ def evaluate_signal(*args, **kwargs) -> Optional[Dict[str, Any]]:
     # qualquer Exception -> cai para o caminho normal.
     try:
         from .config import RISK_PROFILES, ACTIVE_PROFILE
+        try:
+            from .config import MACD_ONLY_EXCLUDE as _macd_excl
+        except Exception:
+            _macd_excl = set()
         _profile = RISK_PROFILES.get(ACTIVE_PROFILE) or RISK_PROFILES.get("balanceado", {})
-        if _profile.get("macd_cross_enough"):
-            _approved = _profile.get("approved_symbols") or []
-            if symbol in _approved:
+        if _profile.get("macd_cross_enough") and symbol not in (_macd_excl or set()):
+            _approved = _profile.get("approved_symbols")
+            # approved_symbols == None -> TODOS os ativos (exceto MACD_ONLY_EXCLUDE)
+            if _approved is None or symbol in _approved:
                 return _check_aggressive_macd(df, symbol, timeframe, exchange)
     except Exception:
         pass  # degradacao segura: cai para o caminho normal
