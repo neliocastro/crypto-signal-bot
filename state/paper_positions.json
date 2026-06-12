@@ -1,5 +1,19 @@
 {
-  "open": [],
+  "open": [
+    {
+      "signal_id": "6c89e8effbff7b22",
+      "symbol": "HYPE/USDT",
+      "strategy": "Breakout / Tendência",
+      "exit_kind": "trailing",
+      "entry": 60.408,
+      "stop": 57.74072179,
+      "risk_dist": 2.667278209999999,
+      "tp": 68.40983463,
+      "peak": 60.408,
+      "opened_at": "2026-06-12T12:00:00+00:00",
+      "opened_scan_utc": "2026-06-12T13:56:53.530223+00:00"
+    }
+  ],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",
