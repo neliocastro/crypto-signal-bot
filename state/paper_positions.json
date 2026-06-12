@@ -12,6 +12,19 @@
       "peak": 61.423,
       "opened_at": "2026-06-12T12:00:00+00:00",
       "opened_scan_utc": "2026-06-12T13:56:53.530223+00:00"
+    },
+    {
+      "signal_id": "666082199eecb829",
+      "symbol": "BTC/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 63859.1,
+      "stop": 63172.69848763,
+      "risk_dist": 686.401512370001,
+      "tp": 65918.3045371,
+      "peak": 63859.1,
+      "opened_at": "2026-06-12T17:00:00+00:00",
+      "opened_scan_utc": "2026-06-12T18:28:20.213315+00:00"
     }
   ],
   "closed": [
