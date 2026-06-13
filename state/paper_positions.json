@@ -1,19 +1,6 @@
 {
   "open": [
     {
-      "signal_id": "6c89e8effbff7b22",
-      "symbol": "HYPE/USDT",
-      "strategy": "Breakout / Tendência",
-      "exit_kind": "trailing",
-      "entry": 60.408,
-      "stop": 58.75572179,
-      "risk_dist": 2.667278209999999,
-      "tp": 68.40983463,
-      "peak": 61.423,
-      "opened_at": "2026-06-12T12:00:00+00:00",
-      "opened_scan_utc": "2026-06-12T13:56:53.530223+00:00"
-    },
-    {
       "signal_id": "666082199eecb829",
       "symbol": "BTC/USDT",
       "strategy": "Tendência MACD — Agressivo",
@@ -63,6 +50,24 @@
       "closed_at": "2026-06-04T08:47:27.113812+00:00",
       "pnl_pct": -7.51,
       "pnl_usdt": -0.0751
+    },
+    {
+      "signal_id": "6c89e8effbff7b22",
+      "symbol": "HYPE/USDT",
+      "strategy": "Breakout / Tendência",
+      "exit_kind": "trailing",
+      "entry": 60.408,
+      "stop": 58.75572179,
+      "risk_dist": 2.667278209999999,
+      "tp": 68.40983463,
+      "peak": 61.423,
+      "opened_at": "2026-06-12T12:00:00+00:00",
+      "opened_scan_utc": "2026-06-12T13:56:53.530223+00:00",
+      "exit": 58.124,
+      "exit_reason": "trailing_stop",
+      "closed_at": "2026-06-13T06:05:09.641436+00:00",
+      "pnl_pct": -3.781,
+      "pnl_usdt": -0.03781
     }
   ],
   "last_report_utc": "2026-06-06T23:19:18.886160+00:00"
