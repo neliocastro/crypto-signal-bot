@@ -12,6 +12,45 @@
       "peak": 63859.1,
       "opened_at": "2026-06-12T17:00:00+00:00",
       "opened_scan_utc": "2026-06-12T18:28:20.213315+00:00"
+    },
+    {
+      "signal_id": "099ed659612d20d6",
+      "symbol": "LINK/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 8.072,
+      "stop": 7.97536179,
+      "risk_dist": 0.09663820999999917,
+      "tp": 8.36191462,
+      "peak": 8.072,
+      "opened_at": "2026-06-14T21:00:00+00:00",
+      "opened_scan_utc": "2026-06-14T22:48:36.742428+00:00"
+    },
+    {
+      "signal_id": "0b3a9b4cef3c7143",
+      "symbol": "HYPE/USDT",
+      "strategy": "Breakout / Tendência",
+      "exit_kind": "trailing",
+      "entry": 63.023,
+      "stop": 61.06662452,
+      "risk_dist": 2.2403754800000044,
+      "tp": 69.74412643,
+      "peak": 63.307,
+      "opened_at": "2026-06-14T21:00:00+00:00",
+      "opened_scan_utc": "2026-06-14T22:48:36.742443+00:00"
+    },
+    {
+      "signal_id": "f755d98fe19f0735",
+      "symbol": "AAVE/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 67.69,
+      "stop": 66.73581215,
+      "risk_dist": 0.9541878499999967,
+      "tp": 70.55256354,
+      "peak": 67.69,
+      "opened_at": "2026-06-14T21:00:00+00:00",
+      "opened_scan_utc": "2026-06-14T22:48:36.742454+00:00"
     }
   ],
   "closed": [
