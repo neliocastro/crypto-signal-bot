@@ -16,3 +16,5 @@
 {"event": "relay_response", "signal_id": "fafe523d5c9a7791", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-12T18:28:20.212992+00:00"}
 {"event": "intent", "signal_id": "b7fe4d63defb4759", "symbol": "BTC/USDT", "side": "buy", "type": "market", "strategy": "Tendência MACD — Agressivo", "notional_usdt": 100.0, "qty": 0.0015666074489050982, "ref_price": 63832.2, "dry_run": true, "ts": "2026-06-13T11:29:10.584662+00:00"}
 {"event": "relay_response", "signal_id": "b7fe4d63defb4759", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-13T11:29:10.584822+00:00"}
+{"event": "intent", "signal_id": "d85267e792f7d04a", "symbol": "AAVE/USDT", "side": "buy", "type": "market", "strategy": "Tendência MACD — Agressivo", "notional_usdt": 100.0, "qty": 1.4865467518953472, "ref_price": 67.27, "dry_run": true, "ts": "2026-06-14T02:03:06.790971+00:00"}
+{"event": "relay_response", "signal_id": "d85267e792f7d04a", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-14T02:03:06.791161+00:00"}
