@@ -131,24 +131,35 @@ def _simulate_exit(pos: dict, price: float) -> dict | None:
     kind = pos.get("exit_kind")
 
     if kind == "trailing":
-        # arrasta o stop para cima mantendo a distancia de risco inicial
+        # arrasta o stop para cima mantendo a distancia de risco inicial.
+        # REGRA: o stop SO sobe, nunca desce (high-water mark).
         if price > pos.get("peak", price):
             pos["peak"] = price
         rd = pos.get("risk_dist")
-        trail = (pos["peak"] - rd) if rd else pos.get("stop")
-        if trail is not None:
-            pos["stop"] = trail  # persiste o stop arrastado
-            if price <= trail:
-                return _close(pos, price, "trailing_stop")
+        cur_stop = pos.get("stop")
+        if rd is not None:
+            candidate = pos["peak"] - rd
+            # so arrasta para CIMA; jamais reduz a protecao ja conquistada
+            if cur_stop is None or candidate > cur_stop:
+                pos["stop"] = candidate
+        trail = pos.get("stop")
+        if trail is not None and price <= trail:
+            # fecha NO PRECO DO STOP (ordem stop), nao no price do scan.
+            # Evita slippage artificial causado pela granularidade do scan (1h).
+            fill = min(price, trail)  # nunca melhor que o stop; usa o pior real
+            return _close(pos, fill, "trailing_stop")
         return None
 
     if kind == "fixed":
         stop = pos.get("stop")
         tp = pos.get("tp")
         if stop is not None and price <= stop:
-            return _close(pos, price, "stop")
+            # idem: preenche no nivel do stop, nao no price (ja furado) do scan
+            fill = min(price, float(stop))
+            return _close(pos, fill, "stop")
         if tp is not None and price >= tp:
-            return _close(pos, price, "take_profit")
+            fill = max(price, float(tp))
+            return _close(pos, fill, "take_profit")
         return None
 
     # hold (acumulacao): nunca fecha por preco
