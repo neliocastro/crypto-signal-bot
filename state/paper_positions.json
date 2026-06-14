@@ -32,10 +32,10 @@
       "strategy": "Breakout / Tendência",
       "exit_kind": "trailing",
       "entry": 63.023,
-      "stop": 61.06662452,
+      "stop": 61.716624519999996,
       "risk_dist": 2.2403754800000044,
       "tp": 69.74412643,
-      "peak": 63.307,
+      "peak": 63.957,
       "opened_at": "2026-06-14T21:00:00+00:00",
       "opened_scan_utc": "2026-06-14T22:48:36.742443+00:00"
     },
@@ -51,6 +51,19 @@
       "peak": 67.69,
       "opened_at": "2026-06-14T21:00:00+00:00",
       "opened_scan_utc": "2026-06-14T22:48:36.742454+00:00"
+    },
+    {
+      "signal_id": "3e2ccbdf25070ef4",
+      "symbol": "BNB/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 614.1,
+      "stop": 609.08125721,
+      "risk_dist": 5.018742790000033,
+      "tp": 629.15622836,
+      "peak": 614.1,
+      "opened_at": "2026-06-14T22:00:00+00:00",
+      "opened_scan_utc": "2026-06-14T23:53:53.651361+00:00"
     }
   ],
   "closed": [
