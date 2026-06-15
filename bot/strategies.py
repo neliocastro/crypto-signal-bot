@@ -206,7 +206,28 @@ def _check_aggressive_macd(df: pd.DataFrame, symbol: str, timeframe: str, exchan
     above_ema200  = close_curr > ema200_curr
     rsi_ok        = 40.0 <= rsi_curr <= 70.0
 
-    if not (crossed_above and above_ema200 and rsi_ok):
+    # ---- FILTRO ANTI-LATERAL (anti-chop) -------------------------------
+    # So opera se houver TENDENCIA real. Em mercado lateral o MACD cruza
+    # muito e gera sinais falsos (visto no paper: AAVE/BNB pico +0%).
+    # Usa dados ja existentes no df (sem ADX novo): EMAs e inclinacao EMA200.
+    try:
+        ema9_v   = float(curr["ema9"])
+        ema50_v  = float(curr["ema50"])
+        # EMA200 ~12 velas atras p\/ medir inclinacao (fallback seguro)
+        ema200_prev = float(df.iloc[-14]["ema200"])
+    except (KeyError, ValueError, TypeError, IndexError):
+        return None
+    if any(_is_nan(v) for v in (ema9_v, ema50_v, ema200_prev)):
+        return None
+
+    emas_stacked    = ema9_v > ema21_v > ema50_v               # ordem de alta
+    ema_spread_pct  = (ema9_v - ema50_v) / close_curr * 100.0  # abertura das EMAs
+    spread_ok       = ema_spread_pct >= 0.15                   # >=0.15% (nao coladas)
+    ema200_slope_ok = ema200_curr > ema200_prev                # macro inclinada p\/ cima
+    not_lateral     = emas_stacked and spread_ok and ema200_slope_ok
+    # --------------------------------------------------------------------
+
+    if not (crossed_above and above_ema200 and rsi_ok and not_lateral):
         return None
 
     entry = close_curr
@@ -247,6 +268,7 @@ def _check_aggressive_macd(df: pd.DataFrame, symbol: str, timeframe: str, exchan
             "MACD cruzou acima do sinal (vela fechada)",
             f"Preco > EMA200 ({close_curr:.2f} > {ema200_curr:.2f})",
             f"RSI saudavel ({rsi_curr:.1f})",
+            f"Filtro anti-lateral OK (spread EMAs {ema_spread_pct:.2f}%, EMA200 subindo)",
         ],
         "timestamp":    ts,
         "profile":      "agressivo",
