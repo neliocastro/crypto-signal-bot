@@ -200,3 +200,27 @@ Investigacao trade-a-trade revelou 3 causas. Duas corrigidas hoje.
 - Bot segue em EXECUTION_DRY_RUN=True. NAO ir ao vivo ate o paper, com a
   logica corrigida, mostrar edge positivo consistente.
 - Acao: deixar o scan rodar e reavaliar o paper em ~1-2 semanas.
+
+
+---
+
+## 2026-06-14 — DECISAO: manter cruzamentos de MACD ABAIXO de zero
+
+Contexto: ao revisar um sinal de BNB, o usuario notou que o MACD-only dispara
+quando a linha MACD cruza a Signal INDEPENDENTE de estarem acima ou abaixo da
+linha zero. Perguntou se deveria filtrar para so operar cruzamentos acima de 0.
+
+DECISAO (consciente, do usuario): NAO adicionar o filtro `macd > 0`. O bot
+continua enviando sinais em cruzamentos acima E abaixo de zero.
+
+Justificativa:
+- Cruzamentos abaixo de zero capturam a VIRADA cedo (inicio de tendencia).
+  Exigir macd>0 entraria mais tarde e perderia o melhor trecho de altas (ex.:
+  no HYPE, o rali 44.736->55.338 comecou com cruzamento perto/abaixo de zero).
+- Risco ja mitigado por filtros existentes: preco>EMA200 (so opera em alta
+  macro), filtro anti-lateral (EMAs separadas + EMA200 inclinada) e RSI 40-70.
+
+IMPORTANTE: isto NAO e um esquecimento. E uma escolha deliberada. Nao
+"corrigir" no futuro adicionando macd>0 sem antes validar em backtest/paper.
+
+Sem mudanca de codigo (comportamento atual ja e o desejado).
