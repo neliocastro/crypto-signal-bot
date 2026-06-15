@@ -46,6 +46,17 @@ Cada estratégia é um "caçador" esperando uma presa diferente.
   pois o stop curto é estourado com facilidade.
 - **Validada em backtest:** apenas LINK e HYPE (90d).
 - **Usa hoje:** BTC, ETH, SOL, XRP, TRX, BNB, LINK, AAVE.
+- **FILTRO ANTI-LATERAL (desde 2026-06-14):** o cruzamento do MACD sozinho
+  gera muitos sinais FALSOS quando o mercado anda de lado ("serrado"). Para
+  evitar isso, alem do cruzamento, agora exige sinais de TENDENCIA real:
+  1. **EMA9 > EMA21 > EMA50** (as medias empilhadas, na ordem de alta);
+  2. **EMAs separadas** — a distancia entre EMA9 e EMA50 deve ser >= 0.15%
+     do preco (se estao "coladas", e lateral -> nao compra);
+  3. **EMA200 inclinada para cima** (compara com ~14 velas atras): garante
+     que a mare macro esta subindo, nao parada.
+  Analogia: so "puxa o gatilho" quando o caminho esta claramente em subida,
+  nao quando o mercado esta indeciso. Trade-off: menos sinais, mais qualidade.
+  Limiares conservadores; podem ser calibrados com os dados do paper.
 
 ### 2. Breakout / Tendência — "caçador paciente de grandes ondas"
 - **Filosofia:** não sai rápido; monta numa tendência GRANDE e cavalga.
