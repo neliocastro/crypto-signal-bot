@@ -152,3 +152,51 @@ mantendo HYPE no Breakout e PAXG na Acumulacao.
 ### Commits
 - config.py: d33ff8d (approved_symbols=None + MACD_ONLY_EXCLUDE)
 - strategies.py: a2e69a0 (fast-path aceita None + respeita exclude)
+
+
+---
+
+## 2026-06-14 — INVESTIGACAO DE PERDAS + 2 CORRECOES
+
+Motivo: paper trading acumulou -9.46% (WR 20%, 5 trades fechados) em 14 dias.
+Investigacao trade-a-trade revelou 3 causas. Duas corrigidas hoje.
+
+### Diagnostico (paper_positions.json)
+| Ativo | Estrategia | pnl | pico | duracao | causa |
+|---|---|---|---|---|---|
+| HYPE | Breakout | +4.00% | +8.14% | 54h | OK (onda real) |
+| HYPE | Breakout | -7.51% | +1.49% | 15h | BUG trailing |
+| HYPE | Breakout | -3.78% | +1.68% | 18h | BUG trailing |
+| AAVE | MACD-only | -1.56% | +0.00% | 6h | sinal falso (lateral) |
+| BNB  | MACD-only | -0.60% | +0.00% | 7h | sinal falso (lateral) |
+
+### CORRECAO 1 — Bug do trailing stop (commit 9e8b41f)
+- Arquivo: bot/paper_evaluator.py (_simulate_exit).
+- Bug A: `pos["stop"] = trail` sobrescrevia o stop a cada scan -> podia DESCER.
+- Bug B: fechava no `price` do scan (granularidade 1h, ja furado) e nao no
+  nivel do stop -> slippage artificial (-7.5% num stop de ~-5.2%).
+- Fix: stop so sobe (high-water mark); fill no nivel do stop (min(price,trail)).
+  Mesmo ajuste aplicado ao stop fixo (MACD-only) e ao take_profit.
+- NOTA: o bug era do SIMULADOR (paper), nao da estrategia. O paper estava
+  reportando perda PIOR que a real. Estrategia Breakout permanece valida.
+
+### CORRECAO 2 — Filtro anti-lateral no MACD-only (commit d51f7a1)
+- Arquivo: bot/strategies.py (_check_aggressive_macd).
+- Problema: em mercado lateral o MACD cruza muito -> sinais falsos (AAVE/BNB
+  com pico +0%, stop direto).
+- Fix: alem de (cross + preco>EMA200 + RSI 40-70), agora exige TENDENCIA real:
+  1) EMA9 > EMA21 > EMA50 (empilhadas)
+  2) spread (EMA9-EMA50)/close >= 0.15% (EMAs nao coladas)
+  3) EMA200 inclinada p/ cima (ema200 atual > ema200 ~14 velas atras)
+- Usa apenas dados ja existentes no df (sem adicionar ADX). Limiares
+  conservadores; calibrar depois com dados do paper.
+- Trade-off aceito: menos sinais, maior qualidade.
+
+### Causa 3 (NAO corrigida, apenas registrada) — Regime de mercado
+- Backtest pegou alta de maio; paper pegou junho lateral. Estrategias de
+  tendencia sofrem em lateral por natureza. Mitigado pelos filtros acima.
+
+### Status / proximo passo
+- Bot segue em EXECUTION_DRY_RUN=True. NAO ir ao vivo ate o paper, com a
+  logica corrigida, mostrar edge positivo consistente.
+- Acao: deixar o scan rodar e reavaliar o paper em ~1-2 semanas.
