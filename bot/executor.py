@@ -172,6 +172,60 @@ def send_order(order: dict, timeout: int = 10) -> dict:
         return {"status": "error", "reason": str(exc)}
 
 
+
+# ------------------------------------------------------------------
+# Alerta de EXECUCAO no Telegram (best-effort: nunca derruba o scan).
+# ------------------------------------------------------------------
+def _notify_execution(order: dict, result: dict) -> None:
+    """Envia ao Telegram o resultado de uma ordem (real, bloqueada ou rejeitada)."""
+    try:
+        from . import telegram_sender as tg
+    except Exception:
+        return
+    try:
+        status = str(result.get("status", "?"))
+        sym = order.get("symbol", "?")
+        notional = order.get("notional_usdt", "?")
+        sid = order.get("signal_id", "?")
+        mode = "DRY-RUN (simulado)" if EXECUTION_DRY_RUN else "REAL"
+
+        if status in ("filled", "accepted", "ok"):
+            fill = result.get("sim_fill_price") or result.get("fill_price") or result.get("avg_price")
+            slip = result.get("slippage_pct")
+            head = "✅ *ORDEM EXECUTADA*" if not EXECUTION_DRY_RUN else "🧪 *Ordem simulada (dry-run)*"
+            msg = (
+                f"{head}\n"
+                f"Par: *{sym}*\n"
+                f"Lado: COMPRA\n"
+                f"Valor: *${notional}* USDT\n"
+                f"Modo: {mode}\n"
+                + (f"Preço: {fill}\n" if fill else "")
+                + (f"Slippage: {slip}%\n" if slip is not None else "")
+                + f"ID: `{sid}`"
+            )
+        elif status == "blocked_by_guard":
+            msg = (
+                f"🛡️ *Ordem BLOQUEADA por trava de capital*\n"
+                f"Par: *{sym}*  •  Valor: ${notional}\n"
+                f"Motivo: {result.get('reason','?')}\n"
+                f"ID: `{sid}`"
+            )
+        elif status == "dry_run":
+            msg = (
+                f"🧪 *Ping dry-run* — *{sym}* ${notional} "
+                f"(relay confirmou, ordem NÃO enviada)\nID: `{sid}`"
+            )
+        else:
+            msg = (
+                f"⚠️ *Ordem não executada* — *{sym}* ${notional}\n"
+                f"Status: `{status}`  •  {result.get('reason','')}\n"
+                f"ID: `{sid}`"
+            )
+        tg.send(msg)
+    except Exception as e:  # alerta jamais pode quebrar o fluxo de execucao
+        log.warning("falha ao notificar execucao no telegram: %s", e)
+
+
 def maybe_execute(signal: dict, balance_usdt: float) -> dict | None:
     """
     Ponto de entrada chamado pelo scan APOS um sinal de compra.
@@ -193,6 +247,7 @@ def maybe_execute(signal: dict, balance_usdt: float) -> dict | None:
     if not ok:
         blocked = {"status": "blocked_by_guard", "reason": reason}
         _append_jsonl(PAPER_TRADES_FILE, {"event": "guard_block", "signal_id": order["signal_id"], "result": blocked, "ts": _now_iso()})
+        _notify_execution(order, blocked)
         return {"order": order, "result": blocked}
 
     # 2) envia ao relay (Fase 1: relay responde simulando, nao executa)
@@ -206,4 +261,9 @@ def maybe_execute(signal: dict, balance_usdt: float) -> dict | None:
     _append_jsonl(PAPER_TRADES_FILE, {
         "event": "relay_response", "signal_id": order["signal_id"], "result": result, "ts": _now_iso(),
     })
+
+    # 4) ALERTA NO TELEGRAM: avisa o resultado da operacao (real/dry-run/bloqueio).
+    if isinstance(result, dict):
+        _notify_execution(order, result)
+
     return {"order": order, "result": result}
