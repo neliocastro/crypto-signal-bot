@@ -1,5 +1,19 @@
 {
-  "open": [],
+  "open": [
+    {
+      "signal_id": "c850f45ba68e9df1",
+      "symbol": "LINK/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 8.314,
+      "stop": 8.18002077,
+      "risk_dist": 0.13397922999999956,
+      "tp": 8.71593769,
+      "peak": 8.314,
+      "opened_at": "2026-06-16T21:00:00+00:00",
+      "opened_scan_utc": "2026-06-16T22:19:34.203860+00:00"
+    }
+  ],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",

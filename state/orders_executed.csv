@@ -1,1 +1,2 @@
 ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mode,status,reason
+2026-06-16T22:19:33.648753+00:00,c850f45ba68e9df1,LINK/USDT,buy,5.0,8.314,,,REAL,skipped,relay/segredo nao configurado
