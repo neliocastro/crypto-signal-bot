@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import csv
 import json
 import os
 import time
@@ -48,6 +49,7 @@ except Exception:  # degradacao segura: sem config -> camada inerte
     EXECUTION_STATE_FILE = "state/execution_guard.json"
 
 PAPER_TRADES_FILE = "state/paper_trades.jsonl"
+ORDERS_CSV_FILE = "state/orders_executed.csv"
 # O segredo HMAC vem de variavel de ambiente (GitHub Secret). NUNCA hardcode.
 _HMAC_SECRET = os.environ.get("EXECUTION_HMAC_SECRET", "")
 
@@ -176,8 +178,45 @@ def send_order(order: dict, timeout: int = 10) -> dict:
 # ------------------------------------------------------------------
 # Alerta de EXECUCAO no Telegram (best-effort: nunca derruba o scan).
 # ------------------------------------------------------------------
+
+
+ORDERS_CSV_HEADER = [
+    "ts_utc", "signal_id", "symbol", "side", "notional_usdt",
+    "ref_price", "fill_price", "slippage_pct", "mode", "status", "reason",
+]
+
+
+def _append_execution_csv(order: dict, result: dict) -> None:
+    """Grava UMA linha por operacao no state/orders_executed.csv (legivel/Excel)."""
+    try:
+        os.makedirs(os.path.dirname(ORDERS_CSV_FILE), exist_ok=True)
+        new_file = not os.path.exists(ORDERS_CSV_FILE) or os.path.getsize(ORDERS_CSV_FILE) == 0
+        row = {
+            "ts_utc": _now_iso(),
+            "signal_id": order.get("signal_id", ""),
+            "symbol": order.get("symbol", ""),
+            "side": order.get("side", "buy"),
+            "notional_usdt": order.get("notional_usdt", ""),
+            "ref_price": order.get("ref_price", ""),
+            "fill_price": result.get("sim_fill_price") or result.get("fill_price") or result.get("avg_price") or "",
+            "slippage_pct": result.get("slippage_pct", "") if result.get("slippage_pct") is not None else "",
+            "mode": "DRY_RUN" if EXECUTION_DRY_RUN else "REAL",
+            "status": result.get("status", ""),
+            "reason": result.get("reason", ""),
+        }
+        with open(ORDERS_CSV_FILE, "a", encoding="utf-8", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=ORDERS_CSV_HEADER)
+            if new_file:
+                w.writeheader()
+            w.writerow(row)
+    except Exception as e:  # log de CSV jamais pode quebrar a execucao
+        log.warning("falha ao gravar orders_executed.csv: %s", e)
+
+
 def _notify_execution(order: dict, result: dict) -> None:
     """Envia ao Telegram o resultado de uma ordem (real, bloqueada ou rejeitada)."""
+    # registro estruturado em CSV (alem do .jsonl) - legivel e versionado no Git
+    _append_execution_csv(order, result)
     try:
         from . import telegram_sender as tg
     except Exception:
