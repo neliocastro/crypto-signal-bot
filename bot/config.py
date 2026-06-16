@@ -181,7 +181,7 @@ DASHBOARD_ENABLED = False
 EXECUTION_ENABLED       = True
 EXECUTION_DRY_RUN       = True
 EXECUTION_PCT           = 0.02   # go-live minimo: 2% do saldo por ordem
-EXECUTION_RELAY_URL     = ""        # Fase 2: preencher com a URL do execute.php
+EXECUTION_RELAY_URL     = "https://ineo.com.br/cryptosignals/execute.php"  # relay live (HMAC+IP whitelist)
 EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
 
 # ============ PROTECOES DE CAPITAL (go-live minimo / canario) ============
