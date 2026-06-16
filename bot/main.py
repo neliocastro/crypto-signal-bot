@@ -159,6 +159,14 @@ def main() -> int:
             log.info("⏭️  Scan PULADO — %s", motivo)
             return 0
         log.info("✅ Scan AUTORIZADO — %s", motivo)
+        # Fase D1: watchdog de cadencia (cron do GitHub removido).
+        # cfg ainda tem o last_scan_utc ANTERIOR aqui (mark_scan_ran roda no fim).
+        # Se o intervalo anterior estourou o limite -> alerta no Telegram.
+        try:
+            from . import watchdog as _wd
+            _wd.check_gap(cfg)
+        except Exception as _e:
+            log.warning("watchdog indisponivel (ignorado): %s", _e)
         runtime_watchlist = cfg.get("watchlist") or []
         effective_symbols = list(runtime_watchlist) if runtime_watchlist else list(SYMBOLS)
     except Exception as e:
