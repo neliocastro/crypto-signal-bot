@@ -1,0 +1,36 @@
+name: telegram-alert-test
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install requests
+      - name: Send sample execution alert to Telegram
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python - <<'PY'
+          from bot import telegram_sender as tg
+          msg = (
+              "\u2705 *ORDEM EXECUTADA* (TESTE)\n"
+              "Par: *HYPE/USDT*\n"
+              "Lado: COMPRA\n"
+              "Valor: *$5* USDT\n"
+              "Modo: REAL\n"
+              "Pre\u00e7o: 55338\n"
+              "Slippage: 0.04%\n"
+              "ID: `teste-alerta-001`\n\n"
+              "_Mensagem de teste do alerta de execu\u00e7\u00e3o. Ignore._"
+          )
+          ok = tg.send(msg)
+          print("send() retornou:", ok)
+          PY
