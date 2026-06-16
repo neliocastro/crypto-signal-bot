@@ -28,3 +28,5 @@
 {"event": "relay_response", "signal_id": "f755d98fe19f0735", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-14T22:48:36.742161+00:00"}
 {"event": "intent", "signal_id": "3e2ccbdf25070ef4", "symbol": "BNB/USDT", "side": "buy", "type": "market", "strategy": "Tendência MACD — Agressivo", "notional_usdt": 100.0, "qty": 0.1628399283504315, "ref_price": 614.1, "dry_run": true, "ts": "2026-06-14T23:53:53.650944+00:00"}
 {"event": "relay_response", "signal_id": "3e2ccbdf25070ef4", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-14T23:53:53.651079+00:00"}
+{"event": "intent", "signal_id": "b3fc9e2c2a6d769d", "symbol": "HYPE/USDT", "side": "buy", "type": "market", "strategy": "Breakout / Tendência", "notional_usdt": 100.0, "qty": 1.3755725820872937, "ref_price": 72.697, "dry_run": true, "ts": "2026-06-16T07:08:33.282647+00:00"}
+{"event": "relay_response", "signal_id": "b3fc9e2c2a6d769d", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-16T07:08:33.282807+00:00"}
