@@ -192,6 +192,7 @@ EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
 #   EXECUTION_MAX_TRADES_DAY    -> maximo de ordens enviadas por dia (UTC).
 #   EXECUTION_DAILY_LOSS_STOP   -> se a perda do dia (USDT) atingir isto, PARA.
 EXECUTION_MAX_NOTIONAL_USDT = 5.0    # nunca envia ordem acima de $5
+EXECUTION_MIN_NOTIONAL_USDT = 3.0    # piso: Gate.io rejeita ordem < $3 (too small)
 EXECUTION_MAX_OPEN          = 2      # no maximo 2 posicoes live ao mesmo tempo
 EXECUTION_MAX_TRADES_DAY    = 6      # no maximo 6 ordens/dia
 EXECUTION_DAILY_LOSS_STOP   = 10.0   # kill-switch: para tudo se perder $10 no dia
