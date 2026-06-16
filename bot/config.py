@@ -180,9 +180,22 @@ DASHBOARD_ENABLED = False
 #   EXECUTION_PAPER_BALANCE -> saldo USDT assumido p/ dimensionar no dry-run.
 EXECUTION_ENABLED       = True
 EXECUTION_DRY_RUN       = True
-EXECUTION_PCT           = 0.10
+EXECUTION_PCT           = 0.02   # go-live minimo: 2% do saldo por ordem
 EXECUTION_RELAY_URL     = ""        # Fase 2: preencher com a URL do execute.php
 EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
+
+# ============ PROTECOES DE CAPITAL (go-live minimo / canario) ============
+# Travas RIGIDAS aplicadas no executor.py ANTES de qualquer envio ao relay.
+# Pensadas para "testar o mundo real" com perda insignificante.
+#   EXECUTION_MAX_NOTIONAL_USDT -> teto absoluto por ordem (igual ao do PHP).
+#   EXECUTION_MAX_OPEN          -> maximo de posicoes live simultaneas.
+#   EXECUTION_MAX_TRADES_DAY    -> maximo de ordens enviadas por dia (UTC).
+#   EXECUTION_DAILY_LOSS_STOP   -> se a perda do dia (USDT) atingir isto, PARA.
+EXECUTION_MAX_NOTIONAL_USDT = 5.0    # nunca envia ordem acima de $5
+EXECUTION_MAX_OPEN          = 2      # no maximo 2 posicoes live ao mesmo tempo
+EXECUTION_MAX_TRADES_DAY    = 6      # no maximo 6 ordens/dia
+EXECUTION_DAILY_LOSS_STOP   = 10.0   # kill-switch: para tudo se perder $10 no dia
+EXECUTION_STATE_FILE        = "state/execution_guard.json"  # contadores diarios
 
 # Arquivo da "intencao" (lado cerebro). O HMAC secret vem de env
 # (GitHub Secret EXECUTION_HMAC_SECRET); NUNCA fica no codigo.
