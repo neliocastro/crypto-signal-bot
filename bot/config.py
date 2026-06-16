@@ -179,7 +179,7 @@ DASHBOARD_ENABLED = False
 #   EXECUTION_RELAY_URL     -> URL https do braco PHP (vazio = so loga local).
 #   EXECUTION_PAPER_BALANCE -> saldo USDT assumido p/ dimensionar no dry-run.
 EXECUTION_ENABLED       = True
-EXECUTION_DRY_RUN       = True
+EXECUTION_DRY_RUN       = False      # GO-LIVE MINIMO: ordens REAIS (teto $5, stop $10/dia)
 EXECUTION_PCT           = 0.02   # go-live minimo: 2% do saldo por ordem
 EXECUTION_RELAY_URL     = "https://ineo.com.br/cryptosignals/execute.php"  # relay live (HMAC+IP whitelist)
 EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
