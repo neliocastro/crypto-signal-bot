@@ -224,3 +224,50 @@ IMPORTANTE: isto NAO e um esquecimento. E uma escolha deliberada. Nao
 "corrigir" no futuro adicionando macd>0 sem antes validar em backtest/paper.
 
 Sem mudanca de codigo (comportamento atual ja e o desejado).
+
+
+---
+
+## 2026-06-16 — INVESTIGACAO: 3 residuos do bug do trailing
+
+Contexto: apos a medicao mostrar P&L +26.97% (vs baseline -9.46%), 3 trades
+fechados apresentavam perda PIOR que o stop calculado. Investigados um a um
+com timestamps e candles reais da Gate.io (BNB/USDT 1h, 14-16/06).
+
+### Resultado da investigacao
+
+| Trade          | pnl    | stop   | fechou      | veredicto                        |
+|----------------|--------|--------|-------------|----------------------------------|
+| HYPE -7.51%    | -7.51% | -3.68% | 04/06 08h   | FOSSIL pre-fix (9e8b41f). OK.    |
+| HYPE -3.78%    | -3.78% | -2.74% | 13/06 06h   | FOSSIL pre-fix (9e8b41f). OK.    |
+| BNB  -1.42%    | -1.42% | -0.82% | 16/06 17h   | RISCO REAL de mercado (ver abaixo)|
+
+### Detalhe do BNB (16/06): mergulho intra-vela, nao bug
+
+Candles da Gate.io (fonte real do bot):
+- 16/06 12:00 -> preco OK (614.40), acima do stop (609.08)
+- 16/06 13:00 -> vela despencou de 614.60 ate LOW 601.20 (-2.2%) em 1 hora
+- Stop de 609.08 foi furado INTRA-VELA (abriu acima, fechou abaixo)
+- Scan so rodou na hora seguinte -> preco ja estava bem abaixo do stop
+- fill = min(price, stop) pegou o price real (604.xx) -> perda -1.42%
+
+CONCLUSAO: o codigo esta CORRETO. O `min(price, stop)` funciona como esperado.
+A perda acima do stop e RISCO DE MERCADO GENUINO (slippage por gap/vela brusca)
+-- nao e defeito do simulador. Isso acontece com qualquer trader em qualquer
+corretora. O paper esta sendo REALISTA, nao pessimista.
+
+IMPORTANTE: o +26.97% do paper e confiavel. O simulador nao esconde perdas.
+
+### Decisao: manter comportamento atual (nao alterar codigo)
+- Nao aumentar frequencia do scan (mais API calls sem beneficio proporcional)
+- Nao criar "fill garantido no stop" (seria otimista demais para o paper)
+- Registrar slippage como risco inerente ao go-live (stops podem executar
+  levemente pior que o planejado em movimentos bruscos)
+
+### Status geral pos-investigacao (16/06)
+- Codigo limpo: nenhum bug vivo confirmado
+- P&L paper: -9.46% (baseline 14/06) -> +26.97% (16/06)
+- Win-rate: 20% -> 50% (5/10 trades)
+- Melhor trade: HYPE Breakout +16.76% (trailing corrigido funcionou)
+- Bot permanece em EXECUTION_DRY_RUN=True
+- Proxima reavaliacao automatica: segunda-feira 09:00 (Bahia)
