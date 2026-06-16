@@ -1,0 +1,39 @@
+name: relay-dryrun-test
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping relay in dry-run (signed)
+        env:
+          HMAC: ${{ secrets.EXECUTION_HMAC_SECRET }}
+        run: |
+          python - <<'PY'
+          import os, json, hmac, hashlib, urllib.request, uuid
+          secret = os.environ["HMAC"].encode()
+          url = "https://ineo.com.br/cryptosignals/execute.php"
+          order = {
+              "symbol": "BTC/USDT",
+              "notional_usdt": 1.0,
+              "signal_id": "relaytest-" + uuid.uuid4().hex[:10],
+              "ref_price": 0,
+              "note": "teste forcado dry-run (nao executa)"
+          }
+          raw = json.dumps(order).encode()
+          sig = hmac.new(secret, raw, hashlib.sha256).hexdigest()
+          req = urllib.request.Request(url, data=raw, method="POST",
+              headers={"Content-Type": "application/json", "X-Signature": sig})
+          try:
+              with urllib.request.urlopen(req, timeout=20) as r:
+                  body = r.read().decode()
+                  print("HTTP", r.status)
+                  print("RESPOSTA DO RELAY:")
+                  print(body)
+          except urllib.error.HTTPError as e:
+              print("HTTP", e.code)
+              print("RESPOSTA (erro):", e.read().decode())
+          except Exception as e:
+              print("FALHA conexao:", repr(e))
+          PY
