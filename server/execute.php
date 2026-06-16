@@ -12,7 +12,7 @@
  *   3) Teto rigido: recusa notional acima de MAX_NOTIONAL_USDT.
  *   4) Idempotencia: mesmo signal_id nunca executa 2x.
  *
- * Chaves Gate.io: FORA da web root (ex.: /home/nelio/secrets/.env). Nunca aqui.
+ * Chaves Gate.io: FORA da web root (ex.: /home/ineocom/cryptosignals/secrets/.env). Nunca aqui.
  */
 
 // ===================== CONFIG =====================
@@ -24,7 +24,7 @@ $LOG_FILE           = __DIR__ . '/execution_log.jsonl';
 $SEEN_FILE          = __DIR__ . '/seen_signals.json';   // idempotencia
 
 // Segredos fora da web root:
-$secrets = @parse_ini_file('/home/nelio/secrets/.env');
+$secrets = @parse_ini_file('/home/ineocom/cryptosignals/secrets/.env');
 $HMAC_SECRET = $secrets['EXECUTION_HMAC_SECRET'] ?? '';
 $GATE_KEY    = $secrets['GATE_API_KEY'] ?? '';
 $GATE_SECRET = $secrets['GATE_API_SECRET'] ?? '';
