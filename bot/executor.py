@@ -32,6 +32,7 @@ try:
         EXECUTION_PCT,
         EXECUTION_RELAY_URL,
         EXECUTION_MAX_NOTIONAL_USDT,
+        EXECUTION_MIN_NOTIONAL_USDT,
         EXECUTION_MAX_OPEN,
         EXECUTION_MAX_TRADES_DAY,
         EXECUTION_DAILY_LOSS_STOP,
@@ -43,6 +44,7 @@ except Exception:  # degradacao segura: sem config -> camada inerte
     EXECUTION_PCT = 0.02
     EXECUTION_RELAY_URL = ""
     EXECUTION_MAX_NOTIONAL_USDT = 5.0
+    EXECUTION_MIN_NOTIONAL_USDT = 3.0
     EXECUTION_MAX_OPEN = 2
     EXECUTION_MAX_TRADES_DAY = 6
     EXECUTION_DAILY_LOSS_STOP = 10.0
@@ -126,7 +128,9 @@ def build_order(signal: dict, balance_usdt: float) -> dict:
     """Monta a intencao de ordem (a mercado) a partir de um sinal de COMPRA."""
     price = _ref_price(signal)
     notional = round(float(balance_usdt) * float(EXECUTION_PCT), 2)
-    # clamp rigido: nunca acima do teto, mesmo com saldo grande ou bug de %.
+    # piso: Gate.io rejeita ordem < $3 ("too small"). Eleva ao minimo...
+    notional = max(notional, float(EXECUTION_MIN_NOTIONAL_USDT))
+    # clamp rigido: ...mas nunca acima do teto (teto > piso garantido).
     notional = min(notional, float(EXECUTION_MAX_NOTIONAL_USDT))
     qty = (notional / price) if price else None
     return {
