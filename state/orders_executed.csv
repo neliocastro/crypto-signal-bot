@@ -4,3 +4,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-06-16T22:30:06.918121+00:00,c850f45ba68e9df1,LINK/USDT,buy,5.0,8.314,,,REAL,skipped,relay/segredo nao configurado
 2026-06-16T22:35:27.949832+00:00,c850f45ba68e9df1,LINK/USDT,buy,5.0,8.314,,,REAL,rejected_by_exchange,INVALID_PARAM_VALUE
 2026-06-16T22:40:46.961434+00:00,c850f45ba68e9df1,LINK/USDT,buy,5.0,8.314,,,REAL,duplicate,signal_id ja processado
+2026-06-16T22:50:30.472521+00:00,c850f45ba68e9df1,LINK/USDT,buy,5.0,8.314,,,REAL,duplicate,signal_id ja processado
