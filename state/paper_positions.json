@@ -1,32 +1,5 @@
 {
-  "open": [
-    {
-      "signal_id": "0b3a9b4cef3c7143",
-      "symbol": "HYPE/USDT",
-      "strategy": "Breakout / Tendência",
-      "exit_kind": "trailing",
-      "entry": 63.023,
-      "stop": 73.59362451999999,
-      "risk_dist": 2.2403754800000044,
-      "tp": 69.74412643,
-      "peak": 75.834,
-      "opened_at": "2026-06-14T21:00:00+00:00",
-      "opened_scan_utc": "2026-06-14T22:48:36.742443+00:00"
-    },
-    {
-      "signal_id": "3e2ccbdf25070ef4",
-      "symbol": "BNB/USDT",
-      "strategy": "Tendência MACD — Agressivo",
-      "exit_kind": "fixed",
-      "entry": 614.1,
-      "stop": 609.08125721,
-      "risk_dist": 5.018742790000033,
-      "tp": 629.15622836,
-      "peak": 614.1,
-      "opened_at": "2026-06-14T22:00:00+00:00",
-      "opened_scan_utc": "2026-06-14T23:53:53.651361+00:00"
-    }
-  ],
+  "open": [],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",
@@ -171,6 +144,42 @@
       "closed_at": "2026-06-15T13:34:56.310543+00:00",
       "pnl_pct": 11.2277,
       "pnl_usdt": 0.112277
+    },
+    {
+      "signal_id": "0b3a9b4cef3c7143",
+      "symbol": "HYPE/USDT",
+      "strategy": "Breakout / Tendência",
+      "exit_kind": "trailing",
+      "entry": 63.023,
+      "stop": 73.59362451999999,
+      "risk_dist": 2.2403754800000044,
+      "tp": 69.74412643,
+      "peak": 75.834,
+      "opened_at": "2026-06-14T21:00:00+00:00",
+      "opened_scan_utc": "2026-06-14T22:48:36.742443+00:00",
+      "exit": 73.586,
+      "exit_reason": "trailing_stop",
+      "closed_at": "2026-06-16T17:26:11.253251+00:00",
+      "pnl_pct": 16.7605,
+      "pnl_usdt": 0.167605
+    },
+    {
+      "signal_id": "3e2ccbdf25070ef4",
+      "symbol": "BNB/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 614.1,
+      "stop": 609.08125721,
+      "risk_dist": 5.018742790000033,
+      "tp": 629.15622836,
+      "peak": 614.1,
+      "opened_at": "2026-06-14T22:00:00+00:00",
+      "opened_scan_utc": "2026-06-14T23:53:53.651361+00:00",
+      "exit": 605.4,
+      "exit_reason": "stop",
+      "closed_at": "2026-06-16T17:26:11.253276+00:00",
+      "pnl_pct": -1.4167,
+      "pnl_usdt": -0.014167
     }
   ],
   "last_report_utc": "2026-06-13T23:46:57.803838+00:00"
