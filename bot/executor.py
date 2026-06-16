@@ -30,12 +30,22 @@ try:
         EXECUTION_DRY_RUN,
         EXECUTION_PCT,
         EXECUTION_RELAY_URL,
+        EXECUTION_MAX_NOTIONAL_USDT,
+        EXECUTION_MAX_OPEN,
+        EXECUTION_MAX_TRADES_DAY,
+        EXECUTION_DAILY_LOSS_STOP,
+        EXECUTION_STATE_FILE,
     )
 except Exception:  # degradacao segura: sem config -> camada inerte
     EXECUTION_ENABLED = False
     EXECUTION_DRY_RUN = True
-    EXECUTION_PCT = 0.10
+    EXECUTION_PCT = 0.02
     EXECUTION_RELAY_URL = ""
+    EXECUTION_MAX_NOTIONAL_USDT = 5.0
+    EXECUTION_MAX_OPEN = 2
+    EXECUTION_MAX_TRADES_DAY = 6
+    EXECUTION_DAILY_LOSS_STOP = 10.0
+    EXECUTION_STATE_FILE = "state/execution_guard.json"
 
 PAPER_TRADES_FILE = "state/paper_trades.jsonl"
 # O segredo HMAC vem de variavel de ambiente (GitHub Secret). NUNCA hardcode.
@@ -57,10 +67,65 @@ def _ref_price(signal: dict):
     return signal.get("entry") or signal.get("price")
 
 
+
+# ===================== PROTECOES DE CAPITAL (go-live minimo) =====================
+def _today_utc() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
+def _load_guard_state() -> dict:
+    """Estado diario das travas. Zera sozinho quando vira o dia (UTC)."""
+    try:
+        with open(EXECUTION_STATE_FILE, "r", encoding="utf-8") as fh:
+            st = json.load(fh)
+    except Exception:
+        st = {}
+    if st.get("day") != _today_utc():  # novo dia -> zera contadores
+        st = {"day": _today_utc(), "trades_today": 0, "open_positions": 0, "realized_loss_today": 0.0}
+    st.setdefault("trades_today", 0)
+    st.setdefault("open_positions", 0)
+    st.setdefault("realized_loss_today", 0.0)
+    return st
+
+
+def _save_guard_state(st: dict) -> None:
+    os.makedirs(os.path.dirname(EXECUTION_STATE_FILE), exist_ok=True)
+    with open(EXECUTION_STATE_FILE, "w", encoding="utf-8") as fh:
+        json.dump(st, fh)
+
+
+def check_guards(order: dict) -> tuple[bool, str]:
+    """Retorna (pode_enviar, motivo). Travas RIGIDAS antes de qualquer envio."""
+    st = _load_guard_state()
+    # 1) stop de perda diaria (kill-switch)
+    if float(st["realized_loss_today"]) >= float(EXECUTION_DAILY_LOSS_STOP):
+        return False, f"stop diario atingido (perda {st['realized_loss_today']:.2f} >= {EXECUTION_DAILY_LOSS_STOP})"
+    # 2) maximo de ordens por dia
+    if int(st["trades_today"]) >= int(EXECUTION_MAX_TRADES_DAY):
+        return False, f"limite diario de ordens atingido ({EXECUTION_MAX_TRADES_DAY})"
+    # 3) maximo de posicoes abertas
+    if int(st["open_positions"]) >= int(EXECUTION_MAX_OPEN):
+        return False, f"limite de posicoes abertas atingido ({EXECUTION_MAX_OPEN})"
+    # 4) teto por ordem (defesa em profundidade; PHP tambem recusa)
+    if float(order.get("notional_usdt", 0)) > float(EXECUTION_MAX_NOTIONAL_USDT):
+        return False, f"notional {order.get('notional_usdt')} acima do teto {EXECUTION_MAX_NOTIONAL_USDT}"
+    return True, "ok"
+
+
+def _register_sent_order() -> None:
+    """Apos enviar uma ordem real, incrementa contadores diarios."""
+    st = _load_guard_state()
+    st["trades_today"] = int(st["trades_today"]) + 1
+    st["open_positions"] = int(st["open_positions"]) + 1
+    _save_guard_state(st)
+
+
 def build_order(signal: dict, balance_usdt: float) -> dict:
     """Monta a intencao de ordem (a mercado) a partir de um sinal de COMPRA."""
     price = _ref_price(signal)
     notional = round(float(balance_usdt) * float(EXECUTION_PCT), 2)
+    # clamp rigido: nunca acima do teto, mesmo com saldo grande ou bug de %.
+    notional = min(notional, float(EXECUTION_MAX_NOTIONAL_USDT))
     qty = (notional / price) if price else None
     return {
         "signal_id": _signal_id(signal),
@@ -123,8 +188,19 @@ def maybe_execute(signal: dict, balance_usdt: float) -> dict | None:
     # 1) registra SEMPRE a intencao (verdade do lado do cerebro)
     _append_jsonl(PAPER_TRADES_FILE, {"event": "intent", **order})
 
+    # 1.5) PROTECOES DE CAPITAL: travas rigidas antes de enviar.
+    ok, reason = check_guards(order)
+    if not ok:
+        blocked = {"status": "blocked_by_guard", "reason": reason}
+        _append_jsonl(PAPER_TRADES_FILE, {"event": "guard_block", "signal_id": order["signal_id"], "result": blocked, "ts": _now_iso()})
+        return {"order": order, "result": blocked}
+
     # 2) envia ao relay (Fase 1: relay responde simulando, nao executa)
     result = send_order(order)
+
+    # 2.5) se a ordem REAL foi de fato enviada (nao dry-run/skip), conta nos limites do dia
+    if isinstance(result, dict) and result.get("status") in ("filled", "accepted", "ok"):
+        _register_sent_order()
 
     # 3) registra a resposta do relay (verdade do lado do braco)
     _append_jsonl(PAPER_TRADES_FILE, {
