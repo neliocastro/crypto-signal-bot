@@ -34,3 +34,5 @@
 {"event": "relay_response", "signal_id": "c850f45ba68e9df1", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-16T22:19:33.648657+00:00"}
 {"event": "intent", "signal_id": "c850f45ba68e9df1", "symbol": "LINK/USDT", "side": "buy", "type": "market", "strategy": "Tendência MACD — Agressivo", "notional_usdt": 5.0, "qty": 0.6013952369497233, "ref_price": 8.314, "dry_run": false, "ts": "2026-06-16T22:24:50.966126+00:00"}
 {"event": "relay_response", "signal_id": "c850f45ba68e9df1", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-16T22:24:50.966335+00:00"}
+{"event": "intent", "signal_id": "c850f45ba68e9df1", "symbol": "LINK/USDT", "side": "buy", "type": "market", "strategy": "Tendência MACD — Agressivo", "notional_usdt": 5.0, "qty": 0.6013952369497233, "ref_price": 8.314, "dry_run": false, "ts": "2026-06-16T22:30:06.917796+00:00"}
+{"event": "relay_response", "signal_id": "c850f45ba68e9df1", "result": {"status": "skipped", "reason": "relay/segredo nao configurado"}, "ts": "2026-06-16T22:30:06.918010+00:00"}
