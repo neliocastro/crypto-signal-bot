@@ -17,7 +17,7 @@
 
 // ===================== CONFIG =====================
 $DRY_RUN            = true;                 // FASE 1: true. So mude p/ false na Fase 2.
-$MAX_NOTIONAL_USDT  = 20.0;                 // teto rigido (protege de bug no Python)
+$MAX_NOTIONAL_USDT  = 5.0;                 // teto rigido (protege de bug no Python)
 $SYMBOL_WHITELIST   = ['HYPE/USDT','LINK/USDT','BTC/USDT','ETH/USDT','SOL/USDT',
                        'XRP/USDT','TRX/USDT','BNB/USDT','AAVE/USDT'];
 $LOG_FILE           = __DIR__ . '/execution_log.jsonl';
@@ -39,6 +39,22 @@ function respond($arr, $code = 200) {
 function log_event($file, $record) {
     $record['ts'] = gmdate('c');
     file_put_contents($file, json_encode($record, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND);
+}
+
+// ----- Assinatura Gate.io v4 (DIFERENTE do HMAC Python<->PHP) -----
+// SIGN = HMAC-SHA512 de: "METHOD\nPATH\nQUERY\nSHA512(body)\nTIMESTAMP"
+function gate_headers($method, $path, $query, $body, $key, $secret) {
+    $ts = time();
+    $hashed_body = hash('sha512', $body);
+    $payload = "$method\n$path\n$query\n$hashed_body\n$ts";
+    $sign = hash_hmac('sha512', $payload, $secret);
+    return [
+        "KEY: $key",
+        "Timestamp: $ts",
+        "SIGN: $sign",
+        "Content-Type: application/json",
+        "Accept: application/json",
+    ];
 }
 
 // ===================== 1) VALIDA HMAC =====================
@@ -90,9 +106,62 @@ if ($DRY_RUN) {
         'note'          => 'FASE 1: ordem NAO enviada (dry-run)',
     ];
 } else {
-    // FASE 2: aqui entraria o cURL assinado p/ POST /spot/orders na Gate.io,
-    // usando $GATE_KEY/$GATE_SECRET. Mantido fechado na Fase 1.
-    $result = ['status' => 'real_disabled', 'reason' => 'execucao real ainda nao habilitada'];
+    // ===================== FASE 2: EXECUCAO REAL (Gate.io v4) =====================
+    // Triplo cinto continua valendo: HMAC + whitelist + teto $MAX_NOTIONAL_USDT.
+    // Ordem a MERCADO de compra. Na Gate.io spot market-buy, "amount" = USDT a gastar.
+    if (!$GATE_KEY || !$GATE_SECRET) {
+        $result = ['status' => 'error', 'reason' => 'chave Gate.io ausente no .env do servidor'];
+    } else {
+        $path  = '/api/v4/spot/orders';
+        $bodyArr = [
+            'currency_pair' => $pair,            // ex.: BTC_USDT
+            'side'          => 'buy',
+            'type'          => 'market',
+            'account'       => 'spot',
+            'amount'        => (string)$notional, // market-buy: amount em USDT (quote)
+            'text'          => 't-' . substr($sid, 0, 12), // tag p/ rastrear (idempotencia)
+        ];
+        $bodyJson = json_encode($bodyArr, JSON_UNESCAPED_SLASHES);
+        $headers  = gate_headers('POST', $path, '', $bodyJson, $GATE_KEY, $GATE_SECRET);
+
+        $ch = curl_init('https://api.gateio.ws' . $path);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $bodyJson,
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_TIMEOUT        => 15,
+        ]);
+        $raw_resp = curl_exec($ch);
+        $http     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_err = curl_error($ch);
+        curl_close($ch);
+
+        $gate = $raw_resp ? json_decode($raw_resp, true) : null;
+        if ($curl_err) {
+            $result = ['status' => 'error', 'reason' => "curl: $curl_err"];
+        } elseif ($http >= 200 && $http < 300 && isset($gate['id'])) {
+            $result = [
+                'status'       => 'filled',
+                'order_id'     => $gate['id'],
+                'symbol'       => $symbol,
+                'side'         => 'buy',
+                'gate_status'  => $gate['status']        ?? null,
+                'filled_total' => $gate['filled_total']  ?? null,  // USDT gasto
+                'fill_price'   => $gate['avg_deal_price'] ?? $ask,  // preco medio real
+                'amount_base'  => $gate['amount']        ?? null,
+                'http'         => $http,
+            ];
+        } else {
+            // Gate.io rejeitou (saldo, par, permissao...). Loga o motivo, nao quebra.
+            $result = [
+                'status' => 'rejected_by_exchange',
+                'http'   => $http,
+                'reason' => $gate['label'] ?? ($gate['message'] ?? 'erro desconhecido'),
+                'detail' => $gate,
+            ];
+        }
+    }
 }
 
 // ===================== 5) LOG + idempotencia + resposta =====================
