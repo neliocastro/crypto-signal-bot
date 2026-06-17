@@ -11,3 +11,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-06-17T18:18:18.259910+00:00,741043b46116bf3b,AAVE/USDT,buy,5.0,77.04,,,REAL,duplicate,signal_id ja processado
 2026-06-17T18:23:36.661640+00:00,741043b46116bf3b,AAVE/USDT,buy,5.0,77.04,,,REAL,duplicate,signal_id ja processado
 2026-06-17T18:28:56.331742+00:00,741043b46116bf3b,AAVE/USDT,buy,5.0,77.04,,,REAL,duplicate,signal_id ja processado
+2026-06-17T18:34:12.689356+00:00,741043b46116bf3b,AAVE/USDT,buy,5.0,77.04,,,REAL,duplicate,signal_id ja processado
