@@ -1,19 +1,5 @@
 {
-  "open": [
-    {
-      "signal_id": "c850f45ba68e9df1",
-      "symbol": "LINK/USDT",
-      "strategy": "Tendência MACD — Agressivo",
-      "exit_kind": "fixed",
-      "entry": 8.314,
-      "stop": 8.18002077,
-      "risk_dist": 0.13397922999999956,
-      "tp": 8.71593769,
-      "peak": 8.314,
-      "opened_at": "2026-06-16T21:00:00+00:00",
-      "opened_scan_utc": "2026-06-16T22:19:34.203860+00:00"
-    }
-  ],
+  "open": [],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",
@@ -194,6 +180,24 @@
       "closed_at": "2026-06-16T17:26:11.253276+00:00",
       "pnl_pct": -1.4167,
       "pnl_usdt": -0.014167
+    },
+    {
+      "signal_id": "c850f45ba68e9df1",
+      "symbol": "LINK/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 8.314,
+      "stop": 8.18002077,
+      "risk_dist": 0.13397922999999956,
+      "tp": 8.71593769,
+      "peak": 8.314,
+      "opened_at": "2026-06-16T21:00:00+00:00",
+      "opened_scan_utc": "2026-06-16T22:19:34.203860+00:00",
+      "exit": 8.18,
+      "exit_reason": "stop",
+      "closed_at": "2026-06-17T08:44:32.952120+00:00",
+      "pnl_pct": -1.6117,
+      "pnl_usdt": -0.016117
     }
   ],
   "last_report_utc": "2026-06-13T23:46:57.803838+00:00"
