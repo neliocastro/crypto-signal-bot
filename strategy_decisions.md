@@ -43,3 +43,39 @@ Evita que decisoes conscientes sejam revertidas por engano no futuro.
 ### Commits desta sessao
 - config.py: EXECUTION_MIN_NOTIONAL_USDT=3.0 (commit 2fc293f)
 - executor.py: piso $3 em build_order (commit c4b6740)
+
+---
+
+## 2026-06-17 — SAIDA AUTOMATICA (TP/SL nativos na Gate.io) IMPLEMENTADA 🎯
+
+### Marco
+- Toda compra agora NASCE PROTEGIDA: alem da ordem market, o relay anexa
+  Take-Profit e Stop-Loss como ordens price-triggered nativas na Gate.io.
+- Validado em teste real: compra order_id 1084748113878 (BTC @ $64.593,80, ~$3)
+  + TP id 2067427661151469568 (>= $72.000) + SL id 2067427666172051456 (<= $62.000),
+  todas HTTP 201. (Posicao de teste — gerenciar/vender manualmente.)
+
+### Design da saida (ATR-based, configuravel)
+- SL = entrada - (EXECUTION_ATR_MULT_SL * ATR)   -> default 2.0x
+- TP = entrada + (EXECUTION_TP_RR * risco)        -> default 2.0 (R:R 1:2)
+- ATR(14) ja calculado em indicators.py e propagado no sinal (main.py).
+- Parametros em config.py, com kill-switch EXECUTION_TPSL_ENABLED.
+- Decisao do multiplicador: 2.0x (configuravel). Nota: breakout HYPE usa 2.5x
+  (validado em backtest); 1.5x foi considerado apertado demais p/ timeframe 1h.
+
+### CONFIRMADO: Gate.io SPOT nao tem OCO nativo atomico
+- TP e SL sao ordens INDEPENDENTES (/spot/price_orders). A corretora NAO cancela
+  a irma quando uma executa. Mitigacao atual: expiration=86400s (24h) mata o orfao.
+
+### PENDENCIA TECNICA (proximo passo planejado): OCO emulado pelo bot
+- Falta: a cada scan, o bot listar price_orders na Gate.io, detectar gatilho orfao
+  (1 lado executou, outro pendente) e cancelar o restante.
+- Exige 2 novos endpoints no execute.php (listar + cancelar price_orders) + logica
+  de pareamento TP<->SL por compra. Risco do orfao hoje e baixo (ordens $3-5,
+  expiration 24h, Gate.io rejeita orfao por saldo). Implementar com servidor disponivel p/ teste.
+
+### Commits desta etapa
+- config.py: EXECUTION_ATR_MULT_SL=2.0, EXECUTION_TP_RR=2.0, EXECUTION_TPSL_ENABLED (commit e72bbc5)
+- executor.py: sl_price/tp_price por ATR no build_order (commit af41cc5)
+- execute.php (no servidor, fora do GitHub): bloco price_orders apos compra filled.
+- test_relay.php (servidor): atualizado com sl_price/tp_price + resumo TP/SL.
