@@ -33,6 +33,9 @@ try:
         EXECUTION_RELAY_URL,
         EXECUTION_MAX_NOTIONAL_USDT,
         EXECUTION_MIN_NOTIONAL_USDT,
+        EXECUTION_ATR_MULT_SL,
+        EXECUTION_TP_RR,
+        EXECUTION_TPSL_ENABLED,
         EXECUTION_MAX_OPEN,
         EXECUTION_MAX_TRADES_DAY,
         EXECUTION_DAILY_LOSS_STOP,
@@ -45,6 +48,9 @@ except Exception:  # degradacao segura: sem config -> camada inerte
     EXECUTION_RELAY_URL = ""
     EXECUTION_MAX_NOTIONAL_USDT = 5.0
     EXECUTION_MIN_NOTIONAL_USDT = 3.0
+    EXECUTION_ATR_MULT_SL = 2.0
+    EXECUTION_TP_RR = 2.0
+    EXECUTION_TPSL_ENABLED = True
     EXECUTION_MAX_OPEN = 2
     EXECUTION_MAX_TRADES_DAY = 6
     EXECUTION_DAILY_LOSS_STOP = 10.0
@@ -133,6 +139,22 @@ def build_order(signal: dict, balance_usdt: float) -> dict:
     # clamp rigido: ...mas nunca acima do teto (teto > piso garantido).
     notional = min(notional, float(EXECUTION_MAX_NOTIONAL_USDT))
     qty = (notional / price) if price else None
+
+    # --- Saida automatica: calcula SL/TP por volatilidade (ATR) ---
+    # SL = entrada - (mult * ATR)  |  TP = entrada + (RR * risco)
+    sl_price = None
+    tp_price = None
+    try:
+        atr = float(signal.get("atr") or 0)
+    except (TypeError, ValueError):
+        atr = 0.0
+    if EXECUTION_TPSL_ENABLED and price and atr > 0:
+        risco = float(EXECUTION_ATR_MULT_SL) * atr   # distancia do stop em $
+        sl_price = round(price - risco, 8)
+        tp_price = round(price + float(EXECUTION_TP_RR) * risco, 8)
+        if sl_price <= 0:                            # guarda: nunca SL negativo
+            sl_price = None
+
     return {
         "signal_id": _signal_id(signal),
         "symbol": signal.get("symbol"),
@@ -142,6 +164,9 @@ def build_order(signal: dict, balance_usdt: float) -> dict:
         "notional_usdt": notional,
         "qty": qty,
         "ref_price": price,                  # preco no momento do sinal
+        "atr": atr,                          # ATR usado p/ dimensionar SL/TP
+        "sl_price": sl_price,                # stop-loss (None se ATR ausente)
+        "tp_price": tp_price,                # take-profit
         "dry_run": bool(EXECUTION_DRY_RUN),
         "ts": _now_iso(),
     }
