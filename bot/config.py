@@ -193,6 +193,10 @@ EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
 #   EXECUTION_DAILY_LOSS_STOP   -> se a perda do dia (USDT) atingir isto, PARA.
 EXECUTION_MAX_NOTIONAL_USDT = 5.0    # nunca envia ordem acima de $5
 EXECUTION_MIN_NOTIONAL_USDT = 3.0    # piso: Gate.io rejeita ordem < $3 (too small)
+# --- Saida automatica (TP/SL nativos na Gate.io, anexados a cada compra) ---
+EXECUTION_ATR_MULT_SL = 2.0    # Stop-Loss = entrada - (mult * ATR). Configuravel (subir p/ 2.5 = mais folga)
+EXECUTION_TP_RR       = 2.0    # Take-Profit = entrada + (RR * risco). RR 2.0 = alvo 2x o risco
+EXECUTION_TPSL_ENABLED = True  # kill-switch: False = volta a comprar sem TP/SL
 EXECUTION_MAX_OPEN          = 2      # no maximo 2 posicoes live ao mesmo tempo
 EXECUTION_MAX_TRADES_DAY    = 6      # no maximo 6 ordens/dia
 EXECUTION_DAILY_LOSS_STOP   = 10.0   # kill-switch: para tudo se perder $10 no dia
