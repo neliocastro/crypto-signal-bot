@@ -18,3 +18,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-06-17T18:55:41.118213+00:00,741043b46116bf3b,AAVE/USDT,buy,5.0,77.04,,,REAL,duplicate,signal_id ja processado
 2026-06-19T17:07:52.743642+00:00,71342ff30e073a30,TRX/USDT,buy,5.0,0.32219,0.3222,,REAL,filled,
 2026-06-19T17:13:09.939861+00:00,71342ff30e073a30,TRX/USDT,buy,5.0,0.32219,,,REAL,duplicate,signal_id ja processado
+2026-06-19T17:22:51.195078+00:00,71342ff30e073a30,TRX/USDT,buy,5.0,0.32219,,,REAL,duplicate,signal_id ja processado
