@@ -223,6 +223,38 @@ def main() -> int:
 
     qualified_signals = [d["signal"] for d in diagnostics if d.get("signal")]
 
+    # --- FIX SL/TP (bug TRX 2026-06-19): propaga ATR do candle para o sinal ---
+    # As estrategias nao incluem "atr" no dict retornado; sem ele o executor
+    # (build_order) usa atr=0 -> SL/TP=None -> ordem REAL sai DESPROTEGIDA.
+    # Aqui temos diag["atr"] do mesmo ativo: injeta no sig se faltar.
+    # Type-safe: o sinal pode ser dict OU objeto, dependendo da estrategia.
+    def _sig_get_atr(_s):
+        try:
+            if isinstance(_s, dict):
+                return float(_s.get("atr") or 0)
+            return float(getattr(_s, "atr", 0) or 0)
+        except (TypeError, ValueError):
+            return 0.0
+    def _sig_set_atr(_s, _v):
+        if isinstance(_s, dict):
+            _s["atr"] = _v
+        else:
+            try:
+                setattr(_s, "atr", _v)
+            except Exception:
+                pass
+    for _d in diagnostics:
+        _s = _d.get("signal")
+        if not _s:
+            continue
+        try:
+            _atr_val = _d.get("atr")
+            if _sig_get_atr(_s) <= 0 and _atr_val is not None and _atr_val == _atr_val and float(_atr_val) > 0:
+                _sig_set_atr(_s, float(_atr_val))
+                log.info("[FIX-ATR] %s: ATR=%.8f propagado p/ SL/TP", _d.get("symbol"), float(_atr_val))
+        except Exception as _e_atr:
+            log.warning("[FIX-ATR] %s: falha ao propagar ATR (%s)", _d.get("symbol"), _e_atr)
+
     # 3) Envia sinais qualificados (1 msg cada)
     for sig in qualified_signals:
         try:
@@ -273,7 +305,7 @@ def main() -> int:
             if _paper_eval.maybe_send_weekly_report(send):
                 log.info("\U0001f4e8 Relatorio semanal de paper trading enviado.")
         except Exception:
-            log.error("Falha no relatorio semanal (ignorada):\n%s",
+            log.error("Falha no relatorio semanal (ignarada):\n%s",
                       traceback.format_exc())
 
     # 4) Envia resumo do scan (sempre)
