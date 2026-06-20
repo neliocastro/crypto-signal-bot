@@ -128,8 +128,20 @@ def should_run_now(cfg: dict[str, Any], now_utc: datetime | None = None) -> tupl
     return False, f"aguardando — proximo em {interval - minutes_since:.1f}min"
 
 
-def mark_scan_ran(updated_by: str = "scan") -> None:
-    """Atualiza last_scan_utc para agora."""
+def mark_scan_ran(updated_by: str = "scan", fg=None, signals_count=None) -> None:
+    """Atualiza last_scan_utc para agora.
+
+    Opcionalmente grava o ultimo Fear & Greed (dict {score,label,emoji})
+    e a contagem de sinais do scan, para uso em relatorios (ex.: resumo diario).
+    """
     cfg = load()
     cfg["last_scan_utc"] = datetime.now(timezone.utc).isoformat()
+    if isinstance(fg, dict):
+        cfg["fear_greed"] = {
+            "score": fg.get("score"),
+            "label": fg.get("label", ""),
+            "emoji": fg.get("emoji", ""),
+        }
+    if signals_count is not None:
+        cfg["last_signals_count"] = int(signals_count)
     save(cfg, updated_by=updated_by)
