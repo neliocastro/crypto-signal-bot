@@ -26,3 +26,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-06-20T11:06:29.206116+00:00,1545c6b29b8e9e62,TRX/USDT,buy,5.0,0.3242,0.32416,,REAL,filled,
 2026-06-20T11:16:07.120483+00:00,1545c6b29b8e9e62,TRX/USDT,buy,5.0,0.3242,,,REAL,duplicate,signal_id ja processado
 2026-06-20T11:25:49.441367+00:00,1545c6b29b8e9e62,TRX/USDT,buy,5.0,0.3242,,,REAL,duplicate,signal_id ja processado
+2026-06-20T11:35:31.555283+00:00,1545c6b29b8e9e62,TRX/USDT,buy,5.0,0.3242,,,REAL,duplicate,signal_id ja processado
