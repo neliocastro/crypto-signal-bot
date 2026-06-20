@@ -197,6 +197,7 @@ EXECUTION_MIN_NOTIONAL_USDT = 3.0    # piso: Gate.io rejeita ordem < $3 (too sma
 EXECUTION_ATR_MULT_SL = 2.0    # Stop-Loss = entrada - (mult * ATR). Configuravel (subir p/ 2.5 = mais folga)
 EXECUTION_TP_RR       = 2.0    # Take-Profit = entrada + (RR * risco). RR 2.0 = alvo 2x o risco
 EXECUTION_TPSL_ENABLED = True  # kill-switch: False = volta a comprar sem TP/SL
+EXECUTION_MIN_STOP_PCT = 0.8   # piso de afastamento do stop (% do preco). Bug TRX: ATR baixo (0.25%) gerava stop coladissimo (-0.5%) -> ruido estopava
 EXECUTION_MAX_OPEN          = 2      # no maximo 2 posicoes live ao mesmo tempo
 EXECUTION_MAX_TRADES_DAY    = 6      # no maximo 6 ordens/dia
 EXECUTION_DAILY_LOSS_STOP   = 10.0   # kill-switch: para tudo se perder $10 no dia
