@@ -22,7 +22,10 @@ import json
 import os
 import time
 import urllib.request
+import logging
 from datetime import datetime, timezone
+
+log = logging.getLogger("bot.executor")
 
 # --- Config com fallback seguro (se faltar no config.py, assume desligado) ---
 try:
@@ -41,6 +44,10 @@ try:
         EXECUTION_DAILY_LOSS_STOP,
         EXECUTION_STATE_FILE,
     )
+    try:
+        from .config import EXECUTION_MIN_STOP_PCT
+    except Exception:
+        EXECUTION_MIN_STOP_PCT = 0.8
 except Exception:  # degradacao segura: sem config -> camada inerte
     EXECUTION_ENABLED = False
     EXECUTION_DRY_RUN = True
@@ -49,6 +56,7 @@ except Exception:  # degradacao segura: sem config -> camada inerte
     EXECUTION_MAX_NOTIONAL_USDT = 5.0
     EXECUTION_MIN_NOTIONAL_USDT = 3.0
     EXECUTION_ATR_MULT_SL = 2.0
+    EXECUTION_MIN_STOP_PCT = 0.8  # piso de afastamento do stop (% do preco)
     EXECUTION_TP_RR = 2.0
     EXECUTION_TPSL_ENABLED = True
     EXECUTION_MAX_OPEN = 2
@@ -145,11 +153,24 @@ def build_order(signal: dict, balance_usdt: float) -> dict:
     sl_price = None
     tp_price = None
     try:
-        atr = float(signal.get("atr") or 0)
+        if isinstance(signal, dict):
+            atr = float(signal.get("atr") or 0)
+        else:
+            atr = float(getattr(signal, "atr", 0) or 0)
     except (TypeError, ValueError):
         atr = 0.0
     if EXECUTION_TPSL_ENABLED and price and atr > 0:
         risco = float(EXECUTION_ATR_MULT_SL) * atr   # distancia do stop em $
+        # PISO DE VOLATILIDADE (bug TRX): em ativos de baixa vol (ATR ~0.25%),
+        # 2*ATR gera stop coladissimo (-0.5%) -> estopado por ruido. Garante um
+        # afastamento minimo do preco (EXECUTION_MIN_STOP_PCT, default 0.8%).
+        try:
+            _min_stop_pct = float(globals().get("EXECUTION_MIN_STOP_PCT", 0.8))
+        except Exception:
+            _min_stop_pct = 0.8
+        _min_dist = float(price) * (_min_stop_pct / 100.0)
+        if _min_dist > risco:
+            risco = _min_dist
         sl_price = round(price - risco, 8)
         tp_price = round(price + float(EXECUTION_TP_RR) * risco, 8)
         if sl_price <= 0:                            # guarda: nunca SL negativo
