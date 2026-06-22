@@ -74,3 +74,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-06-22T06:53:12.648503+00:00,cecd04867f1eb349,BTC/USDT,buy,5.0,64243.6,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-06-22T13:07:12.958651+00:00,ce3042c3bccf2d85,SOL/USDT,buy,5.0,74.42,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-06-22T13:16:59.477226+00:00,ce3042c3bccf2d85,SOL/USDT,buy,5.0,74.42,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
+2026-06-22T13:22:12.393423+00:00,ce3042c3bccf2d85,SOL/USDT,buy,5.0,74.42,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
