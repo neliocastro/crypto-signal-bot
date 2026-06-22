@@ -64,3 +64,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-06-22T03:41:10.853655+00:00,c33c6496b64d16db,BTC/USDT,buy,5.0,64258.6,,,REAL,duplicate,signal_id ja processado
 2026-06-22T03:50:49.311680+00:00,c33c6496b64d16db,BTC/USDT,buy,5.0,64258.6,,,REAL,duplicate,signal_id ja processado
 2026-06-22T04:00:30.573939+00:00,c33c6496b64d16db,BTC/USDT,buy,5.0,64258.6,,,REAL,duplicate,signal_id ja processado
+2026-06-22T06:03:02.519534+00:00,cecd04867f1eb349,BTC/USDT,buy,5.0,64243.6,64201.6,,REAL,filled,
