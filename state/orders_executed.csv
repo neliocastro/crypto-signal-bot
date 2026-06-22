@@ -77,3 +77,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-06-22T13:22:12.393423+00:00,ce3042c3bccf2d85,SOL/USDT,buy,5.0,74.42,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-06-22T13:27:26.335188+00:00,ce3042c3bccf2d85,SOL/USDT,buy,5.0,74.42,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-06-22T13:32:43.891957+00:00,ce3042c3bccf2d85,SOL/USDT,buy,5.0,74.42,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
+2026-06-22T13:42:22.341072+00:00,ce3042c3bccf2d85,SOL/USDT,buy,5.0,74.42,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
