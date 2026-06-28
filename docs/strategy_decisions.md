@@ -5,19 +5,27 @@ de robustez. Mantido para rastreabilidade — por que cada ativo opera como oper
 
 ---
 
-## PAXG/USDT — REPROVADO (removido da watchlist em 2026-05-28)
+## ⚠️ PAXG/USDT — REPROVADO em TRADE (2026-05-28) — ❌ REGISTRO SUPERADO
+
+> **🔴 ATENÇÃO: este registro está OBSOLETO. Ver a decisão vigente logo abaixo:**
+> **"PAXG/USDT — Acúmulo por sobrevenda (BUY only) em 2026-05-29".**
+> O PAXG **NÃO foi removido em definitivo** — ele está **na watchlist por design**,
+> rodando a estratégia de **Acumulação RSI 4h (compra-only)**. O que foi reprovado
+> aqui foi o uso do PAXG em estratégias de **TRADE direcional** (momentum/breakout/
+> mean-reversion em 1h) — e isso continua válido: PAXG não é trade direcional.
 
 Ouro tokenizado: ativo de baixíssima volatilidade, sem tendências exploráveis
-no timeframe de 1h.
+no timeframe de 1h **para trade direcional**.
 
-| Estratégia testada | Resultado |
+| Estratégia de TRADE testada | Resultado |
 |---|---|
 | MACD-only (agressivo) | Reprovado — pouquíssimos sinais, sem edge |
 | Mean-reversion (RSI/banda) | Reprovado — PF < 1.2 |
 | Breakout/Tendência | Reprovado — natureza lateral, não rompe |
 
-**Decisão:** removido da `WATCHLIST`. Reprovado em 3 abordagens distintas.
-PAXG não combina com estratégias de momentum/tendência em 1h.
+**Decisão (parcial, depois revista):** removido da `WATCHLIST` como ativo de TRADE.
+**↳ REVISTA em 2026-05-29:** PAXG reintroduzido na watchlist para **ACUMULAÇÃO**
+(categoria oposta — compra na sobrevenda, sem alvo de venda). Ver registro vigente.
 
 ---
 
@@ -333,3 +341,73 @@ procurar o log `[FIX-ATR]` no "Run bot". Nota: `php test_relay.php` rodou em
 ### Kill-switch / ajustes
 - `EXECUTION_TPSL_ENABLED = False` -> volta a comprar sem TP/SL (reverte tudo).
 - `EXECUTION_MIN_STOP_PCT` -> ajustavel (subir = stop mais largo p/ baixa vol).
+
+---
+
+## 2026-06-27 — GO-LIVE do TP/SL nativo: 2 causas-raiz resolvidas (allow_url_fopen + account)
+
+Contexto: desde 21/06 a compra real saia mas o TP/SL nativo na Gate.io falhava
+com HTTP 400 — posicao nascia nua. Nesta sessao 2 causas-raiz independentes
+foram encontradas e o ciclo completo foi validado em producao real (TRX $5).
+
+### BUG 1 — allow_url_fopen=Off no servidor (causa-raiz oculta)
+- `execute.php` lia regras do par/ticker via `file_get_contents("https://...")`.
+- Servidor tem `allow_url_fopen => Off` -> TODA leitura HTTPS falhava silenciosa
+  -> `pair_rules()` retornava null -> precisao caia no fallback "6 cego"
+  -> trigger com 6 casas -> Gate HTTP 400. Era esse o bug desde 21/06.
+- Prova: no servidor, `curl` na Gate.io retorna JSON OK, mas
+  `php -r 'file_get_contents(...)'` retorna "FALHOU". A rede esta OK; o bloqueio
+  e so do file_get_contents.
+- FIX: trocar TODOS os GET publicos por cURL (funciona com allow_url_fopen=Off),
+  com retry e fallback por tabela de precisao por par como segunda defesa.
+  Tabela: BTC=1 ETH=2 SOL=2 XRP=4 TRX=5 BNB=1 LINK=3 HYPE=3 AAVE=2.
+
+### BUG 2 — account:"spot" no price_order (boss final)
+- Apos o FIX 1 a compra passou (filled, rules_source:api) mas TP/SL ainda davam
+  HTTP 400 INVALID_PARAM_VALUE, agora com precisao CORRETA (5 casas).
+- Diagnostico (diag_tpsl.php) testou 3 variantes do /spot/price_orders na conta
+  real: market+account:normal -> 201 OK; limit+normal -> 201 OK;
+  market+account:spot (o que estava no codigo) -> 400.
+- Causa: /spot/price_orders exige account:"normal", NAO "spot". Por isso a compra
+  (/spot/orders, account:spot) passava e so o TP/SL falhava.
+- FIX: usar account:"normal" SO nos price_orders; manter account:"spot" na compra.
+
+### Os 5 fixes no execute.php
+1. pair_rules() via cURL + retry + fallback por tabela (precisao "6 cega").
+2. valida casas do gatilho ANTES do POST (skip se decimal_places > precisao).
+3. ATR=0 (sem tp_price E sl_price) -> recusa compra (anti-posicao-nua).
+4. TODO GET publico via cURL (allow_url_fopen=Off).
+5. account:"normal" nos price_orders (INVALID_PARAM_VALUE).
+
+### Validacao em producao (prova final)
+`php gerar_teste_trx.php` (ordem real $5 TRX):
+- status filled, order_id 1089995576060, filled_total 4.9990599, fill 0.32107
+- rules_source: api (cURL leu a Gate.io ao vivo, nao fallback)
+- TP: http 201, id 2070698693777948672, err null, price 0.3262
+- SL: http 201, id 2070698698643341312, err null, price 0.3185
+- Registro gravado em execution_log.jsonl (auditavel).
+
+### Ambiente do servidor (registrar)
+- allow_url_fopen = Off -> usar SEMPRE cURL para HTTP, nunca file_get_contents.
+- cURL = OK (saida liberada p/ api.gateio.ws:443).
+- .env: /home/ineocom/cryptosignals/secrets/.env (fora da web root).
+- projeto (web root): /home/ineocom/public_html/cryptosignals/
+- logs: execution_log.jsonl (na pasta do projeto).
+
+### Decisoes do operador (2026-06-27/28)
+- Sem ordens nuas. TRX atual: apenas TP ativo (SL removido por escolha consciente
+  do usuario PARA ESTA posicao especifica). Regra geral mantida: o bot SEMPRE
+  envia TP + SL nas novas ordens direcionais.
+- PAXG: confirmado como ACUMULACAO RSI 4h (compra-only, sem SL/TP), mantido na
+  watchlist por design (ver registro de 2026-05-29).
+
+### Artefatos
+- execute.php: braco PHP corrigido (5 fixes) — producao.
+- gerar_teste_trx.php: disparador de teste controlado ($5, --dry e real) — manter.
+- diag_tpsl.php: diagnostico das 3 variantes — pode apagar.
+
+### Licao central
+O bug que persistia ha semanas (allow_url_fopen=Off) estava na INFRAESTRUTURA,
+nao na logica. A virada veio de diagnosticar por evidencia (provar cada hipotese
+com um comando), em vez de chutar no codigo. O account:"normal" era o detalhe
+final que so apareceu testando as 3 variantes na conta real.
