@@ -154,7 +154,7 @@ ACCUMULATION_SYMBOLS = {
         "timeframe":      "4h",
         "rsi_threshold":  30.0,
         "rsi_extreme":    20.0,
-        "cooldown_hours": 24,
+        "cooldown_hours": 12,
     },
 }
 ACCUMULATION_STATE_FILE = "state/accumulation_signals.json"
