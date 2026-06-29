@@ -90,3 +90,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-06-26T06:54:14.715262+00:00,5f43ecc6158c764c,AAVE/USDT,buy,5.0,83.86,,,REAL,duplicate,signal_id ja processado
 2026-06-29T18:05:16.514222+00:00,040fd92c4e86df09,HYPE/USDT,buy,5.0,66.37,66.294,,REAL,filled,
 2026-06-29T18:14:54.814093+00:00,040fd92c4e86df09,HYPE/USDT,buy,5.0,66.37,,,REAL,duplicate,signal_id ja processado
+2026-06-29T18:24:35.925582+00:00,040fd92c4e86df09,HYPE/USDT,buy,5.0,66.37,,,REAL,duplicate,signal_id ja processado
