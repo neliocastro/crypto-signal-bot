@@ -12,19 +12,6 @@
       "peak": 67.538,
       "opened_at": "2026-06-29T17:00:00+00:00",
       "opened_scan_utc": "2026-06-29T18:05:17.070603+00:00"
-    },
-    {
-      "signal_id": "7a0b1e55e49759dd",
-      "symbol": "AAVE/USDT",
-      "strategy": "Tendência MACD — Agressivo",
-      "exit_kind": "fixed",
-      "entry": 92.26,
-      "stop": 89.98438389,
-      "risk_dist": 2.2756161100000014,
-      "tp": 99.08684833,
-      "peak": 92.26,
-      "opened_at": "2026-06-29T18:00:00+00:00",
-      "opened_scan_utc": "2026-06-29T19:09:40.645246+00:00"
     }
   ],
   "closed": [
@@ -369,6 +356,24 @@
       "closed_at": "2026-06-26T16:25:32.198417+00:00",
       "pnl_pct": 12.3897,
       "pnl_usdt": 0.123897
+    },
+    {
+      "signal_id": "7a0b1e55e49759dd",
+      "symbol": "AAVE/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 92.26,
+      "stop": 89.98438389,
+      "risk_dist": 2.2756161100000014,
+      "tp": 99.08684833,
+      "peak": 92.26,
+      "opened_at": "2026-06-29T18:00:00+00:00",
+      "opened_scan_utc": "2026-06-29T19:09:40.645246+00:00",
+      "exit": 89.98,
+      "exit_reason": "stop",
+      "closed_at": "2026-06-30T03:23:38.549104+00:00",
+      "pnl_pct": -2.4713,
+      "pnl_usdt": -0.024713
     }
   ],
   "last_report_utc": "2026-06-28T00:04:26.157020+00:00"
