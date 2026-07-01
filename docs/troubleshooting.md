@@ -104,3 +104,70 @@ crontab -l | grep paxg                         # conferir agendamento
 ```
 
 **Parametros de acumulacao (config.py):** timeframe 4h, rsi_threshold 30, rsi_extreme 20, cooldown_hours 12.
+
+---
+
+## INC-002 — Ordens TP/SL desapareciam apos 24h
+
+**Data:** 2026-06-30 / 2026-07-01
+**Severidade:** Alta (posicao ficava sem protecao apos 1 dia)
+**Componente:** `execute.php` (braco de execucao, servidor) — linhas 193 e 206
+
+### Sintoma
+As ordens de Take-Profit (TP) e Stop-Loss (SL) eram criadas com sucesso
+(`http:201` no log, com IDs retornados pela Gate.io), mas **desapareciam
+apos ~24 horas**. Posicoes que nao batiam o gatilho no primeiro dia ficavam
+**desprotegidas** (sem TP e sem SL) a partir do 2o dia.
+
+### Investigacao
+```bash
+grep -n "price_orders\|expiration\|trigger\|put_type\|86400" \
+  /home/ineocom/public_html/cryptosignals/execute.php
+# -> 186: $ppath = '/api/v4/spot/price_orders';
+# -> 193: $tpBody = ['trigger'=>['price'=>$tp_s,'rule'=>'>=','expiration'=>86400], ...
+# -> 206: $slBody = ['trigger'=>['price'=>$sl_s,'rule'=>'<=','expiration'=>86400], ...
+```
+
+### Causa raiz
+O TP e o SL sao **price-triggered orders** (ordens condicionais, endpoint
+`/api/v4/spot/price_orders`). Cada uma tem o campo obrigatorio `expiration`
+(tempo de vida em segundos) — quanto tempo a ordem-gatilho fica "viva"
+esperando o preco tocar o trigger.
+
+O valor estava fixado em **`expiration => 86400`** = exatamente **24 horas**.
+Passadas 24h sem o preco atingir o gatilho, a Gate.io **cancela
+automaticamente** a ordem condicional. Por isso o TP/SL "sumia" apos 1 dia.
+
+A Gate.io **exige** `expiration > 0` (nao existe valor "infinito"/perpetuo).
+
+### Correcao
+Aumentar o `expiration` de 24h para 30 dias (2592000s) nas duas linhas:
+
+```bash
+BASE=/home/ineocom/public_html/cryptosignals
+cp $BASE/execute.php $BASE/execute.php.bak-expiration
+sed -i "s/'expiration'=>86400/'expiration'=>2592000/g" $BASE/execute.php
+grep -n "expiration" $BASE/execute.php
+# -> 193: ... 'expiration'=>2592000 ...
+# -> 206: ... 'expiration'=>2592000 ...
+```
+
+Equivalencias uteis: 86400=1d · 604800=7d · **2592000=30d** · 31536000=365d.
+
+### Verificacao (pos-fix)
+`grep` confirmou as linhas 193 e 206 com `'expiration'=>2592000` (30 dias).
+Backup salvo em `execute.php.bak-expiration`.
+
+### Impacto
+- **Futuro:** toda nova compra passa a criar TP/SL validos por 30 dias.
+- **Passado:** posicoes ja abertas cujos TP/SL ja haviam expirado ficaram
+  temporariamente nuas; foram **reprotegidas manualmente** pelo operador.
+  O fix NAO recria ordens ja canceladas — apenas as novas nascem com 30 dias.
+
+### Prevencao
+- Nunca usar `expiration` curto (24h) em price_orders de TP/SL de swing/trend,
+  cujos trades podem levar dias/semanas para resolver.
+- Ao alterar `execute.php`, sempre validar via `grep -n "expiration"` que as
+  DUAS linhas (TP e SL) ficaram com o valor correto.
+- Considerar (melhoria futura) um cron de "re-arme" que verifica posicoes
+  abertas e recria TP/SL antes de qualquer expiracao.
