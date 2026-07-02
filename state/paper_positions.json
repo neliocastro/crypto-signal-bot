@@ -1,5 +1,32 @@
 {
-  "open": [],
+  "open": [
+    {
+      "signal_id": "e4631c4d57260ff5",
+      "symbol": "BTC/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 61181.6,
+      "stop": 60407.76248437,
+      "risk_dist": 773.8375156299953,
+      "tp": 63503.11254688,
+      "peak": 61181.6,
+      "opened_at": "2026-07-02T09:00:00+00:00",
+      "opened_scan_utc": "2026-07-02T10:04:13.900084+00:00"
+    },
+    {
+      "signal_id": "6d70c988017bab5e",
+      "symbol": "ETH/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 1643.35,
+      "stop": 1620.33085523,
+      "risk_dist": 23.01914476999991,
+      "tp": 1712.40743431,
+      "peak": 1643.35,
+      "opened_at": "2026-07-02T09:00:00+00:00",
+      "opened_scan_utc": "2026-07-02T10:04:13.900099+00:00"
+    }
+  ],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",
