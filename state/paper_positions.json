@@ -27,19 +27,6 @@
       "opened_scan_utc": "2026-07-02T19:05:17.571842+00:00"
     },
     {
-      "signal_id": "2f5d80cb860ce85c",
-      "symbol": "XRP/USDT",
-      "strategy": "Tendência MACD — Agressivo",
-      "exit_kind": "fixed",
-      "entry": 1.1011,
-      "stop": 1.0886613,
-      "risk_dist": 0.012438699999999914,
-      "tp": 1.13841611,
-      "peak": 1.1011,
-      "opened_at": "2026-07-03T06:00:00+00:00",
-      "opened_scan_utc": "2026-07-03T07:04:44.264063+00:00"
-    },
-    {
       "signal_id": "c13f6c08b13888d6",
       "symbol": "BNB/USDT",
       "strategy": "Tendência MACD — Agressivo",
@@ -449,6 +436,24 @@
       "closed_at": "2026-07-02T14:16:23.940744+00:00",
       "pnl_pct": 4.4592,
       "pnl_usdt": 0.044592
+    },
+    {
+      "signal_id": "2f5d80cb860ce85c",
+      "symbol": "XRP/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 1.1011,
+      "stop": 1.0886613,
+      "risk_dist": 0.012438699999999914,
+      "tp": 1.13841611,
+      "peak": 1.1011,
+      "opened_at": "2026-07-03T06:00:00+00:00",
+      "opened_scan_utc": "2026-07-03T07:04:44.264063+00:00",
+      "exit": 1.1392,
+      "exit_reason": "take_profit",
+      "closed_at": "2026-07-03T19:23:18.970524+00:00",
+      "pnl_pct": 3.4602,
+      "pnl_usdt": 0.034602
     }
   ],
   "last_report_utc": "2026-06-28T00:04:26.157020+00:00"
