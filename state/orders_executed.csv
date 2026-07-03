@@ -171,3 +171,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-07-03T12:30:13.391608+00:00,2eeb172fa24d59df,HYPE/USDT,buy,5.0,69.298,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-07-03T12:35:26.228610+00:00,2eeb172fa24d59df,HYPE/USDT,buy,5.0,69.298,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-07-03T12:40:41.494261+00:00,2eeb172fa24d59df,HYPE/USDT,buy,5.0,69.298,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
+2026-07-03T12:45:58.530146+00:00,2eeb172fa24d59df,HYPE/USDT,buy,5.0,69.298,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
