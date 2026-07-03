@@ -4,6 +4,8 @@ name: backtest
 #   - backtest_macd           : sinal MACD-only (Fase A) -> grava relatorio em state/docs
 #   - backtest_super_agressivo: EMA9>21>50 + MACD>signal + RSI 40-69 -> imprime no log
 #   - backtest_meanrev_paxg   : RSI<30 & banda inf. Bollinger -> saida SMA20 (reversao) -> log
+#   - backtest_breakout_hype  : EMA9>21>50 + breakout N velas + RSI>50 -> trailing stop -> log
+#   - backtest_risco_maximo   : MACD cruza^ (mesmo <0) & EMA9>EMA21 -> TP 6% -> stop ATR vs min -> log
 on:
   workflow_dispatch:
     inputs:
@@ -16,6 +18,7 @@ on:
           - backtest_super_agressivo
           - backtest_meanrev_paxg
           - backtest_breakout_hype
+          - backtest_risco_maximo
       args:
         description: "Args extras (ex: --compare | --rsi 25 --bb-std 2.5)"
         type: string
@@ -53,6 +56,9 @@ jobs:
               ;;
             backtest_breakout_hype)
               python -m scripts.backtest_breakout_hype ${{ github.event.inputs.args }}
+              ;;
+            backtest_risco_maximo)
+              python -m scripts.backtest_risco_maximo ${{ github.event.inputs.args }}
               ;;
             *)
               python -m scripts.backtest_macd ${{ github.event.inputs.args }}
