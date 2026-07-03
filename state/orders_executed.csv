@@ -145,3 +145,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-07-03T06:45:09.229233+00:00,00549dda8ec3e78c,HYPE/USDT,buy,5.0,67.328,,,REAL,duplicate,signal_id ja processado
 2026-07-03T06:54:51.714530+00:00,00549dda8ec3e78c,HYPE/USDT,buy,5.0,67.328,,,REAL,duplicate,signal_id ja processado
 2026-07-03T07:04:43.652323+00:00,2f5d80cb860ce85c,XRP/USDT,buy,5.0,1.1011,1.1006,,REAL,filled,
+2026-07-03T07:10:02.067509+00:00,2f5d80cb860ce85c,XRP/USDT,buy,5.0,1.1011,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
