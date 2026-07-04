@@ -227,3 +227,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-07-04T18:13:07.355345+00:00,4618646ad341c60f,BNB/USDT,buy,5.0,578.5,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-07-04T18:22:52.199816+00:00,4618646ad341c60f,BNB/USDT,buy,5.0,578.5,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-07-04T18:28:09.296475+00:00,4618646ad341c60f,BNB/USDT,buy,5.0,578.5,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
+2026-07-04T18:37:53.332815+00:00,4618646ad341c60f,BNB/USDT,buy,5.0,578.5,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
