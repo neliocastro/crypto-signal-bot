@@ -218,3 +218,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-07-04T04:52:39.500167+00:00,20821da8a17bf878,AAVE/USDT,buy,5.0,88.92,,,REAL,duplicate,signal_id ja processado
 2026-07-04T15:01:54.782921+00:00,aeee6d0380fcd812,AAVE/USDT,buy,5.0,89.04,89.38,,REAL,filled,
 2026-07-04T15:11:37.628179+00:00,aeee6d0380fcd812,AAVE/USDT,buy,5.0,89.04,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
+2026-07-04T15:21:25.019890+00:00,aeee6d0380fcd812,AAVE/USDT,buy,5.0,89.04,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
