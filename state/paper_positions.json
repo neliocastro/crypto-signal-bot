@@ -51,6 +51,19 @@
       "peak": 82.48,
       "opened_at": "2026-07-03T19:00:00+00:00",
       "opened_scan_utc": "2026-07-03T20:01:58.735468+00:00"
+    },
+    {
+      "signal_id": "aeee6d0380fcd812",
+      "symbol": "AAVE/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 89.04,
+      "stop": 87.57220746,
+      "risk_dist": 1.467792540000005,
+      "tp": 93.44337761,
+      "peak": 89.04,
+      "opened_at": "2026-07-04T14:00:00+00:00",
+      "opened_scan_utc": "2026-07-04T15:02:00.820386+00:00"
     }
   ],
   "closed": [
