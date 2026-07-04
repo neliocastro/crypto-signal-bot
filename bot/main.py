@@ -286,6 +286,25 @@ def main() -> int:
             except Exception:
                 log.error("Falha no executor (ignorada):\n%s", traceback.format_exc())
 
+    # --- MARE ALTA D1 (producao): scan diario proprio + rota ao executor live ---
+    # Autocontido: qualquer falha e logada e ignorada (nunca derruba o scan).
+    try:
+        from .mare_alta import run_mare_alta
+        _ma_signals = run_mare_alta(notify=send)
+        if _executor is not None:
+            for _ma_sig in _ma_signals:
+                try:
+                    _ma_res = _executor.maybe_execute(_ma_sig, _paper_balance)
+                    if _ma_res:
+                        log.info("\U0001F30A MARE ALTA: ordem processada p/ %s",
+                                 _ma_sig.get("symbol"))
+                except Exception:
+                    log.error("Falha no executor (Mare Alta, ignorada):\n%s",
+                              traceback.format_exc())
+    except Exception:
+        log.error("Falha na Mare Alta (ignorada):\n%s", traceback.format_exc())
+
+
     try:
         from .config import PAPER_EVAL_ENABLED as _eval_on
     except Exception:

@@ -1,5 +1,5 @@
 """
-MARE ALTA D1 - Estrategia validada em walk-forward (jul/2026). SHADOW MODE.
+MARE ALTA D1 - Estrategia validada em walk-forward (jul/2026). PRODUCAO (live).
 
 Entrada (diario, vela FECHADA):
   - MACD(12,26,9) cruza ACIMA da linha de sinal (valido mesmo abaixo de zero)
@@ -25,7 +25,7 @@ from typing import Callable, Optional, Dict, Any, List
 
 # ---------------- config / kill-switches ----------------
 MARE_ALTA_ENABLED     = True    # False = desliga tudo
-MARE_ALTA_SHADOW_MODE = True    # True = so alerta [SHADOW], nunca executa
+MARE_ALTA_SHADOW_MODE = False   # PRODUCAO: sinais vao ao executor (ordens reais)
 MARE_ALTA_UNIVERSE    = ["BTC/USDT", "SOL/USDT", "TRX/USDT", "BNB/USDT"]
 MARE_ALTA_TIMEFRAME   = "1d"
 MARE_ALTA_STOP_ATR    = 2.5
@@ -96,7 +96,9 @@ def check_mare_alta(ohlcv: List[List[float]]) -> Optional[Dict[str, Any]]:
         "strategy":  "MARE_ALTA_D1",
         "side":      "BUY",
         "candle_ts": int(ohlcv[i][0]),
+        "timestamp": int(ohlcv[i][0]),  # compat executor._signal_id (idempotencia por vela D1)
         "entry_ref": entry,
+        "price": entry,              # compat executor._ref_price
         "stop":      round(entry - MARE_ALTA_STOP_ATR * atr[i], 8),
         "tp1":       round(entry * (1.0 + MARE_ALTA_TP1_PCT), 8),
         "atr":       round(atr[i], 8),
