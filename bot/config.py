@@ -215,3 +215,12 @@ PAPER_TRADES_FILE = "state/paper_trades.jsonl"
 PAPER_EVAL_ENABLED         = True
 PAPER_REPORT_INTERVAL_DAYS = 7
 PAPER_POSITIONS_FILE       = "state/paper_positions.json"
+
+# ============ MARE ALTA - TRAILING D1 (bot/mare_alta_trailing.py) ============
+# Trailing sintetico por ATR no diario: sobe o stop (CATRACA, nunca rebaixa)
+# via acao "update_trailing" no relay PHP (cria novo stop -> confirma -> deleta
+# o antigo; se falhar, o antigo e MANTIDO). Ligado em 2026-07-04.
+MARE_ALTA_TRAILING_ENABLED = True   # kill-switch do trailing D1
+MARE_ALTA_SL_ATR_MULT      = 3.0    # stop = close_D1 - 3.0 * ATR(D1)
+MARE_ALTA_ATR_PERIOD       = 14     # periodo do ATR diario
+MARE_ALTA_SYMBOLS          = []     # vazio = qualquer posicao aberta registrada
