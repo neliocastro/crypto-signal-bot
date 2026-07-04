@@ -236,6 +236,123 @@ ORDERS_CSV_HEADER = [
 ]
 
 
-def _append_execution_csv(orler: dict, result: dict) -> None:
+def _append_execution_csv(order: dict, result: dict) -> None:
     """Grava UMA linha por operacao no state/orders_executed.csv (legivel/Excel)."""
-    pass
+    try:
+        os.makedirs(os.path.dirname(ORDERS_CSV_FILE), exist_ok=True)
+        new_file = not os.path.exists(ORDERS_CSV_FILE) or os.path.getsize(ORDERS_CSV_FILE) == 0
+        row = {
+            "ts_utc": _now_iso(),
+            "signal_id": order.get("signal_id", ""),
+            "symbol": order.get("symbol", ""),
+            "side": order.get("side", "buy"),
+            "notional_usdt": order.get("notional_usdt", ""),
+            "ref_price": order.get("ref_price", ""),
+            "fill_price": result.get("sim_fill_price") or result.get("fill_price") or result.get("avg_price") or "",
+            "slippage_pct": result.get("slippage_pct", "") if result.get("slippage_pct") is not None else "",
+            "mode": "DRY_RUN" if EXECUTION_DRY_RUN else "REAL",
+            "status": result.get("status", ""),
+            "reason": result.get("reason", ""),
+        }
+        with open(ORDERS_CSV_FILE, "a", encoding="utf-8", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=ORDERS_CSV_HEADER)
+            if new_file:
+                w.writeheader()
+            w.writerow(row)
+    except Exception as e:  # log de CSV jamais pode quebrar a execucao
+        log.warning("falha ao gravar orders_executed.csv: %s", e)
+
+
+def _notify_execution(order: dict, result: dict) -> None:
+    """Envia ao Telegram o resultado de uma ordem (real, bloqueada ou rejeitada)."""
+    # registro estruturado em CSV (alem do .jsonl) - legivel e versionado no Git
+    _append_execution_csv(order, result)
+    try:
+        from . import telegram_sender as tg
+    except Exception:
+        return
+    try:
+        status = str(result.get("status", "?"))
+        sym = order.get("symbol", "?")
+        notional = order.get("notional_usdt", "?")
+        sid = order.get("signal_id", "?")
+        mode = "DRY-RUN (simulado)" if EXECUTION_DRY_RUN else "REAL"
+
+        if status in ("filled", "accepted", "ok"):
+            fill = result.get("sim_fill_price") or result.get("fill_price") or result.get("avg_price")
+            slip = result.get("slippage_pct")
+            head = "✅ *ORDEM EXECUTADA*" if not EXECUTION_DRY_RUN else "🧪 *Ordem simulada (dry-run)*"
+            msg = (
+                f"{head}\n"
+                f"Par: *{sym}*\n"
+                f"Lado: COMPRA\n"
+                f"Valor: *${notional}* USDT\n"
+                f"Modo: {mode}\n"
+                + (f"Preço: {fill}\n" if fill else "")
+                + (f"Slippage: {slip}%\n" if slip is not None else "")
+                + f"ID: `{sid}`"
+            )
+        elif status == "blocked_by_guard":
+            msg = (
+                f"🛡️ *Ordem BLOQUEADA por trava de capital*\n"
+                f"Par: *{sym}*  •  Valor: ${notional}\n"
+                f"Motivo: {result.get('reason','?')}\n"
+                f"ID: `{sid}`"
+            )
+        elif status == "dry_run":
+            msg = (
+                f"🧪 *Ping dry-run* — *{sym}* ${notional} "
+                f"(relay confirmou, ordem NÃO enviada)\nID: `{sid}`"
+            )
+        else:
+            msg = (
+                f"⚠️ *Ordem não executada* — *{sym}* ${notional}\n"
+                f"Status: `{status}`  •  {result.get('reason','')}\n"
+                f"ID: `{sid}`"
+            )
+        tg.send(msg)
+    except Exception as e:  # alerta jamais pode quebrar o fluxo de execucao
+        log.warning("falha ao notificar execucao no telegram: %s", e)
+
+
+def maybe_execute(signal: dict, balance_usdt: float) -> dict | None:
+    """
+    Ponto de entrada chamado pelo scan APOS um sinal de compra.
+    Agnostico de estrategia: qualquer side buy/long vira ordem candidata.
+    """
+    if not EXECUTION_ENABLED:
+        return None
+    side = str(signal.get("side", "")).lower()
+    if side not in ("buy", "long"):
+        return None
+
+    order = build_order(signal, balance_usdt)
+
+    # 1) registra SEMPRE a intencao (verdade do lado do cerebro)
+    _append_jsonl(PAPER_TRADES_FILE, {"event": "intent", **order})
+
+    # 1.5) PROTECOES DE CAPITAL: travas rigidas antes de enviar.
+    ok, reason = check_guards(order)
+    if not ok:
+        blocked = {"status": "blocked_by_guard", "reason": reason}
+        _append_jsonl(PAPER_TRADES_FILE, {"event": "guard_block", "signal_id": order["signal_id"], "result": blocked, "ts": _now_iso()})
+        _notify_execution(order, blocked)
+        return {"order": order, "result": blocked}
+
+    # 2) envia ao relay (Fase 1: relay responde simulando, nao executa)
+    result = send_order(order)
+
+    # 2.5) se a ordem REAL foi de fato enviada (nao dry-run/skip), conta nos limites do dia
+    if isinstance(result, dict) and result.get("status") in ("filled", "accepted", "ok"):
+        _register_sent_order()
+
+    # 3) registra a resposta do relay (verdade do lado do braco)
+    _append_jsonl(PAPER_TRADES_FILE, {
+        "event": "relay_response", "signal_id": order["signal_id"], "result": result, "ts": _now_iso(),
+    })
+
+    # 4) ALERTA NO TELEGRAM: avisa o resultado da operacao (real/dry-run/bloqueio).
+    if isinstance(result, dict):
+        _notify_execution(order, result)
+
+    return {"order": order, "result": result}
