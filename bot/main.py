@@ -298,11 +298,59 @@ def main() -> int:
                     if _ma_res:
                         log.info("\U0001F30A MARE ALTA: ordem processada p/ %s",
                                  _ma_sig.get("symbol"))
+                    # TRAILING D1: registra a posicao se a compra REAL preencheu
+                    # (fill_price + id/preco do SL nativo vem na resposta do PHP).
+                    try:
+                        from . import mare_alta_trailing as _ma_trail
+                        _r = (_ma_res or {}).get("result") or {}
+                        if _r.get("status") == "filled":
+                            _tpsl = _r.get("tpsl") or {}
+                            _slr  = _tpsl.get("sl") or {}
+                            _ma_trail.register_position(
+                                ((_ma_res or {}).get("order") or {}).get("signal_id", ""),
+                                _ma_sig.get("symbol"),
+                                _tpsl.get("base_qty") or _r.get("filled_total") or "",
+                                _r.get("fill_price") or 0.0,
+                                sl_price=float(_slr.get("price") or 0.0),
+                                sl_order_id=_slr.get("id") or "",
+                            )
+                    except Exception:
+                        log.error("Falha ao registrar posicao p/ trailing (ignorada):\n%s",
+                                  traceback.format_exc())
                 except Exception:
                     log.error("Falha no executor (Mare Alta, ignorada):\n%s",
                               traceback.format_exc())
     except Exception:
         log.error("Falha na Mare Alta (ignorada):\n%s", traceback.format_exc())
+
+    # --- MARE ALTA D1: TRAILING por ATR (catraca: so sobe o stop, nunca desce) ---
+    # Roda a cada scan; a catraca interna garante que so envia update_trailing ao
+    # relay quando o novo SL e MAIOR que o atual. Kill-switch:
+    # config.MARE_ALTA_TRAILING_ENABLED. Falhas nunca derrubam o scan.
+    try:
+        from . import mare_alta_trailing as _ma_trail2
+
+        def _fetch_d1_candles(_sym):
+            _df = fetch_ohlcv(_sym, timeframe="1d", limit=60)
+            if _df is None or _df.empty:
+                return []
+            return _df[["high", "low", "close"]].to_dict("records")
+
+        _tr_results = _ma_trail2.update_trailing(_fetch_d1_candles)
+        for _t in _tr_results:
+            if _t.get("action") == "updated":
+                log.info("\U0001F30A TRAILING subiu %s -> %s",
+                         _t.get("symbol"), _t.get("new_sl"))
+                try:
+                    send("\U0001F30A Trailing Mare Alta: %s stop SUBIU para %s"
+                         % (_t.get("symbol"), _t.get("new_sl")))
+                except Exception:
+                    pass
+            elif _t.get("action") in ("send_failed", "error"):
+                log.warning("trailing %s: %s (stop antigo mantido)",
+                            _t.get("symbol"), _t.get("reason"))
+    except Exception:
+        log.error("Falha no trailing Mare Alta (ignorada):\n%s", traceback.format_exc())
 
 
     try:
