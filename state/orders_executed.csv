@@ -234,3 +234,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-07-05T09:17:40.730755+00:00,fa8f3b3585317589,BNB/USDT,buy,5.0,578.4,,,REAL,duplicate,signal_id ja processado
 2026-07-05T09:27:26.656218+00:00,fa8f3b3585317589,BNB/USDT,buy,5.0,578.4,,,REAL,duplicate,signal_id ja processado
 2026-07-05T09:37:15.421510+00:00,fa8f3b3585317589,BNB/USDT,buy,5.0,578.4,,,REAL,duplicate,signal_id ja processado
+2026-07-05T09:47:01.800205+00:00,fa8f3b3585317589,BNB/USDT,buy,5.0,578.4,,,REAL,duplicate,signal_id ja processado
