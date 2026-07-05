@@ -239,3 +239,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-07-05T18:01:16.496675+00:00,0ac0b8daef3e7a75,ETH/USDT,buy,5.0,1779.58,1779.58,,REAL,filled,
 2026-07-05T18:06:35.569499+00:00,0ac0b8daef3e7a75,ETH/USDT,buy,5.0,1779.58,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-07-05T18:16:26.879843+00:00,0ac0b8daef3e7a75,ETH/USDT,buy,5.0,1779.58,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
+2026-07-05T18:26:13.747539+00:00,0ac0b8daef3e7a75,ETH/USDT,buy,5.0,1779.58,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
