@@ -264,3 +264,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-07-06T01:24:18.469547+00:00,a165c7443b31682f,HYPE/USDT,buy,5.0,72.488,,,REAL,duplicate,signal_id ja processado
 2026-07-06T01:34:04.557304+00:00,a165c7443b31682f,HYPE/USDT,buy,5.0,72.488,,,REAL,duplicate,signal_id ja processado
 2026-07-06T01:43:51.441281+00:00,a165c7443b31682f,HYPE/USDT,buy,5.0,72.488,,,REAL,duplicate,signal_id ja processado
+2026-07-06T01:49:14.743618+00:00,a165c7443b31682f,HYPE/USDT,buy,5.0,72.488,,,REAL,duplicate,signal_id ja processado
