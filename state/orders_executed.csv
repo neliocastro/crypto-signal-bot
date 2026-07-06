@@ -278,3 +278,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-07-06T21:21:54.394859+00:00,901a0964d7f2fddc,TRX/USDT,buy,5.0,0.32932,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-07-06T21:31:40.040699+00:00,901a0964d7f2fddc,TRX/USDT,buy,5.0,0.32932,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-07-06T21:41:23.752958+00:00,901a0964d7f2fddc,TRX/USDT,buy,5.0,0.32932,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
+2026-07-06T21:51:13.415203+00:00,901a0964d7f2fddc,TRX/USDT,buy,5.0,0.32932,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
