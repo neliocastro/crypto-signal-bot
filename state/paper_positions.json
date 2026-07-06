@@ -25,19 +25,6 @@
       "peak": 63094.2,
       "opened_at": "2026-07-05T21:00:00+00:00",
       "opened_scan_utc": "2026-07-05T22:33:40.135750+00:00"
-    },
-    {
-      "signal_id": "9c02a4d4d31868ac",
-      "symbol": "HYPE/USDT",
-      "strategy": "Breakout / Tendência",
-      "exit_kind": "trailing",
-      "entry": 71.546,
-      "stop": 70.92431552,
-      "risk_dist": 1.5656844800000016,
-      "tp": 76.24305343,
-      "peak": 72.49,
-      "opened_at": "2026-07-05T22:00:00+00:00",
-      "opened_scan_utc": "2026-07-05T23:04:44.896009+00:00"
     }
   ],
   "closed": [
@@ -562,6 +549,24 @@
       "closed_at": "2026-07-05T22:28:17.197297+00:00",
       "pnl_pct": 3.902,
       "pnl_usdt": 0.03902
+    },
+    {
+      "signal_id": "9c02a4d4d31868ac",
+      "symbol": "HYPE/USDT",
+      "strategy": "Breakout / Tendência",
+      "exit_kind": "trailing",
+      "entry": 71.546,
+      "stop": 70.92431552,
+      "risk_dist": 1.5656844800000016,
+      "tp": 76.24305343,
+      "peak": 72.49,
+      "opened_at": "2026-07-05T22:00:00+00:00",
+      "opened_scan_utc": "2026-07-05T23:04:44.896009+00:00",
+      "exit": 70.758,
+      "exit_reason": "trailing_stop",
+      "closed_at": "2026-07-06T05:31:57.329360+00:00",
+      "pnl_pct": -1.1014,
+      "pnl_usdt": -0.011014
     }
   ],
   "last_report_utc": "2026-07-05T00:12:06.419819+00:00"
