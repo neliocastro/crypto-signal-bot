@@ -273,3 +273,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-07-06T06:41:36.225371+00:00,67a1668ca5338adb,AAVE/USDT,buy,5.0,89.81,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-07-06T06:51:21.638288+00:00,67a1668ca5338adb,AAVE/USDT,buy,5.0,89.81,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
 2026-07-06T21:01:18.241588+00:00,901a0964d7f2fddc,TRX/USDT,buy,5.0,0.32932,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
+2026-07-06T21:06:37.953060+00:00,901a0964d7f2fddc,TRX/USDT,buy,5.0,0.32932,,,REAL,blocked_by_guard,limite de posicoes abertas atingido (2)
