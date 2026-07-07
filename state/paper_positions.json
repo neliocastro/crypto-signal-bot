@@ -25,6 +25,45 @@
       "peak": 72.578,
       "opened_at": "2026-07-07T12:00:00+00:00",
       "opened_scan_utc": "2026-07-07T13:04:55.828966+00:00"
+    },
+    {
+      "signal_id": "a9ec6b467f2a9de7",
+      "symbol": "BTC/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 63935.1,
+      "stop": 63252.33478878,
+      "risk_dist": 682.7652112200012,
+      "tp": 65983.39563366,
+      "peak": 63935.1,
+      "opened_at": "2026-07-07T15:00:00+00:00",
+      "opened_scan_utc": "2026-07-07T16:01:51.242867+00:00"
+    },
+    {
+      "signal_id": "a93c60c2adfb8028",
+      "symbol": "ETH/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 1797.5,
+      "stop": 1773.52442227,
+      "risk_dist": 23.97557772999994,
+      "tp": 1869.42673318,
+      "peak": 1797.5,
+      "opened_at": "2026-07-07T15:00:00+00:00",
+      "opened_scan_utc": "2026-07-07T16:01:51.242887+00:00"
+    },
+    {
+      "signal_id": "3325e7a3ec5f4aa2",
+      "symbol": "SOL/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 82.11,
+      "stop": 80.99519539,
+      "risk_dist": 1.114804609999993,
+      "tp": 85.45441384,
+      "peak": 82.11,
+      "opened_at": "2026-07-07T15:00:00+00:00",
+      "opened_scan_utc": "2026-07-07T16:01:51.242895+00:00"
     }
   ],
   "closed": [
