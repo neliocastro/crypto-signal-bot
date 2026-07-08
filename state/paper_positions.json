@@ -1,19 +1,5 @@
 {
-  "open": [
-    {
-      "signal_id": "901a0964d7f2fddc",
-      "symbol": "TRX/USDT",
-      "strategy": "Tendência MACD — Agressivo",
-      "exit_kind": "fixed",
-      "entry": 0.32932,
-      "stop": 0.3277779,
-      "risk_dist": 0.0015420999999999907,
-      "tp": 0.33394629,
-      "peak": 0.32932,
-      "opened_at": "2026-07-06T20:00:00+00:00",
-      "opened_scan_utc": "2026-07-06T21:01:25.065730+00:00"
-    }
-  ],
+  "open": [],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",
@@ -680,6 +666,24 @@
       "closed_at": "2026-07-08T01:44:15.731553+00:00",
       "pnl_pct": -1.3141,
       "pnl_usdt": -0.013141
+    },
+    {
+      "signal_id": "901a0964d7f2fddc",
+      "symbol": "TRX/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 0.32932,
+      "stop": 0.3277779,
+      "risk_dist": 0.0015420999999999907,
+      "tp": 0.33394629,
+      "peak": 0.32932,
+      "opened_at": "2026-07-06T20:00:00+00:00",
+      "opened_scan_utc": "2026-07-06T21:01:25.065730+00:00",
+      "exit": 0.32774,
+      "exit_reason": "stop",
+      "closed_at": "2026-07-08T09:02:50.216418+00:00",
+      "pnl_pct": -0.4798,
+      "pnl_usdt": -0.004798
     }
   ],
   "last_report_utc": "2026-07-05T00:12:06.419819+00:00"
