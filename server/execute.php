@@ -2,6 +2,10 @@
 /**
  * execute.php - BRACO da execucao (lado servidor, IP FIXO na whitelist Gate.io).
  * FIX 1..5 (compra + TP/SL) + FIX 6 (acao update_trailing: cria->confirma->DELETE antigo).
+ * FIX 7 (2026-07-10): base_qty do TP/SL derivada do fill REAL (filled_total/fill_price).
+ *   Antes usava $gate['amount'], que em MARKET BUY vem em QUOTE (USDT), nao em base:
+ *   gatilhos eram criados p/ vender ~4.99 ETH em vez de ~0.0029 -> disparavam,
+ *   a venda falhava por saldo insuficiente e o gatilho morria (TP/SL fantasma).
  */
 $DRY_RUN            = false;
 $TPSL_ENABLED       = true;
@@ -128,11 +132,19 @@ if ($DRY_RUN) {
             if ($TPSL_ENABLED) {
                 $sl_price = $sl_price_in; $tp_price = $tp_price_in; $rules = pair_rules($pair);
                 $apz = $rules['amount_precision']; $ppz = $rules['price_precision']; $minb = $rules['min_base_amount']; $tpsl['rules_source'] = $rules['source'];
+                // FIX 7: em MARKET BUY, $gate['amount'] esta em QUOTE (USDT) - JAMAIS usar como base.
+                // Base REAL comprada = filled_total (USDT preenchidos) / preco medio do fill.
                 $base_raw = 0.0;
-                if (isset($gate['amount']) && (float)$gate['amount'] > 0) $base_raw = (float)$gate['amount'];
-                elseif ($fill_price > 0) $base_raw = (float)($result['filled_total']) / $fill_price;
+                if ($fill_price > 0 && isset($gate['filled_total']) && (float)$gate['filled_total'] > 0) {
+                    $base_raw = (float)$gate['filled_total'] / $fill_price;
+                }
+                // Cinto extra (fail-safe > fail-silent): base*fill jamais excede o notional (+5%).
+                if ($fill_price > 0 && ($base_raw * $fill_price) > ($notional * 1.05)) {
+                    $tpsl['note'] = "sanity: base_raw ($base_raw) x fill ($fill_price) excede notional ($notional); TP/SL NAO criados";
+                    $base_raw = 0.0;
+                }
                 $base_qty_s = fmt_floor($base_raw * 0.998, $apz); $base_qty_f = (float)$base_qty_s;
-                if ($base_qty_f <= 0) { $tpsl['note'] = 'base_qty = 0; TP/SL NAO criados'; }
+                if ($base_qty_f <= 0) { if (empty($tpsl['note'])) $tpsl['note'] = 'base_qty = 0; TP/SL NAO criados'; }
                 elseif ($minb > 0 && $base_qty_f < $minb) { $tpsl['note'] = "base_qty ($base_qty_f) < min_base ($minb); TP/SL NAO criados"; }
                 else {
                     $ppath = '/api/v4/spot/price_orders';
