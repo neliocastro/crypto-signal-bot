@@ -7,9 +7,7 @@
     "XRP/USDT",
     "TRX/USDT",
     "BNB/USDT",
-    "LINK/USDT",
-    "HYPE/USDT",
-    "AAVE/USDT"
+    "HYPE/USDT"
   ],
   "dnd_enabled": false,
   "dnd_start_hour_local": 23,

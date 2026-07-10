@@ -223,6 +223,35 @@ def main() -> int:
 
     qualified_signals = [d["signal"] for d in diagnostics if d.get("signal")]
 
+    # --- ROTEAMENTO POR TRILHO (2026-07-10) -------------------------------
+    # Decisao: cada ativo opera por UM unico trilho executor.
+    #   1) Mare Alta D1  -> BTC, ETH, SOL, XRP, TRX, BNB (scan proprio, abaixo)
+    #   2) Breakout      -> HYPE (intraday)
+    #   3) Acumulacao    -> PAXG (intraday)
+    # O scan 1h deixa de gerar sinal de Telegram E de execucao p/ outros pares
+    # (fim da duplicidade que comprou ETH pelo trilho errado em 05/07).
+    # AAVE e LINK sairam da lista (reprovados; ver docs/backtests/2026-07-mare-alta-d1.md).
+    INTRADAY_EXEC_ALLOWLIST = {
+        ("HYPE/USDT", "Breakout / Tendência"),
+        ("PAXG/USDT", "Acúmulo (RSI sobrevenda)"),
+    }
+    def _sig_field(_s, _k):
+        if isinstance(_s, dict):
+            return _s.get(_k)
+        return getattr(_s, _k, None)
+    _n_pre_rota = len(qualified_signals)
+    qualified_signals = [
+        _s for _s in qualified_signals
+        if (str(_sig_field(_s, "symbol")), str(_sig_field(_s, "strategy")))
+        in INTRADAY_EXEC_ALLOWLIST
+    ]
+    if _n_pre_rota != len(qualified_signals):
+        log.info("🚦 roteamento: %d sinal(is) intraday suprimido(s) "
+                 "(so trilhos executores emitem Telegram/ordem; demais ativos "
+                 "operam exclusivamente via Mare Alta D1)",
+                 _n_pre_rota - len(qualified_signals))
+    # -----------------------------------------------------------------------
+
     # --- FIX SL/TP (bug TRX 2026-06-19): propaga ATR do candle para o sinal ---
     # As estrategias nao incluem "atr" no dict retornado; sem ele o executor
     # (build_order) usa atr=0 -> SL/TP=None -> ordem REAL sai DESPROTEGIDA.
@@ -313,7 +342,7 @@ def main() -> int:
                                 _r.get("fill_price") or 0.0,
                                 sl_price=float(_slr.get("price") or 0.0),
                                 sl_order_id=_slr.get("id") or "",
-                            )
+                        )
                     except Exception:
                         log.error("Falha ao registrar posicao p/ trailing (ignorada):\n%s",
                                   traceback.format_exc())

@@ -26,7 +26,7 @@ from typing import Callable, Optional, Dict, Any, List
 # ---------------- config / kill-switches ----------------
 MARE_ALTA_ENABLED     = True    # False = desliga tudo
 MARE_ALTA_SHADOW_MODE = False   # PRODUCAO: sinais vao ao executor (ordens reais)
-MARE_ALTA_UNIVERSE    = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "TRX/USDT", "BNB/USDT", "LINK/USDT"]
+MARE_ALTA_UNIVERSE    = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "TRX/USDT", "BNB/USDT"]
 MARE_ALTA_TIMEFRAME   = "1d"
 MARE_ALTA_STOP_ATR    = 2.5
 MARE_ALTA_TRAIL_ATR   = 3.0

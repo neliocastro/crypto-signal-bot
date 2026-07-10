@@ -17,9 +17,7 @@ WATCHLIST = [
     "XRP/USDT",
     "TRX/USDT",
     "BNB/USDT",
-    "LINK/USDT",
     "HYPE/USDT",
-    "AAVE/USDT",
     "PAXG/USDT",       # acumulo RSI 4h (ouro digital) - sem alvo de venda
 ]
 
