@@ -47,6 +47,8 @@ Registradas aqui justamente para não voltarem:
 1. ~~"Usar OCO nativo da Gate.io"~~ → **não existe no spot.** Proposta inválida.
 2. ~~"O TP reservou o saldo e o SL ficou órfão por saldo insuficiente"~~ →
    price-triggered orders **não reservam saldo**. Não há disputa.
+3. ~~"Os SL do HYPE de 27/07 nunca nasceram / desapareceram"~~ → **falso.**
+   Nasceram, dispararam e executaram. Ver seção 2.
 
 ### ✅ O caminho válido: emular OCO do nosso lado
 
@@ -61,106 +63,202 @@ Como não existe OCO nativo, a exclusividade mútua precisa ser feita por nós:
 
 ---
 
-## 2. Caso real — 27/07/2026: os SL do HYPE desapareceram 🔴
+## 2. Caso real — 27/07/2026: os SL do HYPE FUNCIONARAM ✅
 
-### O que aconteceu
+> **CAUSA RAIZ CONFIRMADA** via `GET /spot/price_orders/{id}` executado no
+> servidor em 27/07/2026 16:51 BRT. A hipótese de "SL desapareceu" era
+> **FALSA**. Os stops fizeram exatamente o trabalho para o qual foram criados.
 
-Duas compras REAIS de HYPE (\$5 cada), estratégia Breakout/Tendência:
+### As duas compras e seus stops
 
-| signal_id | hora (UTC) | fill | qty | TP | SL |
-|---|---|---|---|---|---|
-| `7e16ccd261b86c35` | 04:03 | 59.99 | 0.082 | 61.34 ✅ existe | 59.22 🔴 desapareceu |
-| `4dbd732719211751` | 05:09 | 60.40 | 0.081 | 61.72 ✅ existe | 59.45 🔴 desapareceu |
+| # | signal_id | compra (BRT) | fill | qty | SL gatilho | SL disparou (BRT) | status |
+|---|---|---|---|---|---|---|---|
+| 1 | `7e16ccd261b86c35` | 27/07 01:03 | 59.99 | 0.082 | 59.22 | **27/07 11:06** | `finish` ✅ |
+| 2 | `4dbd732719211751` | 27/07 02:09 | 60.40 | 0.081 | 59.45 | **27/07 10:16** | `finish` ✅ |
 
-### A resposta do relay dizia que o SL nasceu
-
-Log do `state/paper_trades.jsonl`:
+Resposta da API para o SL #1:
 
 ```json
-"tpsl": {
-  "enabled": true,
-  "tp": { "http": 201, "id": 2081607963629322240, "err": null, "price": "61.72" },
-  "sl": { "http": 201, "id": 2081607968662487040, "err": null, "price": "59.45" },
-  "rules_source": "api",
-  "base_qty": "0.081"
+{ "market": "HYPE_USDT",
+  "trigger": { "price": "59.22", "rule": "<=", "expiration": 2592000 },
+  "put": { "type": "market", "side": "sell", "amount": "0.082",
+           "account": "normal", "time_in_force": "ioc" },
+  "id": 2081591195686928384,
+  "ctime": 1785124989, "ftime": 1785161204,
+  "fired_order_id": 1105451750524,
+  "status": "finish" }
+```
+
+### A venda confirmada em `/spot/my_trades`
+
+```json
+{ "id": "30908769", "currency_pair": "HYPE_USDT", "side": "sell",
+  "role": "taker", "amount": "0.082", "price": "59.2",
+  "order_id": "1105451750524", "fee": "0.0048544",
+  "fee_currency": "USDT", "deal": "4.8544",
+  "text": "ao-2081591195686928384" }
+```
+
+O campo `text` começa com `ao-` (auto order) seguido do **id da condicional** —
+é a prova documental de que a venda nasceu do SL, não de uma ação manual.
+
+### P&L real — o stop protegeu
+
+```
+Trade 1: compra 0.082 @ 59.99 = $4.9192  ->  venda @ 59.20 = $4.8544
+         fee $0.0048544                  ->  liquido $4.8495
+         P&L  -$0.0696  (-1.42%)
+
+Trade 2: compra 0.081 @ 60.40 = $4.8924  ->  venda ~@ 59.40 (aprox)
+         P&L  ~-$0.0858  (-1.75%)
+
+TOTAL  : investido $9.8116 | recuperado ~$9.6561
+         P&L -$0.1554  (-1.58%)
+```
+
+🎯 **Sem os stops**, a posição teria seguido até a mínima de 57.17
+(≈5% de prejuízo). Os SL cortaram em -1.58%. **O mecanismo funcionou.**
+
+### 🔴 O BUG REAL: TP órfãos (exatamente o previsto na seção 1)
+
+Depois de o SL disparar e vender a base, os **TP continuaram abertos**:
+
+```json
+[ { "trigger": {"price":"61.72"}, "put": {"amount":"0.081"},
+    "id": 2081607963629322240, "status": "open" },
+  { "trigger": {"price":"61.34"}, "put": {"amount":"0.082"},
+    "id": 2081591191043833856, "status": "open" } ]
+```
+
+Esses dois TP (total 0.163 HYPE) apontam para uma base **que já foi vendida**.
+Se o preço subir até 61.34/61.72, eles vão disparar e **falhar**.
+
+### Prova histórica: 4 ordens já falharam assim
+
+O histórico de finalizadas mostra o destino inevitável do órfão:
+
+| ctime (BRT) | gatilho | amount | status | reason |
+|---|---|---|---|---|
+| 03/07 03:06 | ≤ 65.732 | 4.99 | `failed` | **BALANCE_NOT_ENOUGH** |
+| 03/07 03:06 | ≥ 70.519 | 4.99 | `failed` | **BALANCE_NOT_ENOUGH** |
+| 29/06 15:05 | ≤ 64.422 | 4.99 | `failed` | **BALANCE_NOT_ENOUGH** |
+| 29/06 15:05 | ≥ 70.265 | 4.99 | `expired` | — |
+
+⚠️ Note o `amount: 4.99` — esse é o rastro do **bug FIX 7** (documentado no
+cabeçalho do `execute.php`): `$gate['amount']` em MARKET BUY vem em **QUOTE**
+(USDT), não em base. Tentava vender 4.99 HYPE (≈$300) tendo 0.08.
+Já corrigido, mas as ordens antigas seguem penduradas.
+
+### ✅ Ações que decorrem deste caso
+
+1. Cancelar os 2 TP órfãos (`2081591191043833856`, `2081607963629322240`).
+2. Cancelar os 2 TP antigos de 4.99 (≥74.92 e ≥75.01) — falha garantida.
+3. Implementar a emulação de OCO da seção 1 (cancelar o lado oposto).
+4. Registrar o fechamento no `state/positions.jsonl` — o repo não soube que
+   as posições foram encerradas, e o trailing Maré Alta seguiu gerenciando
+   posição inexistente.
+
+---
+
+## 3. 🧭 Lição DE MÉTODO (a mais importante deste caso)
+
+> **A tela "Ordem (8)" do app Gate.io mostra SOMENTE ordens ABERTAS.**
+> Condicionais com `status = finish` / `failed` / `expired` **desaparecem**
+> dessa lista.
+
+Eu (assistente) concluí que "o SL desapareceu / a posição está desprotegida"
+porque não vi o SL nos prints do app. **Ausência na tela ≠ ordem inexistente.**
+A conclusão gerou alarme falso de posição nua e duas hipóteses técnicas erradas.
+
+**Regra:** antes de afirmar que uma ordem sumiu, consultar
+`GET /api/v4/spot/price_orders/{id}` e `GET /api/v4/spot/my_trades`.
+O `status` e o `fired_order_id` são a única fonte de verdade.
+
+Corolário: **não inventar causa raiz.** Duas consultas de 10 segundos
+substituíram três teorias erradas.
+
+---
+
+## 4. Referência cruzada — o que funcionou
+
+A posição **ETH** (`consolidated_eth_0710`) fechou no lucro: TP executado em
+26/07 20:07:49 a **1957.54** (entrada 1709.66 → **+14.5%**, ≈+\$1.44).
+
+Foi uma posição **consolidada manualmente** por Nélio numa estrutura de
+proteção única (SL 1545 / TP 1957) — não pelo fluxo automático.
+Mesmo problema de reconciliação: o repo seguiu com `status: open`.
+
+---
+
+## 5. 🖥️ Caminhos reais da infraestrutura (servidor ineocom)
+
+Para **não chutar caminho** em scripts de diagnóstico:
+
+```
+.env (segredos) .... /home/ineocom/cryptosignals/secrets/.env
+                     (FORA da web root; lido via parse_ini_file)
+variáveis .......... GATE_API_KEY
+                     GATE_API_SECRET
+                     EXECUTION_HMAC_SECRET
+relay (web root) ... /home/ineocom/public_html/cryptosignals/execute.php
+logs do relay ...... execution_log.jsonl  (mesmo dir do execute.php)
+                     seen_signals.json    (idempotência por signal_id)
+endpoint público ... https://ineo.com.br/cryptosignals/execute.php
+                     (HTTP 401 sem assinatura HMAC — comportamento correto)
+usuário SSH ........ ineocom @ dedi-15131000  (cPanel / jailshell)
+```
+
+⚠️ **Peculiaridades do shell (jailshell):**
+
+- `/tmp` é montado com **noexec** → `chmod +x /tmp/script.sh` dá
+  `Permission denied`. Gravar scripts no **home** (`~/`).
+- Chamar sempre com `bash ~/script.sh` (não `./script.sh`).
+- Heredoc longo pode embaralhar no eco do terminal; usar delimitador
+  distinto (`<<'ENDOFSCRIPT'`) e conferir com `cat`.
+- ❌ **NÃO existe** `/home/nelio/secrets/.env` — caminho inventado, já falhou.
+
+### Script de diagnóstico que funcionou
+
+```bash
+ENV="/home/ineocom/cryptosignals/secrets/.env"
+KEY=$(grep -E '^GATE_API_KEY'    "$ENV" | head -1 | cut -d= -f2- | tr -d ' "')
+SECRET=$(grep -E '^GATE_API_SECRET' "$ENV" | head -1 | cut -d= -f2- | tr -d ' "')
+
+gate_get() {                       # assinatura HMAC-SHA512 da Gate.io v4
+  path="$1"; query="${2:-}"
+  ts=$(date +%s)
+  bh=$(printf '' | openssl dgst -sha512 -hex | awk '{print $NF}')
+  ss=$(printf 'GET\n/api/v4%s\n%s\n%s\n%s' "$path" "$query" "$bh" "$ts")
+  sg=$(printf '%s' "$ss" | openssl dgst -sha512 -hmac "$SECRET" -hex | awk '{print $NF}')
+  url="https://api.gateio.ws/api/v4$path"; [ -n "$query" ] && url="$url?$query"
+  curl -s -H "KEY: $KEY" -H "Timestamp: $ts" -H "SIGN: $sg" "$url"; echo
 }
+
+gate_get "/spot/price_orders/<ID>"
+gate_get "/spot/price_orders" "status=open&market=HYPE_USDT"
+gate_get "/spot/my_trades"    "currency_pair=HYPE_USDT&limit=20"
 ```
 
-**HTTP 201, id gerado, `err: null`** nos dois lados. A Gate.io aceitou o SL.
-
-### Por que NÃO foi o bug de precisão
-
-Descartado com evidência:
-
-- `rules_source: "api"` → o `pair_rules()` leu a Gate.io com sucesso; **não**
-  caiu na tabela de fallback.
-- HYPE_USDT tem `precision = 2`; os preços enviados (`59.45`, `61.72`) têm
-  exatamente 2 casas. ✅ corretos.
-- O **TP**, com o mesmo formato e a mesma `base_qty`, funcionou e **está**
-  nas ordens abertas da corretora.
-
-### Consequência financeira
-
-O preço caiu abaixo dos dois gatilhos (mínima 24h **57.17**, ambos os SL em
-~59.4) e **nada foi vendido** — não havia stop na corretora.
-
-```
-Posição: 0.163 HYPE · custo $9.81
-Preço em 27/07 ~17:50 UTC: 57.18  ->  valor $9.32
-Prejuízo aberto: -$0.49 (-5.0%)
-Se os SL tivessem disparado: ~-$0.15 (-1.5%)
-Perda extra atribuível à falha: ~-$0.34
-```
-
-O teto de \$5/ordem limitou o dano. O **mecanismo**, porém, falhou: a
-proteção existia no log e não na corretora.
-
-### Causa raiz: NÃO DETERMINADA ⚠️
-
-Não há evidência suficiente para concluir. Hipóteses ainda abertas:
-
-- O SL disparou, a ordem de mercado resultante falhou e a Gate.io removeu a
-  condicional sem registrar venda.
-- `expiration: 2592000` interpretado de forma diferente do esperado.
-- Cancelamento manual involuntário.
-- Alguma regra da Gate.io sobre condicionais de venda com `account: normal`.
-
-**⛔ Não inventar causa.** Duas consultas fecham a questão (exigem a chave
-privada, portanto rodam no relay):
-
-```
-GET /api/v4/spot/price_orders/2081591195686928384   # SL da 1a compra
-GET /api/v4/spot/price_orders/2081607968662487040   # SL da 2a compra
-```
-
-O campo `status` retorna `open` | `finish` | `cancelled` | `failed`, e
-`reason` explica o motivo.
+Campos que importam no retorno: **`status`** (`open`/`finish`/`cancelled`/
+`failed`/`expired`), **`reason`**, **`ftime`** (quando finalizou) e
+**`fired_order_id`** (se disparou, o id da ordem de mercado gerada).
 
 ---
 
-## 3. Referência cruzada — o que funcionou
-
-A posição **ETH** (`consolidated_eth_0710`) foi a única que fechou
-corretamente, no lucro: TP executado em 26/07 20:07:49 a **1957.54**
-(entrada 1709.66 → **+14.5%**, ~+\$1.44).
-
-Detalhe relevante: essa posição foi **consolidada manualmente** por
-Nélio numa estrutura de proteção única (SL 1545 / TP 1957) — não pelo
-fluxo automático de duas condicionais independentes.
-
----
-
-## 4. Checklist antes de mexer em TP/SL
+## 6. Checklist antes de mexer em TP/SL
 
 - [ ] Confirmei que **não** estou propondo OCO nativo (não existe).
+- [ ] Consultei a **API** antes de afirmar que uma ordem sumiu (não o app).
 - [ ] O fluxo cancela o lado oposto quando um dispara?
 - [ ] O `positions.jsonl` guarda `tp_order_id` **e** `sl_order_id`?
 - [ ] Há reconciliação contra `GET /spot/price_orders?status=open` antes de agir?
 - [ ] A precisão vem de `pair_rules()` (`rules_source: api`) e não do fallback?
-- [ ] Existe verificação **pós-criação** de que a ordem realmente ficou aberta?
+- [ ] O `amount` do TP/SL está em **BASE** (não em quote)? — bug FIX 7.
+- [ ] Existe verificação **pós-criação** de que a ordem ficou aberta?
 
 ---
 
-_Registrado em 2026-07-27 por solicitação de Nélio Castro, após proposta
-incorreta de "OCO nativo" ter sido repetida. Atualizar este documento quando
-a causa raiz do item 2 for determinada._
+_Criado em 2026-07-27 por solicitação de Nélio Castro, após proposta incorreta
+de "OCO nativo" ter sido repetida. **Atualizado no mesmo dia** com a causa
+raiz confirmada por diagnóstico na API: os SL funcionaram; o bug real são os
+TP órfãos por falta de emulação de OCO._
