@@ -1,13 +1,12 @@
 name: Crypto Signal Bot
 
-  # cron do GitHub REMOVIDO (best-effort/atrasava ate 5h).
-  # Disparo agora vem do cron CONFIAVEL do servidor (ineocom) via workflow_dispatch,
-  # com self-scheduling do proprio workflow como redundancia.
+# Disparo: cron do GitHub (best-effort, pode atrasar) + workflow_dispatch
+# (cron confiavel do servidor ineocom) + self-chain como redundancia.
 on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
-  inputs:
+    inputs:
       self_chain:
         description: "Disparado pelo proprio workflow (auto-reagendamento)"
         required: false
@@ -15,9 +14,9 @@ on:
 
 permissions:
   contents: write
-  actions: write              # necessario p/ auto-redisparo (gh workflow run)
+  actions: write              # necessario p/ auto-redisparo (self-dispatch)
 
-# Evita runs simultaneos (cron 5min + dispatch + self-chain) ao mesmo tempo.
+# Evita runs simultaneos (cron + dispatch + self-chain) ao mesmo tempo.
 # cancel-in-progress:false -> enfileira em vez de cancelar (nao perde scan).
 concurrency:
   group: scan-${{ github.ref }}
@@ -62,12 +61,10 @@ jobs:
           fi
 
       # ---------------------------------------------------------------
-      # AUTO-REAGENDAMENTO (#1 self-scheduling)
-      # Redundancia INDEPENDENTE do cron capenga do GitHub.
+      # AUTO-REAGENDAMENTO (self-scheduling)
+      # Redundancia INDEPENDENTE do cron best-effort do GitHub.
       # So roda se o secret SELF_DISPATCH_PAT existir (kill-switch natural:
-      # sem PAT, este passo nao faz nada e o cron */5 segue como fallback).
-      # Aguarda ~4min e re-dispara a si mesmo -> cadencia ~5min confiavel
-      # mesmo quando o GitHub atrasa/pula o cron agendado.
+      # sem PAT, este passo nao faz nada e o cron */15 segue como fallback).
       # ---------------------------------------------------------------
       - name: Re-arm next scan (self-schedule)
         if: ${{ always() }}
@@ -75,7 +72,7 @@ jobs:
           GH_TOKEN: ${{ secrets.SELF_DISPATCH_PAT }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "SELF_DISPATCH_PAT ausente - auto-reagendamento desligado (fallback: cron */5)."
+            echo "SELF_DISPATCH_PAT ausente - auto-reagendamento desligado (fallback: cron */15)."
             exit 0
           fi
           echo "Aguardando 240s antes de re-armar o proximo scan..."
@@ -86,4 +83,4 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/actions/workflows/main.yml/dispatches \
             -d '{"ref":"main","inputs":{"self_chain":"true"}}' \
             && echo "Proximo scan re-armado (self-chain)." \
-            || echo "Falha ao re-armar - cron */5 cobre como fallback."
+            || echo "Falha ao re-armar - cron */15 cobre como fallback."
