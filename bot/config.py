@@ -177,7 +177,7 @@ DASHBOARD_ENABLED = False
 #   EXECUTION_RELAY_URL     -> URL https do braco PHP (vazio = so loga local).
 #   EXECUTION_PAPER_BALANCE -> saldo USDT assumido p/ dimensionar no dry-run.
 EXECUTION_ENABLED       = True
-EXECUTION_DRY_RUN       = True      # GO-LIVE MINIMO: ordens REAIS (teto $5, stop $10/dia)
+EXECUTION_DRY_RUN       = False     # GO-LIVE: ordens REAIS (teto $5/ordem, stop $20/dia, max 10/dia)
 EXECUTION_PCT           = 0.02   # go-live minimo: 2% do saldo por ordem
 EXECUTION_RELAY_URL     = "https://ineo.com.br/cryptosignals/execute.php"  # relay live (HMAC+IP whitelist)
 EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
@@ -201,7 +201,7 @@ EXECUTION_MAX_TRADES_DAY    = 10      # no maximo 6 ordens/dia
 EXECUTION_DAILY_LOSS_STOP   = 20.0   # kill-switch: para tudo se perder $10 no dia
 EXECUTION_STATE_FILE        = "state/execution_guard.json"  # contadores diarios
 
-# Arquivo da "intencao" (lado cerebro). O HMAC secret vem de env
+# Arquivo da "intencao" (lado cerebrod). O HMAC secret vem de env
 # (GitHub Secret EXECUTION_HMAC_SECRET); NUNCA fica no codigo.
 PAPER_TRADES_FILE = "state/paper_trades.jsonl"
 
