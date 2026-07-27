@@ -1,11 +1,13 @@
 name: Crypto Signal Bot
 
-on:
   # cron do GitHub REMOVIDO (best-effort/atrasava ate 5h).
   # Disparo agora vem do cron CONFIAVEL do servidor (ineocom) via workflow_dispatch,
   # com self-scheduling do proprio workflow como redundancia.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
   workflow_dispatch:
-    inputs:
+  inputs:
       self_chain:
         description: "Disparado pelo proprio workflow (auto-reagendamento)"
         required: false
