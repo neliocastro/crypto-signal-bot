@@ -284,6 +284,63 @@ def main() -> int:
         except Exception as _e_atr:
             log.warning("[FIX-ATR] %s: falha ao propagar ATR (%s)", _d.get("symbol"), _e_atr)
 
+    # --- ANTI-SPAM: cooldown por (symbol, strategy) --------------------------
+    # BUG (achado 2026-07-27): config.py declarava STATE_FILE e
+    # SIGNAL_COOLDOWN_HOURS, mas NENHUM modulo do repo consumia essas
+    # constantes -> state/last_signals.json ficava "{}" e TODO scan (~5min)
+    # re-emitia o mesmo sinal: spam no Telegram + POST inutil ao relay
+    # (HYPE: 6 reenvios em 37min, barrados como "duplicate" pelo PHP).
+    # Filtra qualified_signals ANTES do envio e da execucao.
+    # Chave symbol|strategy: HYPE-breakout e HYPE-mare-alta nao se bloqueiam.
+    # Degradacao segura: qualquer falha -> segue sem filtro (nunca perde sinal).
+    try:
+        import json as _cd_json
+        import os as _cd_os
+        from datetime import datetime as _cd_dt, timezone as _cd_tz
+        from .config import STATE_FILE as _cd_file, SIGNAL_COOLDOWN_HOURS as _cd_h
+
+        def _cd_attr(_s, _k):
+            if isinstance(_s, dict):
+                return _s.get(_k) or ""
+            return getattr(_s, _k, "") or ""
+
+        _cd_now = _cd_dt.now(_cd_tz.utc)
+        try:
+            with open(_cd_file, "r", encoding="utf-8") as _fh:
+                _cd_seen = _cd_json.load(_fh) or {}
+        except (FileNotFoundError, ValueError):
+            _cd_seen = {}
+
+        _cd_fresh, _cd_skip = [], []
+        for _s in qualified_signals:
+            _sym = _cd_attr(_s, "symbol")
+            _key = "%s|%s" % (_sym, _cd_attr(_s, "strategy") or "-")
+            _prev = _cd_seen.get(_key)
+            if _prev:
+                try:
+                    _age = (_cd_now - _cd_dt.fromisoformat(_prev)).total_seconds() / 3600.0
+                    if 0 <= _age < float(_cd_h):
+                        _cd_skip.append("%s (%.1fh/%sh)" % (_sym, _age, _cd_h))
+                        continue
+                except (ValueError, TypeError):
+                    pass  # timestamp corrompido -> deixa passar
+            _cd_seen[_key] = _cd_now.isoformat()
+            _cd_fresh.append(_s)
+
+        qualified_signals = _cd_fresh
+        _cd_dir = _cd_os.path.dirname(_cd_file)
+        if _cd_dir:
+            _cd_os.makedirs(_cd_dir, exist_ok=True)
+        with open(_cd_file, "w", encoding="utf-8") as _fh:
+            _cd_json.dump(_cd_seen, _fh, indent=1, sort_keys=True)
+        if _cd_skip:
+            log.info("[COOLDOWN] %d sinal(is) suprimido(s): %s",
+                     len(_cd_skip), ", ".join(_cd_skip))
+    except Exception:
+        log.error("[COOLDOWN] falha (ignorada, segue sem filtro):\n%s",
+                  traceback.format_exc())
+    # -------------------------------------------------------------------------
+
     # 3) Envia sinais qualificados (1 msg cada)
     for sig in qualified_signals:
         try:
@@ -312,6 +369,30 @@ def main() -> int:
                     log.info("\U0001f9ea [dry-run] intencao registrada: %s -> %s",
                              sig.get("symbol"),
                              (res.get("result") or {}).get("status"))
+                    # FIX (2026-07-27): so a Mare Alta registrava posicao ->
+                    # fills do trilho generico (breakout HYPE / MACD) ficavam
+                    # fora de state/positions.jsonl e SEM trailing D1, alem de
+                    # desalinhar open_positions do execution_guard.
+                    try:
+                        from . import mare_alta_trailing as _trail_g
+                        _rg = (res or {}).get("result") or {}
+                        if _rg.get("status") == "filled":
+                            _tg = _rg.get("tpsl") or {}
+                            _slg = _tg.get("sl") or {}
+                            _symg = (sig.get("symbol") if isinstance(sig, dict)
+                                     else getattr(sig, "symbol", ""))
+                            _trail_g.register_position(
+                                ((res or {}).get("order") or {}).get("signal_id", ""),
+                                _symg,
+                                _tg.get("base_qty") or _rg.get("filled_total") or "",
+                                _rg.get("fill_price") or 0.0,
+                                sl_price=float(_slg.get("price") or 0.0),
+                                sl_order_id=_slg.get("id") or "",
+                            )
+                            log.info("[TRAIL-REG] posicao registrada: %s", _symg)
+                    except Exception:
+                        log.error("[TRAIL-REG] falha (ignorada):\n%s",
+                                  traceback.format_exc())
             except Exception:
                 log.error("Falha no executor (ignorada):\n%s", traceback.format_exc())
 
