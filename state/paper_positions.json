@@ -1,19 +1,5 @@
 {
-  "open": [
-    {
-      "signal_id": "be0c699ca25ab07f",
-      "symbol": "BNB/USDT",
-      "strategy": "Tendência MACD — Agressivo",
-      "exit_kind": "fixed",
-      "entry": 575.6,
-      "stop": 571.68929877,
-      "risk_dist": 3.9107012299999724,
-      "tp": 587.33210368,
-      "peak": 575.6,
-      "opened_at": "2026-07-27T19:00:00+00:00",
-      "opened_scan_utc": "2026-07-27T20:00:59.236754+00:00"
-    }
-  ],
+  "open": [],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",
@@ -716,6 +702,24 @@
       "closed_at": "2026-07-27T12:32:12.535194+00:00",
       "pnl_pct": -0.7342,
       "pnl_usdt": -0.007342
+    },
+    {
+      "signal_id": "be0c699ca25ab07f",
+      "symbol": "BNB/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 575.6,
+      "stop": 571.68929877,
+      "risk_dist": 3.9107012299999724,
+      "tp": 587.33210368,
+      "peak": 575.6,
+      "opened_at": "2026-07-27T19:00:00+00:00",
+      "opened_scan_utc": "2026-07-27T20:00:59.236754+00:00",
+      "exit": 571.3,
+      "exit_reason": "stop",
+      "closed_at": "2026-07-27T22:40:13.105251+00:00",
+      "pnl_pct": -0.747,
+      "pnl_usdt": -0.00747
     }
   ],
   "last_report_utc": "2026-07-23T12:00:11.487098+00:00"
