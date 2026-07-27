@@ -1,5 +1,19 @@
 {
-  "open": [],
+  "open": [
+    {
+      "signal_id": "be0c699ca25ab07f",
+      "symbol": "BNB/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 575.6,
+      "stop": 571.68929877,
+      "risk_dist": 3.9107012299999724,
+      "tp": 587.33210368,
+      "peak": 575.6,
+      "opened_at": "2026-07-27T19:00:00+00:00",
+      "opened_scan_utc": "2026-07-27T20:00:59.236754+00:00"
+    }
+  ],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",
