@@ -10,12 +10,12 @@
 $DRY_RUN            = false;
 $TPSL_ENABLED       = true;
 $REQUIRE_PROTECTION = true;
-$MAX_NOTIONAL_USDT  = 10.0;
+$MAX_NOTIONAL_USDT  = 5.0;   // alinhado ao Python (EXECUTION_MAX_NOTIONAL_USDT)
 $SYMBOL_WHITELIST   = ['PAXG/USDT','HYPE/USDT','LINK/USDT','BTC/USDT','ETH/USDT','SOL/USDT','XRP/USDT','TRX/USDT','BNB/USDT','AAVE/USDT'];
 $LOG_FILE           = __DIR__ . '/execution_log.jsonl';
 $SEEN_FILE          = __DIR__ . '/seen_signals.json';
-$SAFE_PRICE_PREC = ['BTC_USDT'=>1,'ETH_USDT'=>2,'SOL_USDT'=>2,'XRP_USDT'=>4,'TRX_USDT'=>5,'BNB_USDT'=>1,'LINK_USDT'=>3,'HYPE_USDT'=>3,'AAVE_USDT'=>2];
-$SAFE_AMOUNT_PREC = ['BTC_USDT'=>6,'ETH_USDT'=>4,'SOL_USDT'=>3,'XRP_USDT'=>1,'TRX_USDT'=>2,'BNB_USDT'=>3,'LINK_USDT'=>2,'HYPE_USDT'=>2,'AAVE_USDT'=>3];
+$SAFE_PRICE_PREC = ['BTC_USDT'=>1,'ETH_USDT'=>2,'SOL_USDT'=>2,'XRP_USDT'=>4,'TRX_USDT'=>4,'BNB_USDT'=>1,'LINK_USDT'=>3,'HYPE_USDT'=>2,'AAVE_USDT'=>2]; // conferido via /spot/currency_pairs 2026-07-26
+$SAFE_AMOUNT_PREC = ['BTC_USDT'=>6,'ETH_USDT'=>4,'SOL_USDT'=>3,'XRP_USDT'=>1,'TRX_USDT'=>1,'BNB_USDT'=>3,'LINK_USDT'=>2,'HYPE_USDT'=>3,'AAVE_USDT'=>3]; // conferido via /spot/currency_pairs 2026-07-26
 $SAFE_MIN_BASE = ['BTC_USDT'=>0.000001,'ETH_USDT'=>0.001,'SOL_USDT'=>0.001,'XRP_USDT'=>0.1,'TRX_USDT'=>0.01,'BNB_USDT'=>0.001,'LINK_USDT'=>0.01,'HYPE_USDT'=>0.01,'AAVE_USDT'=>0.001];
 $secrets = @parse_ini_file('/home/ineocom/cryptosignals/secrets/.env');
 $HMAC_SECRET = $secrets['EXECUTION_HMAC_SECRET'] ?? '';
@@ -122,7 +122,7 @@ if ($DRY_RUN) {
 } else {
     if (!$GATE_KEY || !$GATE_SECRET) { $result = ['status'=>'error','reason'=>'chave Gate.io ausente no .env']; }
     else {
-        $bodyArr = ['currency_pair'=>$pair,'side'=>'buy','type'=>'market','account'=>'spot','amount'=>(string)$notional,'time_in_force'=>'ioc','text'=>'t-'.substr($sid,0,12)];
+        $bodyArr = ['currency_pair'=>$pair,'side'=>'buy','type'=>'market','account'=>'sspot','amount'=>(string)$notional,'time_in_force'=>'ioc','text'=>'t-'.substr($sid,0,10)];
         list($http, $gate, $curl_err) = gate_post('/api/v4/spot/orders', $bodyArr, $GATE_KEY, $GATE_SECRET);
         if ($curl_err) { $result = ['status'=>'error','reason'=>"curl: $curl_err"]; }
         elseif ($http >= 200 && $http < 300 && isset($gate['id'])) {
@@ -152,7 +152,7 @@ if ($DRY_RUN) {
                         $tp_s = fmt_floor($tp_price, $ppz);
                         if (decimal_places($tp_s) > $ppz) { $tpsl['tp'] = ['skipped'=>true,'reason'=>"precisao TP ($tp_s) excede ppz ($ppz)"]; }
                         else {
-                            $tpBody = ['trigger'=>['price'=>$tp_s,'rule'=>'>=','expiration'=>2592000],'put'=>['type'=>'market','side'=>'sell','amount'=>$base_qty_s,'account'=>'normal','time_in_force'=>'ioc'],'market'=>$pair];
+                            $tpBody = ['trigger'=>['price'=>$tp_s,'rule'=>'>=','expiration'=>2592000],'put'=>['type'=>'market','side'=>'sell','amount'=>$base_qty_s,'account'=>'normal','time_in_force'=>'ioc'],'market'=>$pair];
                             list($h2,$g2,$e2) = gate_post($ppath, $tpBody, $GATE_KEY, $GATE_SECRET);
                             $tpsl['tp'] = ['http'=>$h2,'id'=>($g2['id']??null),'err'=>($e2?:($g2['label']??null)),'price'=>$tp_s];
                         }
