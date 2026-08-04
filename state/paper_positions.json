@@ -832,6 +832,24 @@
       "closed_at": "2026-08-04T17:39:48.014526+00:00",
       "pnl_pct": -0.4831,
       "pnl_usdt": -0.004831
+    },
+    {
+      "signal_id": "2aa37d1ef90e7037",
+      "symbol": "TRX/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 0.3312,
+      "stop": 0.32981781,
+      "risk_dist": 0.0013821900000000054,
+      "tp": 0.33534657,
+      "peak": 0.3312,
+      "opened_at": "2026-08-04T16:00:00+00:00",
+      "opened_scan_utc": "2026-08-04T17:49:48.511618+00:00",
+      "exit": 0.3295,
+      "exit_reason": "stop",
+      "closed_at": "2026-08-04T17:49:48.511646+00:00",
+      "pnl_pct": -0.5133,
+      "pnl_usdt": -0.005133
     }
   ],
   "last_report_utc": "2026-07-30T12:04:01.086427+00:00"
