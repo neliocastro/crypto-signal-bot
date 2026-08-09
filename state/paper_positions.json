@@ -25,6 +25,19 @@
       "peak": 1913.16,
       "opened_at": "2026-08-07T09:00:00+00:00",
       "opened_scan_utc": "2026-08-07T10:02:05.804071+00:00"
+    },
+    {
+      "signal_id": "da09f5be2d6b799d",
+      "symbol": "BNB/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 607.3,
+      "stop": 603.93587232,
+      "risk_dist": 3.3641276799999105,
+      "tp": 617.39238305,
+      "peak": 607.3,
+      "opened_at": "2026-08-09T13:00:00+00:00",
+      "opened_scan_utc": "2026-08-09T14:02:33.184654+00:00"
     }
   ],
   "closed": [
