@@ -25,6 +25,19 @@
       "peak": 1913.16,
       "opened_at": "2026-08-07T09:00:00+00:00",
       "opened_scan_utc": "2026-08-07T10:02:05.804071+00:00"
+    },
+    {
+      "signal_id": "7a46675e1f020292",
+      "symbol": "TRX/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 0.3306,
+      "stop": 0.32988498,
+      "risk_dist": 0.0007150200000000106,
+      "tp": 0.33274506,
+      "peak": 0.3306,
+      "opened_at": "2026-08-10T01:00:00+00:00",
+      "opened_scan_utc": "2026-08-10T02:02:26.820535+00:00"
     }
   ],
   "closed": [
