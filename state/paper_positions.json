@@ -14,19 +14,6 @@
       "opened_scan_utc": "2026-08-04T15:03:13.961818+00:00"
     },
     {
-      "signal_id": "273644f775efb374",
-      "symbol": "ETH/USDT",
-      "strategy": "Tendência MACD — Agressivo",
-      "exit_kind": "fixed",
-      "entry": 1913.16,
-      "stop": 1900.96591766,
-      "risk_dist": 12.194082340000023,
-      "tp": 1949.74224702,
-      "peak": 1913.16,
-      "opened_at": "2026-08-07T09:00:00+00:00",
-      "opened_scan_utc": "2026-08-07T10:02:05.804071+00:00"
-    },
-    {
       "signal_id": "e8210059ddf194ef",
       "symbol": "TRX/USDT",
       "strategy": "Tendência MACD — Agressivo",
@@ -976,6 +963,24 @@
       "closed_at": "2026-08-10T06:51:23.330079+00:00",
       "pnl_pct": -0.2722,
       "pnl_usdt": -0.002722
+    },
+    {
+      "signal_id": "273644f775efb374",
+      "symbol": "ETH/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 1913.16,
+      "stop": 1900.96591766,
+      "risk_dist": 12.194082340000023,
+      "tp": 1949.74224702,
+      "peak": 1913.16,
+      "opened_at": "2026-08-07T09:00:00+00:00",
+      "opened_scan_utc": "2026-08-07T10:02:05.804071+00:00",
+      "exit": 1900.01,
+      "exit_reason": "stop",
+      "closed_at": "2026-08-10T13:49:12.021485+00:00",
+      "pnl_pct": -0.6873,
+      "pnl_usdt": -0.006873
     }
   ],
   "last_report_utc": "2026-08-06T12:11:30.298301+00:00"
