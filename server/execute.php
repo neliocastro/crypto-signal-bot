@@ -6,6 +6,8 @@
  *   Antes usava $gate['amount'], que em MARKET BUY vem em QUOTE (USDT), nao em base:
  *   gatilhos eram criados p/ vender ~4.99 ETH em vez de ~0.0029 -> disparavam,
  *   a venda falhava por saldo insuficiente e o gatilho morria (TP/SL fantasma).
+ * FIX 8 (2026-08-11): acao oco_sync (OCO emulado) + remocao de byte de controle
+ *   0x1D que estava grudado no 'rule' do trigger de TP ('\x1d>=' -> '>=').
  */
 $DRY_RUN            = false;
 $TPSL_ENABLED       = true;
@@ -46,6 +48,13 @@ function gate_post($path, $bodyArr, $key, $secret) {
 function gate_delete($path, $key, $secret) {
     $ch = curl_init('https://api.gateio.ws' . $path);
     curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_CUSTOMREQUEST=>'DELETE', CURLOPT_HTTPHEADER=>gate_headers('DELETE',$path,'','',$key,$secret), CURLOPT_TIMEOUT=>15]);
+    $raw = curl_exec($ch); $http = curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch);
+    return [$http, ($raw ? json_decode($raw, true) : null), $err];
+}
+function gate_get($path, $query, $key, $secret) {
+    $url = 'https://api.gateio.ws' . $path . ($query !== '' ? ('?' . $query) : '');
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_HTTPHEADER=>gate_headers('GET',$path,$query,'',$key,$secret), CURLOPT_TIMEOUT=>15]);
     $raw = curl_exec($ch); $http = curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch);
     return [$http, ($raw ? json_decode($raw, true) : null), $err];
 }
@@ -102,6 +111,52 @@ if ($action === 'update_trailing') {
     $ok = ['status'=>'trailing_updated','symbol'=>$symbol,'signal_id'=>$tsid,'new_sl'=>['id'=>$new_id,'price'=>$sl_s,'http'=>$hc],'old_sl'=>['id'=>$old_id,'delete'=>$del],'rules_source'=>$rules['source']];
     log_event($LOG_FILE, ['event'=>'update_trailing','order'=>$order,'result'=>$ok]); respond($ok);
 }
+if ($action === 'oco_sync') {
+    // OCO EMULADO (2026-08-11): a Gate.io NAO tem OCO nativo no spot; TP e SL sao
+    // price_orders independentes. Esta acao reconcilia pares TP<->SL:
+    //   - consulta o status REAL de cada perna na API;
+    //   - se uma perna disparou (finish) e a outra segue open -> DELETE na sobrevivente;
+    //   - devolve o status de cada par p/ o Python marcar closed_tp/closed_sl.
+    // Read-mostly + delete cirurgico: NUNCA cria ordem, NUNCA compra/vende.
+    if (!$GATE_KEY || !$GATE_SECRET) respond(['status'=>'error','reason'=>'chave Gate.io ausente no .env']);
+    $pairs_in = $order['pairs'] ?? [];
+    if (!is_array($pairs_in) || count($pairs_in) === 0) respond(['status'=>'error','reason'=>'oco_sync: pairs vazio']);
+    if (count($pairs_in) > 20) respond(['status'=>'error','reason'=>'oco_sync: max 20 pares por chamada']);
+    $ppath = '/api/v4/spot/price_orders';
+    $fetch_st = function($id) use ($ppath, $GATE_KEY, $GATE_SECRET) {
+        if ($id === '' || $id === null) return ['id'=>'', 'status'=>'absent'];
+        list($h, $g, $e) = gate_get($ppath . '/' . rawurlencode((string)$id), '', $GATE_KEY, $GATE_SECRET);
+        if ($h >= 200 && $h < 300 && is_array($g)) {
+            return ['id'=>(string)$id, 'status'=>($g['status'] ?? 'unknown'), 'fired_order_id'=>($g['fired_order_id'] ?? null), 'ftime'=>($g['ftime'] ?? null), 'reason'=>($g['reason'] ?? null)];
+        }
+        return ['id'=>(string)$id, 'status'=>'lookup_failed', 'http'=>$h, 'err'=>($e ?: ($g['label'] ?? $g['message'] ?? null))];
+    };
+    $out = [];
+    foreach ($pairs_in as $p) {
+        $psid = (string)($p['signal_id'] ?? '');
+        $tp = $fetch_st($p['tp_order_id'] ?? '');
+        $sl = $fetch_st($p['sl_order_id'] ?? '');
+        $item = ['signal_id'=>$psid, 'tp'=>$tp, 'sl'=>$sl, 'closed_by'=>null, 'cancel'=>null];
+        // regra: 'finish' = disparou. A perna oposta ainda 'open' esta orfa -> cancela.
+        if ($tp['status'] === 'finish' && $sl['status'] === 'open') {
+            list($hd, $gd, $ed) = gate_delete($ppath . '/' . rawurlencode($sl['id']), $GATE_KEY, $GATE_SECRET);
+            $item['closed_by'] = 'tp';
+            $item['cancel'] = ['side'=>'sl', 'id'=>$sl['id'], 'http'=>$hd, 'err'=>($ed ?: ($gd['label'] ?? null))];
+        } elseif ($sl['status'] === 'finish' && $tp['status'] === 'open') {
+            list($hd, $gd, $ed) = gate_delete($ppath . '/' . rawurlencode($tp['id']), $GATE_KEY, $GATE_SECRET);
+            $item['closed_by'] = 'sl';
+            $item['cancel'] = ['side'=>'tp', 'id'=>$tp['id'], 'http'=>$hd, 'err'=>($ed ?: ($gd['label'] ?? null))];
+        } elseif ($tp['status'] === 'finish') {
+            $item['closed_by'] = 'tp';   // SL ja morto (cancelled/failed/expired/absent) -> nada a cancelar
+        } elseif ($sl['status'] === 'finish') {
+            $item['closed_by'] = 'sl';
+        }
+        $out[] = $item;
+    }
+    $resp = ['status'=>'oco_synced', 'pairs'=>$out, 'checked'=>count($out)];
+    log_event($LOG_FILE, ['event'=>'oco_sync', 'order'=>['action'=>'oco_sync','n_pairs'=>count($pairs_in),'signal_id'=>($order['signal_id'] ?? '')], 'result'=>$resp]);
+    respond($resp);
+}
 $symbol = $order['symbol'] ?? ''; $notional = (float)($order['notional_usdt'] ?? 0); $sid = $order['signal_id'] ?? '';
 if (!in_array($symbol, $SYMBOL_WHITELIST, true)) respond(['status'=>'rejected','reason'=>'symbol fora da whitelist']);
 if ($notional <= 0 || $notional > $MAX_NOTIONAL_USDT) respond(['status'=>'rejected','reason'=>"notional fora do teto ($MAX_NOTIONAL_USDT)"]);
@@ -152,7 +207,7 @@ if ($DRY_RUN) {
                         $tp_s = fmt_floor($tp_price, $ppz);
                         if (decimal_places($tp_s) > $ppz) { $tpsl['tp'] = ['skipped'=>true,'reason'=>"precisao TP ($tp_s) excede ppz ($ppz)"]; }
                         else {
-                            $tpBody = ['trigger'=>['price'=>$tp_s,'rule'=>'>=','expiration'=>2592000],'put'=>['type'=>'market','side'=>'sell','amount'=>$base_qty_s,'account'=>'normal','time_in_force'=>'ioc'],'market'=>$pair];
+                            $tpBody = ['trigger'=>['price'=>$tp_s,'rule'=>'>=','expiration'=>2592000],'put'=>['type'=>'market','side'=>'sell','amount'=>$base_qty_s,'account'=>'normal','time_in_force'=>'ioc'],'market'=>$pair];
                             list($h2,$g2,$e2) = gate_post($ppath, $tpBody, $GATE_KEY, $GATE_SECRET);
                             $tpsl['tp'] = ['http'=>$h2,'id'=>($g2['id']??null),'err'=>($e2?:($g2['label']??null)),'price'=>$tp_s];
                         }

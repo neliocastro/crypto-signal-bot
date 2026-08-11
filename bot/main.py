@@ -379,6 +379,7 @@ def main() -> int:
                         if _rg.get("status") == "filled":
                             _tg = _rg.get("tpsl") or {}
                             _slg = _tg.get("sl") or {}
+                            _tpg = _tg.get("tp") or {}
                             _symg = (sig.get("symbol") if isinstance(sig, dict)
                                      else getattr(sig, "symbol", ""))
                             _trail_g.register_position(
@@ -388,6 +389,8 @@ def main() -> int:
                                 _rg.get("fill_price") or 0.0,
                                 sl_price=float(_slg.get("price") or 0.0),
                                 sl_order_id=_slg.get("id") or "",
+                                tp_price=float(_tpg.get("price") or 0),
+                                tp_order_id=_tpg.get("id") or "",
                             )
                             log.info("[TRAIL-REG] posicao registrada: %s", _symg)
                     except Exception:
@@ -416,6 +419,7 @@ def main() -> int:
                         if _r.get("status") == "filled":
                             _tpsl = _r.get("tpsl") or {}
                             _slr  = _tpsl.get("sl") or {}
+                            _tpr  = _tpsl.get("tp") or {}
                             _ma_trail.register_position(
                                 ((_ma_res or {}).get("order") or {}).get("signal_id", ""),
                                 _ma_sig.get("symbol"),
@@ -423,6 +427,8 @@ def main() -> int:
                                 _r.get("fill_price") or 0.0,
                                 sl_price=float(_slr.get("price") or 0.0),
                                 sl_order_id=_slr.get("id") or "",
+                                tp_price=float(_tpr.get("price") or 0),
+                                tp_order_id=_tpr.get("id") or "",
                         )
                     except Exception:
                         log.error("Falha ao registrar posicao p/ trailing (ignorada):\n%s",
@@ -461,6 +467,20 @@ def main() -> int:
                             _t.get("symbol"), _t.get("reason"))
     except Exception:
         log.error("Falha no trailing Mare Alta (ignorada):\n%s", traceback.format_exc())
+
+    # --- OCO EMULADO (2026-08-11): Gate.io spot NAO vincula TP<->SL. ---
+    # A cada scan, o oco_guard reconcilia os pares TP/SL das posicoes abertas
+    # via relay (acao oco_sync): se uma perna disparou, o PHP cancela a
+    # sobrevivente e a posicao local vira closed_tp/closed_sl. Fecha o buraco
+    # das ordens orfas (TPs do HYPE apos SL 27/07; SL do ETH apos TP).
+    # Falhas nunca derrubam o scan.
+    try:
+        from . import oco_guard as _oco
+        for _o in _oco.sync(notify=send):
+            log.info("\U0001F6E1 OCO: %s fechada por %s (perna oposta cancelada)",
+                     _o.get("symbol"), _o.get("closed_by"))
+    except Exception:
+        log.error("Falha no oco_guard (ignorada):\n%s", traceback.format_exc())
 
 
     try:
