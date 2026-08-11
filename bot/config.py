@@ -197,8 +197,8 @@ EXECUTION_TP_RR       = 2.0    # Take-Profit = entrada + (RR * risco). RR 2.0 = 
 EXECUTION_TPSL_ENABLED = True  # kill-switch: False = volta a comprar sem TP/SL
 EXECUTION_MIN_STOP_PCT = 0.8   # piso de afastamento do stop (% do preco). Bug TRX: ATR baixo (0.25%) gerava stop coladissimo (-0.5%) -> ruido estopava
 EXECUTION_MAX_OPEN          = 10      # no maximo 10 posicoes live ao mesmo tempo
-EXECUTION_MAX_TRADES_DAY    = 10      # no maximo 6 ordens/dia
-EXECUTION_DAILY_LOSS_STOP   = 20.0   # kill-switch: para tudo se perder $10 no dia
+EXECUTION_MAX_TRADES_DAY    = 10      # no maximo 10 ordens/dia
+EXECUTION_DAILY_LOSS_STOP   = 20.0   # kill-switch: para tudo se perder $20 no dia
 EXECUTION_STATE_FILE        = "state/execution_guard.json"  # contadores diarios
 
 # Arquivo da "intencao" (lado cerebrod). O HMAC secret vem de env
@@ -222,3 +222,14 @@ MARE_ALTA_TRAILING_ENABLED = True   # kill-switch do trailing D1
 MARE_ALTA_SL_ATR_MULT      = 3.0    # stop = close_D1 - 3.0 * ATR(D1)
 MARE_ALTA_ATR_PERIOD       = 14     # periodo do ATR diario
 MARE_ALTA_SYMBOLS          = []     # vazio = qualquer posicao aberta registrada
+
+# ============ OCO GUARD - emulacao de OCO (bot/oco_guard.py) ============
+# A Gate.io NAO tem OCO nativo no spot: TP e SL sao price_orders INDEPENDENTES,
+# e quando uma perna dispara a outra fica orfa (casos reais: TPs do HYPE 27/07,
+# SL do ETH 11/08). O guard reconcilia pares TP<->SL a cada scan via acao
+# "oco_sync" do relay: consulta o status REAL na API e, se uma perna disparou
+# (finish) e a oposta segue open, cancela a sobrevivente e fecha a posicao
+# local (closed_tp/closed_sl). EM PRODUCAO desde 2026-08-11, validado por
+# smoke test (ver docs/gateio_limitacoes.md, secao 7).
+# Degradacao segura: falha nunca derruba o scan; nunca cria ordem.
+OCO_GUARD_ENABLED = True   # kill-switch do OCO emulado
