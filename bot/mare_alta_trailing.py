@@ -138,7 +138,8 @@ def _save_positions(positions: list) -> None:
 
 
 def register_position(signal_id, symbol, base_qty, entry_price,
-                      sl_price, sl_order_id) -> None:
+                      sl_price, sl_order_id,
+                      tp_price=0.0, tp_order_id="") -> None:
     """Registra/atualiza uma posicao aberta apos o fill. Chave: signal_id.
     Idempotente: mesma signal_id sobrescreve a entrada anterior."""
     try:
@@ -150,6 +151,8 @@ def register_position(signal_id, symbol, base_qty, entry_price,
             "entry_price": float(entry_price),
             "sl_price": float(sl_price) if sl_price else 0.0,
             "sl_order_id": str(sl_order_id) if sl_order_id else "",
+            "tp_price": float(tp_price) if tp_price else 0.0,
+            "tp_order_id": str(tp_order_id) if tp_order_id else "",
             "status": "open",
             "opened_at": _now_iso(),
             "updated_at": _now_iso(),
