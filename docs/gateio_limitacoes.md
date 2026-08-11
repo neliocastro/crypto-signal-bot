@@ -3,6 +3,9 @@
 > **Leia antes de propor qualquer mecanismo de proteção de posição.**
 > Este documento existe para evitar retrabalho e propostas tecnicamente
 > inválidas que já foram descartadas.
+>
+> **STATUS (2026-08-11): caso ENCERRADO.** As órfãs foram canceladas e a
+> emulação de OCO está EM PRODUÇÃO e validada. Ver seção 7.
 
 ---
 
@@ -50,16 +53,15 @@ Registradas aqui justamente para não voltarem:
 3. ~~"Os SL do HYPE de 27/07 nunca nasceram / desapareceram"~~ → **falso.**
    Nasceram, dispararam e executaram. Ver seção 2.
 
-### ✅ O caminho válido: emular OCO do nosso lado
+### ✅ O caminho válido: emular OCO do nosso lado — **IMPLEMENTADO (seção 7)**
 
 Como não existe OCO nativo, a exclusividade mútua precisa ser feita por nós:
 
-- Guardar `tp_order_id` **e** `sl_order_id` no `state/positions.jsonl`.
+- Guardar `tp_order_id` **e** `sl_order_id` no `state/positions.jsonl`. ✅
 - Ao detectar que um lado executou, **cancelar o outro** via
-  `DELETE /api/v4/spot/price_orders/{id}` (o `gate_delete()` do PHP já faz
-  isso no fluxo de trailing).
-- Reconciliar contra a corretora (`GET /api/v4/spot/price_orders?status=open`)
-  antes de agir — nunca confiar apenas no estado local do repo.
+  `DELETE /api/v4/spot/price_orders/{id}`. ✅ (ação `oco_sync` do relay)
+- Reconciliar contra a corretora (`GET /api/v4/spot/price_orders/{id}`)
+  antes de agir — nunca confiar apenas no estado local do repo. ✅
 
 ---
 
@@ -130,8 +132,8 @@ Depois de o SL disparar e vender a base, os **TP continuaram abertos**:
     "id": 2081591191043833856, "status": "open" } ]
 ```
 
-Esses dois TP (total 0.163 HYPE) apontam para uma base **que já foi vendida**.
-Se o preço subir até 61.34/61.72, eles vão disparar e **falhar**.
+Esses dois TP (total 0.163 HYPE) apontavam para uma base **que já foi vendida**.
+(Resolvido — ver seção 7.)
 
 ### Prova histórica: 4 ordens já falharam assim
 
@@ -147,16 +149,23 @@ O histórico de finalizadas mostra o destino inevitável do órfão:
 ⚠️ Note o `amount: 4.99` — esse é o rastro do **bug FIX 7** (documentado no
 cabeçalho do `execute.php`): `$gate['amount']` em MARKET BUY vem em **QUOTE**
 (USDT), não em base. Tentava vender 4.99 HYPE (≈$300) tendo 0.08.
-Já corrigido, mas as ordens antigas seguem penduradas.
+Já corrigido, mas as ordens antigas seguiam penduradas.
 
-### ✅ Ações que decorrem deste caso
+### ✅ Ações que decorreram deste caso — TODAS CONCLUÍDAS (2026-08-11)
 
-1. Cancelar os 2 TP órfãos (`2081591191043833856`, `2081607963629322240`).
-2. Cancelar os 2 TP antigos de 4.99 (≥74.92 e ≥75.01) — falha garantida.
-3. Implementar a emulação de OCO da seção 1 (cancelar o lado oposto).
-4. Registrar o fechamento no `state/positions.jsonl` — o repo não soube que
-   as posições foram encerradas, e o trailing Maré Alta seguiu gerenciando
-   posição inexistente.
+1. ~~Cancelar os 2 TP órfãos~~ ✅ resolvidos: `2081591191043833856` cancelado
+   manualmente; `2081607963629322240` finalizado pela própria exchange.
+2. ~~Cancelar os 2 TP antigos de 4.99~~ ✅ mortos (failed/expired na exchange).
+3. ~~Implementar a emulação de OCO~~ ✅ **EM PRODUÇÃO** — ver seção 7.
+4. ~~Registrar fechamentos no `positions.jsonl`~~ ✅ reconciliado (posições do
+   HYPE marcadas `closed_sl`; ETH `closed_tp`); o `oco_guard` agora faz isso
+   automaticamente a cada scan.
+
+**Caso adicional (mesma classe):** em 11/08 o `gate_cleanup.php` detectou um
+**SL órfão do ETH** (`2081738667730141184`, SELL 0.0058 ETH ≤ 1785.43, saldo
+real 0.00007570 — déficit 98,7%): o espelho do caso HYPE (TP disparou, SL
+ficou órfão). Cancelado via `cancel-orphans` (HTTP 200). Prova de que o
+problema era **recorrente e bidirecional** — daí o OCO emulado ser necessário.
 
 ---
 
@@ -186,7 +195,8 @@ A posição **ETH** (`consolidated_eth_0710`) fechou no lucro: TP executado em
 
 Foi uma posição **consolidada manualmente** por Nélio numa estrutura de
 proteção única (SL 1545 / TP 1957) — não pelo fluxo automático.
-Mesmo problema de reconciliação: o repo seguiu com `status: open`.
+Mesmo problema de reconciliação: o repo seguiu com `status: open`
+(hoje já marcado `closed_tp` e coberto pelo `oco_guard`).
 
 ---
 
@@ -206,6 +216,8 @@ logs do relay ...... execution_log.jsonl  (mesmo dir do execute.php)
 endpoint público ... https://ineo.com.br/cryptosignals/execute.php
                      (HTTP 401 sem assinatura HMAC — comportamento correto)
 usuário SSH ........ ineocom @ dedi-15131000  (cPanel / jailshell)
+cleanup tool ....... ~/gate_cleanup.php (orphans = dry-run; cancel-orphans)
+                     log em ~/gate_cleanup_log.jsonl
 ```
 
 ⚠️ **Peculiaridades do shell (jailshell):**
@@ -243,22 +255,82 @@ Campos que importam no retorno: **`status`** (`open`/`finish`/`cancelled`/
 `failed`/`expired`), **`reason`**, **`ftime`** (quando finalizou) e
 **`fired_order_id`** (se disparou, o id da ordem de mercado gerada).
 
+⚠️ Grafia da API: a Gate.io retorna **`canceled`** (1 "l", grafia americana)
+no status de condicional cancelada — confirmado no smoke test de 11/08.
+
 ---
 
 ## 6. Checklist antes de mexer em TP/SL
 
-- [ ] Confirmei que **não** estou propondo OCO nativo (não existe).
-- [ ] Consultei a **API** antes de afirmar que uma ordem sumiu (não o app).
-- [ ] O fluxo cancela o lado oposto quando um dispara?
-- [ ] O `positions.jsonl` guarda `tp_order_id` **e** `sl_order_id`?
-- [ ] Há reconciliação contra `GET /spot/price_orders?status=open` antes de agir?
+- [x] Confirmei que **não** estou propondo OCO nativo (não existe).
+- [x] Consultei a **API** antes de afirmar que uma ordem sumiu (não o app).
+- [x] O fluxo cancela o lado oposto quando um dispara? → `oco_sync`/`oco_guard`.
+- [x] O `positions.jsonl` guarda `tp_order_id` **e** `sl_order_id`? → sim,
+      desde o `register_position` atualizado (fills novos).
+- [x] Há reconciliação contra a API antes de agir? → `oco_sync` consulta o
+      status real de cada perna a cada scan.
 - [ ] A precisão vem de `pair_rules()` (`rules_source: api`) e não do fallback?
 - [ ] O `amount` do TP/SL está em **BASE** (não em quote)? — bug FIX 7.
 - [ ] Existe verificação **pós-criação** de que a ordem ficou aberta?
 
 ---
 
+## 7. ✅ RESOLUÇÃO — OCO emulado em PRODUÇÃO (2026-08-11)
+
+O buraco descrito na seção 1 foi fechado ponta a ponta. Circuito completo:
+
+```
+COMPRA → register_position() grava tp_order_id + sl_order_id  (mare_alta_trailing.py)
+SCAN   → oco_guard.sync() envia pares abertos ao relay        (bot/oco_guard.py)
+RELAY  → oco_sync consulta status REAL de cada perna na API   (server/execute.php)
+       → perna disparou (finish) + oposta open? DELETE na sobrevivente
+PYTHON → posição vira closed_tp/closed_sl + aviso no Telegram
+```
+
+### Peças e características
+
+| Peça | Onde | Nota |
+|---|---|---|
+| `register_position(..., tp_price, tp_order_id)` | `bot/mare_alta_trailing.py` + 2 pontos do `main.py` | aditivo, retrocompatível |
+| Ação `oco_sync` | `server/execute.php` (deployado 11/08) | read-mostly; NUNCA cria ordem; máx. 20 pares/chamada |
+| `oco_guard.sync()` | `bot/oco_guard.py`, plugado no scan após o trailing | kill-switch `OCO_GUARD_ENABLED` (default True); falha nunca derruba o scan |
+
+### Smoke test (validação em produção, 11/08 ~12h BRT)
+
+Usando o par já morto do HYPE (leitura pura, nada a cancelar):
+
+```json
+HTTP 200
+{"status":"oco_synced","pairs":[{"signal_id":"7e16ccd261b86c35",
+  "tp":{"id":"2081591191043833856","status":"canceled","ftime":1785207869},
+  "sl":{"id":"2081591195686928384","status":"finish",
+        "fired_order_id":1105451750524,"ftime":1785161204},
+  "closed_by":"sl","cancel":null}],"checked":1}
+```
+
+- `sl.fired_order_id 1105451750524` bate com a venda auto-order auditada em
+  `/spot/my_trades` (27/07) → lookup correto. ✅
+- `closed_by: "sl"` → decisão correta. ✅
+- `cancel: null` → TP não estava `open`, nada a cancelar → sem ação
+  desnecessária. ✅
+
+### Retrocompatibilidade
+
+Posições antigas só têm `sl_order_id`: o guard ainda detecta SL `finish` e
+fecha a posição (apenas não há TP a cancelar — o PHP responde `absent`).
+Fills novos nascem com o par completo.
+
+### Limpeza executada
+
+- 27/07: TP órfãos do HYPE — 1 cancelado manualmente, demais finalizados pela
+  exchange (BALANCE_NOT_ENOUGH/expired).
+- 11/08: SL órfão do ETH `2081738667730141184` cancelado via
+  `php ~/gate_cleanup.php cancel-orphans` (HTTP 200). Reconciliação contra a
+  API confirmou: **zero órfãs restantes**.
+
+---
+
 _Criado em 2026-07-27 por solicitação de Nélio Castro, após proposta incorreta
-de "OCO nativo" ter sido repetida. **Atualizado no mesmo dia** com a causa
-raiz confirmada por diagnóstico na API: os SL funcionaram; o bug real são os
-TP órfãos por falta de emulação de OCO._
+de "OCO nativo" ter sido repetida. Atualizado no mesmo dia com a causa raiz
+confirmada por diagnóstico na API. **Encerrado em 2026-08-11**: órfãs
+canceladas e emulação de OCO em produção, validada por smoke test._
