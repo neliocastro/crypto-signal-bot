@@ -138,6 +138,14 @@ BREAKOUT_SYMBOLS = {
     "HYPE/USDT": {"lookback": 30, "atr_mult": 2.5},
 }
 
+# REAVALIACAO DE REENTRADA (2026-08-12) - LINK e SOL REPROVADOS:
+#   Backtest 165d (01/03-13/08, 3961 candles 1h, fee 0.1% i/v, split de robustez):
+#     SOL  breakout PF 0.44 (-25.7%) | MACD PF 0.79 (-10.8%) -> sem edge em nenhuma
+#     LINK breakout PF 0.77 (-9.8%)  | MACD PF 1.08 total, MAS decaiu: H1 2.24 -> H2 0.60
+#   O edge historico do LINK (PF 3.26 no backtest de maio) MORREU na metade recente.
+#   Controle HYPE breakout: PF 1.49 total, positivo nas 2 metades (1.64/2.06).
+#   Decisao do usuario: NAO reentrar nenhum dos dois; concentrar no que tem edge.
+
 
 # ============ ACUMULACAO (PAXG - ouro digital) ============
 # Estrategia de ACUMULO por sobrevenda (BUY only, sem stop nem alvo de venda).
@@ -177,7 +185,7 @@ DASHBOARD_ENABLED = False
 #   EXECUTION_RELAY_URL     -> URL https do braco PHP (vazio = so loga local).
 #   EXECUTION_PAPER_BALANCE -> saldo USDT assumido p/ dimensionar no dry-run.
 EXECUTION_ENABLED       = True
-EXECUTION_DRY_RUN       = False     # GO-LIVE: ordens REAIS (teto $5/ordem, stop $20/dia, max 10/dia)
+EXECUTION_DRY_RUN       = False     # GO-LIVE: ordens REAIS (teto $10/ordem, stop $20/dia, max 10/dia)
 EXECUTION_PCT           = 0.02   # go-live minimo: 2% do saldo por ordem
 EXECUTION_RELAY_URL     = "https://ineo.com.br/cryptosignals/execute.php"  # relay live (HMAC+IP whitelist)
 EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
@@ -189,7 +197,7 @@ EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
 #   EXECUTION_MAX_OPEN          -> maximo de posicoes live simultaneas.
 #   EXECUTION_MAX_TRADES_DAY    -> maximo de ordens enviadas por dia (UTC).
 #   EXECUTION_DAILY_LOSS_STOP   -> se a perda do dia (USDT) atingir isto, PARA.
-EXECUTION_MAX_NOTIONAL_USDT = 5.0    # nunca envia ordem acima de $5
+EXECUTION_MAX_NOTIONAL_USDT = 10.0   # DEGRAU 2 (2026-08-12): $5 -> $10 apos infra provada em 9 trades; proximo degrau ($20) SO no 20o trade com P&L>0 e PF>=1 ex-ETH
 EXECUTION_MIN_NOTIONAL_USDT = 3.0    # piso: Gate.io rejeita ordem < $3 (too small)
 # --- Saida automatica (TP/SL nativos na Gate.io, anexados a cada compra) ---
 EXECUTION_ATR_MULT_SL = 2.0    # Stop-Loss = entrada - (mult * ATR). Configuravel (subir p/ 2.5 = mais folga)
