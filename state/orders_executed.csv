@@ -348,3 +348,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-08-12T16:02:22.618546+00:00,5fb0f3928ddcb1db,HYPE/USDT,buy,5.0,56.55,,,REAL,rejected_by_exchange,REQUEST_EXPIRED
 2026-08-13T06:03:28.186690+00:00,4d56fb99d2fa5148,HYPE/USDT,buy,10.0,57.24,,,REAL,rejected_by_exchange,REQUEST_EXPIRED
 2026-08-13T10:12:59.034170+00:00,6bb78319cd911690,HYPE/USDT,buy,10.0,57.76,,,REAL,rejected_by_exchange,REQUEST_EXPIRED
+2026-08-13T15:00:14.451846+00:00,4c2eeaafca1e180b,HYPE/USDT,buy,10.0,58.21,,,REAL,rejected_by_exchange,REQUEST_EXPIRED
