@@ -1,19 +1,6 @@
 {
   "open": [
     {
-      "signal_id": "49842723af0c1228",
-      "symbol": "TRX/USDT",
-      "strategy": "Tendência MACD — Agressivo",
-      "exit_kind": "fixed",
-      "entry": 0.3363,
-      "stop": 0.33506557,
-      "risk_dist": 0.0012344300000000086,
-      "tp": 0.34000328,
-      "peak": 0.3363,
-      "opened_at": "2026-08-12T08:00:00+00:00",
-      "opened_scan_utc": "2026-08-12T09:03:43.093452+00:00"
-    },
-    {
       "signal_id": "d0da1b19c7f28173",
       "symbol": "BNB/USDT",
       "strategy": "Tendência MACD — Agressivo",
@@ -32,10 +19,10 @@
       "strategy": "Breakout / Tendência",
       "exit_kind": "trailing",
       "entry": 57.24,
-      "stop": 56.63874085,
+      "stop": 56.65874085,
       "risk_dist": 1.041259150000002,
       "tp": 60.36377745,
-      "peak": 57.68,
+      "peak": 57.7,
       "opened_at": "2026-08-13T05:00:00+00:00",
       "opened_scan_utc": "2026-08-13T06:03:46.051369+00:00"
     }
@@ -1066,6 +1053,24 @@
       "closed_at": "2026-08-12T23:09:48.601059+00:00",
       "pnl_pct": 0.3584,
       "pnl_usdt": 0.003584
+    },
+    {
+      "signal_id": "49842723af0c1228",
+      "symbol": "TRX/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 0.3363,
+      "stop": 0.33506557,
+      "risk_dist": 0.0012344300000000086,
+      "tp": 0.34000328,
+      "peak": 0.3363,
+      "opened_at": "2026-08-12T08:00:00+00:00",
+      "opened_scan_utc": "2026-08-12T09:03:43.093452+00:00",
+      "exit": 0.3349,
+      "exit_reason": "stop",
+      "closed_at": "2026-08-13T09:53:26.443126+00:00",
+      "pnl_pct": -0.4163,
+      "pnl_usdt": -0.004163
     }
   ],
   "last_report_utc": "2026-08-06T12:11:30.298301+00:00"
