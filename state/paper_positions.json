@@ -12,6 +12,19 @@
       "peak": 76.17,
       "opened_at": "2026-08-18T08:00:00+00:00",
       "opened_scan_utc": "2026-08-18T09:06:01.258965+00:00"
+    },
+    {
+      "signal_id": "46fa19aecad9309e",
+      "symbol": "ETH/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 1911.12,
+      "stop": 1898.25466727,
+      "risk_dist": 12.865332729999864,
+      "tp": 1949.7159982,
+      "peak": 1911.12,
+      "opened_at": "2026-08-18T14:00:00+00:00",
+      "opened_scan_utc": "2026-08-18T15:07:28.328853+00:00"
     }
   ],
   "closed": [
