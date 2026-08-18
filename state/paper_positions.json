@@ -12,6 +12,19 @@
       "peak": 60.32,
       "opened_at": "2026-08-18T06:00:00+00:00",
       "opened_scan_utc": "2026-08-18T07:04:43.566652+00:00"
+    },
+    {
+      "signal_id": "34e3bf79f405a033",
+      "symbol": "SOL/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 76.17,
+      "stop": 75.63953789,
+      "risk_dist": 0.530462110000002,
+      "tp": 77.76138633,
+      "peak": 76.17,
+      "opened_at": "2026-08-18T08:00:00+00:00",
+      "opened_scan_utc": "2026-08-18T09:06:01.258965+00:00"
     }
   ],
   "closed": [
