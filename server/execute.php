@@ -8,11 +8,18 @@
  *   a venda falhava por saldo insuficiente e o gatilho morria (TP/SL fantasma).
  * FIX 8 (2026-08-11): acao oco_sync (OCO emulado) + remocao de byte de controle
  *   0x1D que estava grudado no 'rule' do trigger de TP ('\x1d>=' -> '>=').
+ * FIX 9 (2026-08-20): CAUSA RAIZ do "sinal PRONTO que nunca virava compra".
+ *   O body da ordem de compra mandava 'account'=>'sspot' (typo, mesma classe de
+ *   corrupcao do FIX 8 e do 'ssem' abaixo). A Gate.io so aceita 'spot'|'margin'|
+ *   'unified', entao TODA compra voltava HTTP 400 INVALID_REQUEST_BODY e o sinal
+ *   morria no relay - sem nunca aparecer como falha no Telegram do scan.
+ *   Tambem alinha $MAX_NOTIONAL_USDT (5.0 -> 10.0) ao EXECUTION_MAX_NOTIONAL_USDT
+ *   do bot/config.py: o Python liberava ate $10 e o PHP recusaria acima de $5.
  */
 $DRY_RUN            = false;
 $TPSL_ENABLED       = true;
 $REQUIRE_PROTECTION = true;
-$MAX_NOTIONAL_USDT  = 5.0;   // alinhado ao Python (EXECUTION_MAX_NOTIONAL_USDT)
+$MAX_NOTIONAL_USDT  = 10.0;  // alinhado ao Python (EXECUTION_MAX_NOTIONAL_USDT = 10.0, DEGRAU 2)
 $SYMBOL_WHITELIST   = ['PAXG/USDT','HYPE/USDT','LINK/USDT','BTC/USDT','ETH/USDT','SOL/USDT','XRP/USDT','TRX/USDT','BNB/USDT','AAVE/USDT'];
 $LOG_FILE           = __DIR__ . '/execution_log.jsonl';
 $SEEN_FILE          = __DIR__ . '/seen_signals.json';
@@ -162,7 +169,7 @@ if (!in_array($symbol, $SYMBOL_WHITELIST, true)) respond(['status'=>'rejected','
 if ($notional <= 0 || $notional > $MAX_NOTIONAL_USDT) respond(['status'=>'rejected','reason'=>"notional fora do teto ($MAX_NOTIONAL_USDT)"]);
 $sl_price_in = isset($order['sl_price']) ? (float)$order['sl_price'] : 0.0; $tp_price_in = isset($order['tp_price']) ? (float)$order['tp_price'] : 0.0;
 if ($REQUIRE_PROTECTION && $TPSL_ENABLED && $sl_price_in <= 0 && $tp_price_in <= 0) {
-    $rej = ['status'=>'rejected','reason'=>'ssem TP nem SL (ATR=0?) - compra recusada (posicao nua)','symbol'=>$symbol,'signal_id'=>$sid];
+    $rej = ['status'=>'rejected','reason'=>'sem TP nem SL (ATR=0?) - compra recusada (posicao nua)','symbol'=>$symbol,'signal_id'=>$sid];
     log_event($LOG_FILE, ['event'=>'execute','order'=>$order,'result'=>$rej]);
     $seen = file_exists($SEEN_FILE) ? json_decode(file_get_contents($SEEN_FILE), true) : []; $seen[$sid] = gmdate('c'); file_put_contents($SEEN_FILE, json_encode($seen)); respond($rej);
 }
@@ -177,7 +184,8 @@ if ($DRY_RUN) {
 } else {
     if (!$GATE_KEY || !$GATE_SECRET) { $result = ['status'=>'error','reason'=>'chave Gate.io ausente no .env']; }
     else {
-        $bodyArr = ['currency_pair'=>$pair,'side'=>'buy','type'=>'market','account'=>'sspot','amount'=>(string)$notional,'time_in_force'=>'ioc','text'=>'t-'.substr($sid,0,10)];
+        // FIX 9: 'account' DEVE ser 'spot' (era 'sspot' -> HTTP 400 INVALID_REQUEST_BODY em toda compra).
+        $bodyArr = ['currency_pair'=>$pair,'side'=>'buy','type'=>'market','account'=>'spot','amount'=>(string)$notional,'time_in_force'=>'ioc','text'=>'t-'.substr($sid,0,10)];
         list($http, $gate, $curl_err) = gate_post('/api/v4/spot/orders', $bodyArr, $GATE_KEY, $GATE_SECRET);
         if ($curl_err) { $result = ['status'=>'error','reason'=>"curl: $curl_err"]; }
         elseif ($http >= 200 && $http < 300 && isset($gate['id'])) {
