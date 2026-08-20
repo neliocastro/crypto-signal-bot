@@ -360,3 +360,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-08-19T20:14:41.491627+00:00,69cc6eb698213867,HYPE/USDT,buy,10.0,70.25,,,REAL,rejected_by_exchange,INVALID_REQUEST_BODY
 2026-08-20T00:00:42.287618+00:00,785f48b9a87dcd7b,ETH/USDT,buy,10.0,2253.24,,,REAL,rejected_by_exchange,INVALID_REQUEST_BODY
 2026-08-20T00:00:45.487094+00:00,d54f51981f3b0bd2,BNB/USDT,buy,10.0,627.6,,,REAL,rejected_by_exchange,INVALID_REQUEST_BODY
+2026-08-20T09:03:15.316968+00:00,227e953adbf190b2,HYPE/USDT,buy,10.0,73.08,,,REAL,rejected_by_exchange,INVALID_REQUEST_BODY
