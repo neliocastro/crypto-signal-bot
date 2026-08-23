@@ -365,3 +365,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-08-21T09:09:11.584846+00:00,d1b9723dc6169f16,HYPE/USDT,buy,10.0,75.75,74.01,,REAL,filled,
 2026-08-21T14:03:11.163444+00:00,8cd096d865926eed,HYPE/USDT,buy,10.0,76.86,76.17,,REAL,filled,
 2026-08-22T03:02:43.307401+00:00,ddce9ef38da22cfd,HYPE/USDT,buy,10.0,80.72,80.79,,REAL,filled,
+2026-08-23T22:04:14.146217+00:00,4a8b9c40ac60e3f6,HYPE/USDT,buy,10.0,81.98,,,REAL,blocked_by_guard,concentracao: ja ha 1 posicao(oes) aberta(s) em HYPE/USDT (max 1)
