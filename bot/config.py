@@ -10,6 +10,10 @@ EXCHANGE_ID = "gateio"
 
 # ============ WATCHLIST ============
 # Formato ccxt: BASE/QUOTE
+# NOTA (2026-08-23): ETH e XRP seguem na watchlist (scan/diagnostico), mas
+# foram REMOVIDOS do universo do Mare Alta D1 (bot/mare_alta.py). Como o
+# roteamento do main.py so executa Mare Alta (D1) + HYPE/PAXG (fast-paths),
+# eles deixam de gerar ordem real. Ver docs/decisao_stop_e_universo_2026-08-23.md
 WATCHLIST = [
     "BTC/USDT",
     "ETH/USDT",
@@ -67,7 +71,6 @@ MTF_PARALLEL_FETCH = True
 SCAN_PARALLEL = True
 SCAN_MAX_WORKERS = 5
 
-
 # ============ ANTI-SPAM ============
 # Não reenvia o mesmo sinal antes desse cooldown (em horas).
 SIGNAL_COOLDOWN_HOURS = 4
@@ -105,6 +108,9 @@ RISK_PROFILES = {
         # Excecoes ja sao interceptadas ANTES no evaluate_signal:
         #   HYPE -> Breakout (fast-path 1)  |  PAXG -> Acumulacao (fast-path 2)
         # Alem disso, MACD_ONLY_EXCLUDE garante que PAXG nunca caia aqui.
+        # NOTA: os sinais MACD-only dos demais ativos sao DESCARTADOS pelo
+        # filtro de roteamento do main.py (INTRADAY_EXEC_ALLOWLIST). Rodam,
+        # mas nao executam. Ver tests/test_roteamento_strings.py.
         "approved_symbols":  None,
         "min_confidence":    5,
     },
@@ -120,7 +126,6 @@ ACTIVE_PROFILE = "agressivo"   # "agressivo" = MACD-only em TODOS (exceto exclus
 # PAXG e ouro digital: estrategia propria de Acumulacao RSI 4h (compra-only).
 MACD_ONLY_EXCLUDE = {"PAXG/USDT"}
 
-
 # ============ BREAKOUT / TREND-FOLLOWING (HYPE) ============
 # Estrategia de tendencia validada por teste de robustez (2026-05-28):
 #   HYPE/USDT lb=30 atr=2.5 -> PF 2.55, +67% em ~150d, MDD -16.9%.
@@ -132,6 +137,11 @@ MACD_ONLY_EXCLUDE = {"PAXG/USDT"}
 # BREAKOUT_SHADOW_MODE=True -> sinal marcado [SHADOW] para observacao
 #   (2-4 semanas) antes de confiar 100%. Troque para False para operar valendo.
 # BREAKOUT_ENABLED=False    -> kill switch: desliga o breakout (HYPE fica sem sinal).
+#
+# DESEMPENHO REAL (2026-08-23, state/positions.jsonl): 12 trades, WR 25%,
+#   PF 0.60 - MUITO abaixo do backtest (2.55). Diagnostico: o stop de 2.0xATR
+#   aplicado pelo executor estava dentro do ruido intraday. Ver mudanca em
+#   EXECUTION_ATR_MULT_SL abaixo e docs/ajuste_stop_2026-08.md.
 BREAKOUT_ENABLED = True
 BREAKOUT_SHADOW_MODE = False
 BREAKOUT_SYMBOLS = {
@@ -146,7 +156,6 @@ BREAKOUT_SYMBOLS = {
 #   Controle HYPE breakout: PF 1.49 total, positivo nas 2 metades (1.64/2.06).
 #   Decisao do usuario: NAO reentrar nenhum dos dois; concentrar no que tem edge.
 
-
 # ============ ACUMULACAO (PAXG - ouro digital) ============
 # Estrategia de ACUMULO por sobrevenda (BUY only, sem stop nem alvo de venda).
 # Dispara quando o RSI CRUZA p/ baixo do threshold no timeframe definido
@@ -154,6 +163,8 @@ BREAKOUT_SYMBOLS = {
 # preso na zona. Pensado p/ ativo de reserva de valor: DCA inteligente.
 #   rsi_extreme -> destaque "sobrevenda extrema" (oportunidade rara).
 # ACCUMULATION_ENABLED=False -> kill switch (PAXG fica sem sinal de acumulo).
+# NOTA (2026-08-23): ZERO disparos em ~2 meses (o RSI 4h nao cruzou 30).
+#   Mantido: e uma estrategia rara por design. Ainda NAO foi exercitada.
 ACCUMULATION_ENABLED = True
 ACCUMULATION_SYMBOLS = {
     "PAXG/USDT": {
@@ -165,11 +176,9 @@ ACCUMULATION_SYMBOLS = {
 }
 ACCUMULATION_STATE_FILE = "state/accumulation_signals.json"
 
-
 # ============ DASHBOARD (Fase C2) ============
 # Kill switch para gerar docs/data/latest.json a cada scan.
 DASHBOARD_ENABLED = False
-
 
 # ============ EXECUCAO (Fase 1 - DRY-RUN / paper trading) ============
 # Camada de execucao agnostica de estrategia. Em Fase 1 NADA e executado de
@@ -197,10 +206,23 @@ EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
 #   EXECUTION_MAX_OPEN          -> maximo de posicoes live simultaneas.
 #   EXECUTION_MAX_TRADES_DAY    -> maximo de ordens enviadas por dia (UTC).
 #   EXECUTION_DAILY_LOSS_STOP   -> se a perda do dia (USDT) atingir isto, PARA.
-EXECUTION_MAX_NOTIONAL_USDT = 10.0   # DEGRAU 2 (2026-08-12): $5 -> $10 apos infra provada em 9 trades; proximo degrau ($20) SO no 20o trade com P&L>0 e PF>=1 ex-ETH
+EXECUTION_MAX_NOTIONAL_USDT = 10.0   # DEGRAU 2 (2026-08-12): $5 -> $10 apos infra provada em 9 trades; proximo degrau ($20) SO no 20o trade com P&L>0 e PF>=1 ex-ETH. AUDITORIA 23/08: 3 de 3 criterios FALHAM (14 trades, P&L -$0.23 ex-ETH, PF 0.60) -> NAO subir.
 EXECUTION_MIN_NOTIONAL_USDT = 3.0    # piso: Gate.io rejeita ordem < $3 (too small)
 # --- Saida automatica (TP/SL nativos na Gate.io, anexados a cada compra) ---
-EXECUTION_ATR_MULT_SL = 2.0    # Stop-Loss = entrada - (mult * ATR). Configuravel (subir p/ 2.5 = mais folga)
+#
+# EXECUTION_ATR_MULT_SL: 2.0 -> 2.5 em 2026-08-23. DUAS razoes:
+#   (a) ALINHAMENTO: o mare_alta.py sempre documentou stop de 2.5xATR, mas quem
+#       calcula o stop da ordem REAL e este parametro (que estava em 2.0). O D1
+#       operava mais apertado que a estrategia validada. Agora bate.
+#   (b) EVIDENCIA: backtest fiel (stop + TP1 +10% 50% + BE + trailing 3xATR),
+#       ~1400 candles D1 por ativo -> 2.5x supera 3.0x em 5 dos 6 ativos
+#       (BTC 1.28 vs 1.07 | SOL 4.51 vs 3.77 | TRX 2.21 vs 2.13 | BNB 2.15 vs 1.79).
+#       No HYPE 1h (180d): PF 1.18 (2.0x) -> 1.31 (2.5x) -> 1.50 (3.0x).
+#   Escolha: 2.5x melhora os DOIS trilhos. O otimo do HYPE (3.0x) exigiria um
+#   override por simbolo no executor.build_order() - commit isolado, ainda nao
+#   feito. Ver docs/decisao_stop_e_universo_2026-08-23.md.
+#   ROLLBACK: volte para 2.0.
+EXECUTION_ATR_MULT_SL = 2.5    # Stop-Loss = entrada - (mult * ATR)
 EXECUTION_TP_RR       = 2.0    # Take-Profit = entrada + (RR * risco). RR 2.0 = alvo 2x o risco
 EXECUTION_TPSL_ENABLED = True  # kill-switch: False = volta a comprar sem TP/SL
 EXECUTION_MIN_STOP_PCT = 0.8   # piso de afastamento do stop (% do preco). Bug TRX: ATR baixo (0.25%) gerava stop coladissimo (-0.5%) -> ruido estopava
@@ -239,5 +261,7 @@ MARE_ALTA_SYMBOLS          = []     # vazio = qualquer posicao aberta registrada
 # (finish) e a oposta segue open, cancela a sobrevivente e fecha a posicao
 # local (closed_tp/closed_sl). EM PRODUCAO desde 2026-08-11, validado por
 # smoke test (ver docs/gateio_limitacoes.md, secao 7).
+# LIMITE: so reconcilia pares registrados em state/positions.jsonl (ordens do
+# bot). Ordens MANUAIS criadas na corretora NAO sao cobertas.
 # Degradacao segura: falha nunca derruba o scan; nunca cria ordem.
 OCO_GUARD_ENABLED = True   # kill-switch do OCO emulado
