@@ -1,5 +1,32 @@
 {
-  "open": [],
+  "open": [
+    {
+      "signal_id": "0012a7b87427b8c7",
+      "symbol": "SOL/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 94.59,
+      "stop": 92.51510713,
+      "risk_dist": 2.0748928699999993,
+      "tp": 100.8146786,
+      "peak": 94.59,
+      "opened_at": "2026-08-23T12:00:00+00:00",
+      "opened_scan_utc": "2026-08-23T13:09:40.440131+00:00"
+    },
+    {
+      "signal_id": "d732044aa19af416",
+      "symbol": "XRP/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 1.4945,
+      "stop": 1.44168603,
+      "risk_dist": 0.05281396999999988,
+      "tp": 1.6529419,
+      "peak": 1.4945,
+      "opened_at": "2026-08-23T12:00:00+00:00",
+      "opened_scan_utc": "2026-08-23T13:09:40.440157+00:00"
+    }
+  ],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",
