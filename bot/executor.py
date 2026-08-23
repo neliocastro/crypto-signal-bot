@@ -48,7 +48,33 @@ try:
         from .config import EXECUTION_MIN_STOP_PCT
     except Exception:
         EXECUTION_MIN_STOP_PCT = 0.8
+    # --- TRAVA DE CONCENTRACAO (2026-08-23) ---
+    # Aditiva: se as chaves nao existirem no config.py, valem estes defaults
+    # (ja LIGADOS). Para desligar/ajustar, basta declarar em bot/config.py:
+    #   EXECUTION_CONCENTRATION_GUARD = False   <- rollback de 1 linha
+    #   EXECUTION_MAX_OPEN_PER_SYMBOL = 1
+    #   EXECUTION_MAX_TRADES_DAY_PER_SYMBOL = 2
+    try:
+        from .config import EXECUTION_CONCENTRATION_GUARD
+    except Exception:
+        EXECUTION_CONCENTRATION_GUARD = True
+    try:
+        from .config import EXECUTION_MAX_OPEN_PER_SYMBOL
+    except Exception:
+        EXECUTION_MAX_OPEN_PER_SYMBOL = 1
+    try:
+        from .config import EXECUTION_MAX_TRADES_DAY_PER_SYMBOL
+    except Exception:
+        EXECUTION_MAX_TRADES_DAY_PER_SYMBOL = 2
+    try:
+        from .config import POSITIONS_FILE
+    except Exception:
+        POSITIONS_FILE = "state/positions.jsonl"
 except Exception:  # degradacao segura: sem config -> camada inerte
+    EXECUTION_CONCENTRATION_GUARD = False
+    EXECUTION_MAX_OPEN_PER_SYMBOL = 1
+    EXECUTION_MAX_TRADES_DAY_PER_SYMBOL = 2
+    POSITIONS_FILE = "state/positions.jsonl"
     EXECUTION_ENABLED = False
     EXECUTION_DRY_RUN = True
     EXECUTION_PCT = 0.02
@@ -112,6 +138,65 @@ def _save_guard_state(st: dict) -> None:
         json.dump(st, fh)
 
 
+def _open_count_for_symbol(symbol: str) -> int:
+    """Posicoes ABERTAS do ativo, lidas de state/positions.jsonl.
+
+    Fonte da verdade real (a mesma do oco_guard/trailing). NAO usa o contador
+    de execution_guard.json: ele so incrementa; nada o decrementa no TP/SL.
+    Degradacao segura: qualquer erro -> 0 (nunca bloqueia por engano).
+    """
+    try:
+        n = 0
+        with open(POSITIONS_FILE, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                if rec.get("symbol") != symbol:
+                    continue
+                if str(rec.get("status", "")).startswith("open"):
+                    n += 1
+        return n
+    except Exception:
+        return 0
+
+
+def _sent_today_for_symbol(symbol: str) -> int:
+    """Ordens ENVIADAS hoje (UTC) para o ativo (state/paper_trades.jsonl).
+
+    Conta os 'relay_response' do dia (so existem apos passar as travas); o
+    'intent' de mesmo signal_id fornece o simbolo. Erro -> 0.
+    """
+    try:
+        today = _today_utc()
+        sym_by_id, vistos, n = {}, set(), 0
+        with open(PAPER_TRADES_FILE, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                if rec.get("event") == "intent":
+                    sym_by_id[rec.get("signal_id")] = rec.get("symbol")
+                if not str(rec.get("ts", "")).startswith(today):
+                    continue
+                if rec.get("event") == "relay_response":
+                    sid = rec.get("signal_id")
+                    if sym_by_id.get(sid) == symbol and sid not in vistos:
+                        vistos.add(sid)
+                        n += 1
+        return n
+    except Exception:
+        return 0
+
+
 def check_guards(order: dict) -> tuple[bool, str]:
     """Retorna (pode_enviar, motivo). Travas RIGIDAS antes de qualquer envio."""
     st = _load_guard_state()
@@ -127,6 +212,18 @@ def check_guards(order: dict) -> tuple[bool, str]:
     # 4) teto por ordem (defesa em profundidade; PHP tambem recusa)
     if float(order.get("notional_usdt", 0)) > float(EXECUTION_MAX_NOTIONAL_USDT):
         return False, f"notional {order.get('notional_usdt')} acima do teto {EXECUTION_MAX_NOTIONAL_USDT}"
+    # 5/6) TRAVA DE CONCENTRACAO (por ativo). EVIDENCIA: 13 dos 17 registros de
+    # state/positions.jsonl sao HYPE (76%) e os 9 stops sao TODOS dele. O teto
+    # global EXECUTION_MAX_OPEN=10 nunca segurou nada porque o bot repetia o
+    # MESMO ativo. Ver docs/trava_concentracao_2026-08-23.md.
+    if EXECUTION_CONCENTRATION_GUARD:
+        sym = str(order.get("symbol", ""))
+        abertas = _open_count_for_symbol(sym)
+        if abertas >= int(EXECUTION_MAX_OPEN_PER_SYMBOL):
+            return False, f"concentracao: ja ha {abertas} posicao(oes) aberta(s) em {sym} (max {EXECUTION_MAX_OPEN_PER_SYMBOL})"
+        hoje = _sent_today_for_symbol(sym)
+        if hoje >= int(EXECUTION_MAX_TRADES_DAY_PER_SYMBOL):
+            return False, f"concentracao: {sym} ja teve {hoje} ordem(ns) hoje (max {EXECUTION_MAX_TRADES_DAY_PER_SYMBOL}/dia)"
     return True, "ok"
 
 
@@ -281,33 +378,33 @@ def _notify_execution(order: dict, result: dict) -> None:
         if status in ("filled", "accepted", "ok"):
             fill = result.get("sim_fill_price") or result.get("fill_price") or result.get("avg_price")
             slip = result.get("slippage_pct")
-            head = "✅ *ORDEM EXECUTADA*" if not EXECUTION_DRY_RUN else "🧪 *Ordem simulada (dry-run)*"
+            head = "\u2705 *ORDEM EXECUTADA*" if not EXECUTION_DRY_RUN else "\U0001f9ea *Ordem simulada (dry-run)*"
             msg = (
                 f"{head}\n"
                 f"Par: *{sym}*\n"
                 f"Lado: COMPRA\n"
                 f"Valor: *${notional}* USDT\n"
                 f"Modo: {mode}\n"
-                + (f"Preço: {fill}\n" if fill else "")
+                + (f"Pre\u00e7o: {fill}\n" if fill else "")
                 + (f"Slippage: {slip}%\n" if slip is not None else "")
                 + f"ID: `{sid}`"
             )
         elif status == "blocked_by_guard":
             msg = (
-                f"🛡️ *Ordem BLOQUEADA por trava de capital*\n"
-                f"Par: *{sym}*  •  Valor: ${notional}\n"
+                f"\U0001f6e1\ufe0f *Ordem BLOQUEADA por trava de capital*\n"
+                f"Par: *{sym}*  \u2022  Valor: ${notional}\n"
                 f"Motivo: {result.get('reason','?')}\n"
                 f"ID: `{sid}`"
             )
         elif status == "dry_run":
             msg = (
-                f"🧪 *Ping dry-run* — *{sym}* ${notional} "
-                f"(relay confirmou, ordem NÃO enviada)\nID: `{sid}`"
+                f"\U0001f9ea *Ping dry-run* \u2014 *{sym}* ${notional} "
+                f"(relay confirmou, ordem N\u00c3O enviada)\nID: `{sid}`"
             )
         else:
             msg = (
-                f"⚠️ *Ordem não executada* — *{sym}* ${notional}\n"
-                f"Status: `{status}`  •  {result.get('reason','')}\n"
+                f"\u26a0\ufe0f *Ordem n\u00e3o executada* \u2014 *{sym}* ${notional}\n"
+                f"Status: `{status}`  \u2022  {result.get('reason','')}\n"
                 f"ID: `{sid}`"
             )
         tg.send(msg)
