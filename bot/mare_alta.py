@@ -26,7 +26,21 @@ from typing import Callable, Optional, Dict, Any, List
 # ---------------- config / kill-switches ----------------
 MARE_ALTA_ENABLED     = True    # False = desliga tudo
 MARE_ALTA_SHADOW_MODE = False   # PRODUCAO: sinais vao ao executor (ordens reais)
-MARE_ALTA_UNIVERSE    = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "TRX/USDT", "BNB/USDT"]
+
+# UNIVERSO (2026-08-23): ETH e XRP REMOVIDOS.
+#   Tres evidencias independentes convergiram contra os dois:
+#     1) walk-forward original (jul/2026): reprovados nesta logica
+#     2) backtest simplificado 3.8 anos:   ETH PF 0.56 | XRP PF 0.47
+#     3) backtest FIEL (stop + TP1 +10% 50% + breakeven + trailing 3xATR),
+#        ~1400 candles D1 por ativo:       ETH PF 0.43 (-38%) | XRP PF 0.55 (-16%)
+#   Os 4 mantidos, no mesmo teste fiel (stop 2.5x):
+#        BTC PF 1.28 | SOL PF 4.51 | TRX PF 2.21 | BNB PF 2.15
+#   O trailing AMPLIFICA quem tem tendencia real (SOL 1.81 -> 4.51) e nao
+#   salva quem serpenteia (ETH 0.56 -> 0.43). Detalhes e ressalvas de amostra
+#   (XRP tem apenas 6 trades no periodo) em docs/revisao_ativos_2026-08.md.
+#   ROLLBACK: basta reinserir "ETH/USDT" e "XRP/USDT" na lista abaixo.
+MARE_ALTA_UNIVERSE    = ["BTC/USDT", "SOL/USDT", "TRX/USDT", "BNB/USDT"]
+
 MARE_ALTA_TIMEFRAME   = "1d"
 MARE_ALTA_STOP_ATR    = 2.5
 MARE_ALTA_TRAIL_ATR   = 3.0
