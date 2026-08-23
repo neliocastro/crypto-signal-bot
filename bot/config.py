@@ -231,6 +231,33 @@ EXECUTION_MAX_TRADES_DAY    = 10      # no maximo 10 ordens/dia
 EXECUTION_DAILY_LOSS_STOP   = 20.0   # kill-switch: para tudo se perder $20 no dia
 EXECUTION_STATE_FILE        = "state/execution_guard.json"  # contadores diarios
 
+# ============ TRAVA DE CONCENTRACAO POR ATIVO (explicita desde 2026-08-23) ============
+# Antes estas chaves existiam SO como fallback dentro do executor.py (invisiveis
+# aqui). Agora sao explicitas: o que voce le neste arquivo e o que roda.
+# EVIDENCIA: 13 dos 17 registros de state/positions.jsonl eram HYPE (76%) e os 9
+# stops eram TODOS dele. O teto global EXECUTION_MAX_OPEN nunca segurou nada
+# porque o bot repetia o MESMO ativo.
+#   EXECUTION_CONCENTRATION_GUARD        -> kill-switch da trava (False = rollback).
+#   EXECUTION_MAX_OPEN_PER_SYMBOL        -> posicoes abertas simultaneas por ativo.
+#   EXECUTION_MAX_TRADES_DAY_PER_SYMBOL  -> ordens por ativo por dia (UTC).
+EXECUTION_CONCENTRATION_GUARD       = True
+EXECUTION_MAX_OPEN_PER_SYMBOL       = 1
+EXECUTION_MAX_TRADES_DAY_PER_SYMBOL = 2
+
+# ============ FONTE DA VERDADE DAS POSICOES ============
+# BUGFIX 2026-08-23 (contador de posicoes abertas):
+#   O campo "open_positions" de state/execution_guard.json era MONOTONICO:
+#   _register_sent_order() somava +1 a cada ordem enviada e NADA o decrementava
+#   quando o TP/SL fechava a posicao (oco_guard e trailing so escrevem em
+#   positions.jsonl). O contador encostava em EXECUTION_MAX_OPEN e passava a
+#   bloquear TODA compra com "limite de posicoes abertas atingido", mesmo com
+#   zero posicao viva - e so "desbloqueava" na virada do dia UTC (o reset
+#   diario zerava tudo), o que fazia o bug parecer intermitente.
+#   CORRECAO: check_guards passou a contar as posicoes com status "open*" em
+#   POSITIONS_FILE (mesma fonte do oco_guard/trailing). O campo open_positions
+#   do execution_guard.json vira apenas ESPELHO informativo.
+POSITIONS_FILE = "state/positions.jsonl"
+
 # Arquivo da "intencao" (lado cerebrod). O HMAC secret vem de env
 # (GitHub Secret EXECUTION_HMAC_SECRET); NUNCA fica no codigo.
 PAPER_TRADES_FILE = "state/paper_trades.jsonl"
