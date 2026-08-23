@@ -127,6 +127,7 @@ def _load_guard_state() -> dict:
     if st.get("day") != _today_utc():  # novo dia -> zera contadores
         st = {"day": _today_utc(), "trades_today": 0, "open_positions": 0, "realized_loss_today": 0.0}
     st.setdefault("trades_today", 0)
+    # open_positions e ESPELHO informativo; a trava real usa _open_count_total()
     st.setdefault("open_positions", 0)
     st.setdefault("realized_loss_today", 0.0)
     return st
@@ -157,6 +158,39 @@ def _open_count_for_symbol(symbol: str) -> int:
                 except Exception:
                     continue
                 if rec.get("symbol") != symbol:
+                    continue
+                if str(rec.get("status", "")).startswith("open"):
+                    n += 1
+        return n
+    except Exception:
+        return 0
+
+
+def _open_count_total() -> int:
+    """Total de posicoes ABERTAS (todos os ativos), lido de state/positions.jsonl.
+
+    BUGFIX 2026-08-23: o contador `open_positions` do execution_guard.json era
+    MONOTONICO - `_register_sent_order()` somava +1 a cada envio e NADA o
+    decrementava quando o TP/SL fechava a posicao (o oco_guard/trailing so
+    mexem em positions.jsonl). Resultado: o contador subia ate encostar em
+    EXECUTION_MAX_OPEN e travava TODA compra com "limite de posicoes abertas
+    atingido", mesmo sem nenhuma posicao viva. Alem disso ele so zerava na
+    virada do dia UTC (efeito colateral do reset diario), o que mascarava o
+    bug e o tornava intermitente.
+
+    Agora a trava le a FONTE DA VERDADE (positions.jsonl), a mesma que o
+    oco_guard e o trailing D1 atualizam. Degradacao segura: erro -> 0.
+    """
+    try:
+        n = 0
+        with open(POSITIONS_FILE, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except Exception:
                     continue
                 if str(rec.get("status", "")).startswith("open"):
                     n += 1
@@ -206,9 +240,12 @@ def check_guards(order: dict) -> tuple[bool, str]:
     # 2) maximo de ordens por dia
     if int(st["trades_today"]) >= int(EXECUTION_MAX_TRADES_DAY):
         return False, f"limite diario de ordens atingido ({EXECUTION_MAX_TRADES_DAY})"
-    # 3) maximo de posicoes abertas
-    if int(st["open_positions"]) >= int(EXECUTION_MAX_OPEN):
-        return False, f"limite de posicoes abertas atingido ({EXECUTION_MAX_OPEN})"
+    # 3) maximo de posicoes abertas (BUGFIX 2026-08-23)
+    # Fonte da verdade = state/positions.jsonl (status "open*"), NAO o contador
+    # monotonico do execution_guard.json, que nunca era decrementado no TP/SL.
+    abertas_total = _open_count_total()
+    if abertas_total >= int(EXECUTION_MAX_OPEN):
+        return False, f"limite de posicoes abertas atingido ({abertas_total}/{EXECUTION_MAX_OPEN})"
     # 4) teto por ordem (defesa em profundidade; PHP tambem recusa)
     if float(order.get("notional_usdt", 0)) > float(EXECUTION_MAX_NOTIONAL_USDT):
         return False, f"notional {order.get('notional_usdt')} acima do teto {EXECUTION_MAX_NOTIONAL_USDT}"
@@ -228,10 +265,20 @@ def check_guards(order: dict) -> tuple[bool, str]:
 
 
 def _register_sent_order() -> None:
-    """Apos enviar uma ordem real, incrementa contadores diarios."""
+    """Apos enviar uma ordem real, atualiza os contadores diarios.
+
+    BUGFIX 2026-08-23: `open_positions` deixou de ser incrementado as cegas
+    (+1 por envio, sem ninguem decrementar no fechamento). Agora ele e apenas
+    um ESPELHO informativo da contagem real em positions.jsonl - quem decide a
+    trava e `_open_count_total()` dentro de `check_guards`. `trades_today`
+    segue sendo um contador de envios do dia (zera sozinho na virada UTC).
+    """
     st = _load_guard_state()
     st["trades_today"] = int(st["trades_today"]) + 1
-    st["open_positions"] = int(st["open_positions"]) + 1
+    # espelho da verdade (+1 pela ordem recem-enviada, que ainda pode nao ter
+    # sido gravada em positions.jsonl no momento deste registro)
+    st["open_positions"] = _open_count_total() + 1
+    st["open_positions_source"] = "positions.jsonl (derivado)"
     _save_guard_state(st)
 
 
