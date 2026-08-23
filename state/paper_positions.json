@@ -1,19 +1,5 @@
 {
-  "open": [
-    {
-      "signal_id": "4b0707fee12276e1",
-      "symbol": "SOL/USDT",
-      "strategy": "Tendência MACD — Agressivo",
-      "exit_kind": "fixed",
-      "entry": 96.0,
-      "stop": 93.5904932,
-      "risk_dist": 2.4095068000000026,
-      "tp": 103.22852041,
-      "peak": 96.0,
-      "opened_at": "2026-08-23T01:00:00+00:00",
-      "opened_scan_utc": "2026-08-23T02:04:13.074861+00:00"
-    }
-  ],
+  "open": [],
   "closed": [
     {
       "signal_id": "0f203ad6080fa29b",
@@ -1256,6 +1242,24 @@
       "closed_at": "2026-08-22T05:12:53.151836+00:00",
       "pnl_pct": 8.6975,
       "pnl_usdt": 0.086975
+    },
+    {
+      "signal_id": "4b0707fee12276e1",
+      "symbol": "SOL/USDT",
+      "strategy": "Tendência MACD — Agressivo",
+      "exit_kind": "fixed",
+      "entry": 96.0,
+      "stop": 93.5904932,
+      "risk_dist": 2.4095068000000026,
+      "tp": 103.22852041,
+      "peak": 96.0,
+      "opened_at": "2026-08-23T01:00:00+00:00",
+      "opened_scan_utc": "2026-08-23T02:04:13.074861+00:00",
+      "exit": 93.44,
+      "exit_reason": "stop",
+      "closed_at": "2026-08-23T04:06:18.449640+00:00",
+      "pnl_pct": -2.6667,
+      "pnl_usdt": -0.026667
     }
   ],
   "last_report_utc": "2026-08-20T12:18:38.549321+00:00"
