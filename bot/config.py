@@ -10,18 +10,26 @@ EXCHANGE_ID = "gateio"
 
 # ============ WATCHLIST ============
 # Formato ccxt: BASE/QUOTE
-# NOTA (2026-08-23): ETH e XRP seguem na watchlist (scan/diagnostico), mas
-# foram REMOVIDOS do universo do Mare Alta D1 (bot/mare_alta.py). Como o
-# roteamento do main.py so executa Mare Alta (D1) + HYPE/PAXG (fast-paths),
-# eles deixam de gerar ordem real. Ver docs/decisao_stop_e_universo_2026-08-23.md
+#
+# FONTE DE VERDADE UNICA (2026-08-24): esta lista define o universo de scan.
+# Antes state/runtime_config.json sobrescrevia isto e vencia - mas ele e um
+# ARTEFATO GERADO (o job commita state/ por cima a cada scan), entao watchlist
+# editada la se perdia em ~5min. Pior: o PAXG havia sumido do runtime e o
+# fast-path de acumulo virou codigo morto silencioso por ~2 meses.
+# runtime_config._static_watchlist() agora forca esta lista.
+# Ver docs/watchlist_runtime_2026-08-24.md
+#
+# ETH e XRP REMOVIDOS (2026-08-24): fora do universo do Mare Alta D1 desde
+# 2026-08-23 (PF 0.43 e 0.55 no backtest fiel) e sem fast-path proprio ->
+# nenhuma rota ate ordem real. Ficavam so para diagnostico MTF no Telegram, ao
+# custo de ~6 fetches/scan. Trade-off assumido: perde-se a visibilidade deles
+# no resumo. ROLLBACK: reinserir as duas linhas aqui e dar push.
 WATCHLIST = [
     "BTC/USDT",
-    "ETH/USDT",
     "SOL/USDT",
-    "XRP/USDT",
     "TRX/USDT",
     "BNB/USDT",
-    "HYPE/USDT",
+    "HYPE/USDT",       # breakout / tendencia (fast-path)
     "PAXG/USDT",       # acumulo RSI 4h (ouro digital) - sem alvo de venda
 ]
 
@@ -142,8 +150,15 @@ BREAKOUT_SYMBOLS = {
 # preso na zona. Pensado p/ ativo de reserva de valor: DCA inteligente.
 #   rsi_extreme -> destaque "sobrevenda extrema" (oportunidade rara).
 # ACCUMULATION_ENABLED=False -> kill switch (PAXG fica sem sinal de acumulo).
-# NOTA (2026-08-23): ZERO disparos em ~2 meses (o RSI 4h nao cruzou 30).
-#   Mantido: e uma estrategia rara por design. Ainda NAO foi exercitada.
+#
+# CORRIGIDO (2026-08-24): a nota anterior dizia "ZERO disparos em ~2 meses (o
+# RSI 4h nao cruzou 30). Mantido: e uma estrategia rara por design." ERRADO -
+# o PAXG estava FORA da watchlist efetiva (runtime), entao evaluate_signal
+# nunca era chamado para ele e este fast-path era INALCANCAVEL. Nao era
+# raridade estatistica, era codigo morto. Com a watchlist unificada em
+# config.py, a estrategia passa a ser avaliada de fato pela primeira vez.
+# ATENCAO: acumulo compra SEM stop-loss (BUY only). Travas de capital abaixo
+# (teto $10/ordem, max 10/dia, stop $20/dia) continuam valendo.
 ACCUMULATION_ENABLED = True
 ACCUMULATION_SYMBOLS = {
     "PAXG/USDT": {
