@@ -2,12 +2,11 @@
   "scan_interval_min": 5,
   "watchlist": [
     "BTC/USDT",
-    "ETH/USDT",
     "SOL/USDT",
-    "XRP/USDT",
     "TRX/USDT",
     "BNB/USDT",
-    "HYPE/USDT"
+    "HYPE/USDT",
+    "PAXG/USDT"
   ],
   "dnd_enabled": false,
   "dnd_start_hour_local": 23,
@@ -15,7 +14,7 @@
   "dnd_interval_min": 60,
   "timezone": "America/Bahia",
   "paused": false,
-  "last_scan_utc": "2026-08-24T01:01:01.713275+00:00",
-  "_updated_at_utc": "2026-08-24T01:01:01.713296+00:00",
+  "last_scan_utc": "2026-08-24T00:55:46.884667+00:00",
+  "_updated_at_utc": "2026-08-24T00:55:46.884690+00:00",
   "_updated_by": "scan"
 }
