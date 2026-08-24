@@ -42,11 +42,17 @@ DEFAULTS: dict[str, Any] = {
 def _static_watchlist(cfg: dict[str, Any]) -> dict[str, Any]:
     """Forca a watchlist a vir de bot/config.py (fonte de verdade unica).
 
-    POR QUE (2026-08-24): state/runtime_config.json e um ARTEFATO GERADO -
-    o job do GitHub Actions faz checkout, roda o scan e commita state/ por
-    cima no fim. Qualquer watchlist editada ali e perdida no proximo ciclo
-    (~5 min). Pior: a divergencia era silenciosa - o PAXG saiu do runtime e
-    o fast-path de acumulo virou codigo morto sem ninguem notar.
+    POR QUE (2026-08-24): havia DUPLA FONTE DE VERDADE - o main.py usava
+    cfg["watchlist"] e so caia em config.SYMBOLS se ela estivesse vazia. A
+    divergencia era silenciosa: o PAXG saiu do runtime e o fast-path de
+    acumulo virou codigo morto por ~2 meses sem ninguem notar.
+
+    CORRECAO (2026-08-24): a justificativa original desta funcao dizia que
+    "o job commita state/ por cima e a watchlist editada ali se perde em
+    ~5 min". Isso e FALSO. mark_scan_ran() faz load() -> save() e regrava a
+    watchlist intacta; verificado na pratica - o scan das 02:07Z preservou
+    uma watchlist commitada as 01:04Z. O motivo valido e o de cima (fonte
+    unica), nao a suposta nao-persistencia.
 
     Watchlist e decisao de ESTRATEGIA: pertence ao codigo versionado e
     revisavel, nao ao estado efemero do scan.
