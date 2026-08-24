@@ -24,10 +24,9 @@ CONFIG_PATH = _REPO_ROOT / "state" / "runtime_config.json"
 
 DEFAULTS: dict[str, Any] = {
     "scan_interval_min": 15,
-    "watchlist": [
-        "BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "TRX/USDT",
-        "BNB/USDT", "LINK/USDT", "HYPE/USDT", "AAVE/USDT", "PAXG/USDT",
-    ],
+    # Placeholder: o valor efetivo SEMPRE vem de bot/config.py WATCHLIST
+    # (ver _static_watchlist / load). Esta lista NAO e mais usada.
+    "watchlist": [],
     "dnd_enabled": False,
     "dnd_start_hour_local": 23,
     "dnd_end_hour_local": 7,
@@ -40,20 +39,45 @@ DEFAULTS: dict[str, Any] = {
 }
 
 
+def _static_watchlist(cfg: dict[str, Any]) -> dict[str, Any]:
+    """Forca a watchlist a vir de bot/config.py (fonte de verdade unica).
+
+    POR QUE (2026-08-24): state/runtime_config.json e um ARTEFATO GERADO -
+    o job do GitHub Actions faz checkout, roda o scan e commita state/ por
+    cima no fim. Qualquer watchlist editada ali e perdida no proximo ciclo
+    (~5 min). Pior: a divergencia era silenciosa - o PAXG saiu do runtime e
+    o fast-path de acumulo virou codigo morto sem ninguem notar.
+
+    Watchlist e decisao de ESTRATEGIA: pertence ao codigo versionado e
+    revisavel, nao ao estado efemero do scan.
+
+    EFEITO COLATERAL: comandos de watchlist do Telegram Commander (/add, /rm)
+    passam a ser inertes - a alteracao e ignorada na proxima leitura. Para
+    mudar o universo: editar WATCHLIST em bot/config.py e dar push.
+    Ver docs/watchlist_runtime_2026-08-24.md
+    """
+    try:
+        from .config import WATCHLIST as _cfg_wl
+        cfg["watchlist"] = list(_cfg_wl)
+    except Exception as e:                                       # noqa: BLE001
+        log.warning("config.WATCHLIST indisponivel (%s) - watchlist do runtime mantida", e)
+    return cfg
+
+
 def load() -> dict[str, Any]:
     """Carrega config; preenche defaults para chaves ausentes."""
     if not CONFIG_PATH.exists():
         log.info("runtime_config.json ausente — usando defaults em memoria")
-        return dict(DEFAULTS)
+        return _static_watchlist(dict(DEFAULTS))
     try:
         with CONFIG_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
         merged = dict(DEFAULTS)
         merged.update(data or {})
-        return merged
+        return _static_watchlist(merged)
     except Exception as e:                                       # noqa: BLE001
         log.warning("Falha ao ler runtime_config.json (%s) — usando defaults", e)
-        return dict(DEFAULTS)
+        return _static_watchlist(dict(DEFAULTS))
 
 
 def save(cfg: dict[str, Any], updated_by: str = "system") -> None:
