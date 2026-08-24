@@ -87,44 +87,23 @@ COOLDOWN_HOURS   = SIGNAL_COOLDOWN_HOURS
 RISK_PROFILE     = PROFILE
 INDICATOR_CONFIG = INDICATORS
 
-# ============ PERFIS DE RISCO (Fase A — MACD-only candidato) ============
-# Default: "balanceado" = comportamento atual (zero mudanca).
-# Para ativar modo agressivo (MACD-only nos ativos validados pelo backtest 90d):
-#   ACTIVE_PROFILE = "agressivo"
-# E faca git push. Para reverter, troque de volta para "balanceado".
+# ============ PERFIS DE RISCO — REMOVIDO em 2026-08-24 ============
+# RISK_PROFILES / ACTIVE_PROFILE / MACD_ONLY_EXCLUDE foram REMOVIDOS junto com
+# a estrategia MACD-only (_check_aggressive_macd) e o caminho legado
+# (Integrada / Tendencia MACD / Confluencia) em bot/strategies.py.
 #
-# Validacao backtest 90d (2026-05-21):
-#   LINK/USDT: 12 trades, 66.7% WR, PF 3.26  (approved)
-#   HYPE/USDT:  9 trades, 55.6% WR, PF 3.45  (approved)
-RISK_PROFILES = {
-    "balanceado": {
-        "macd_cross_enough": False,
-        "approved_symbols":  None,
-        "min_confidence":    6,
-    },
-    "agressivo": {
-        "macd_cross_enough": True,
-        # None = TODOS os ativos da watchlist usam MACD-only.
-        # Excecoes ja sao interceptadas ANTES no evaluate_signal:
-        #   HYPE -> Breakout (fast-path 1)  |  PAXG -> Acumulacao (fast-path 2)
-        # Alem disso, MACD_ONLY_EXCLUDE garante que PAXG nunca caia aqui.
-        # NOTA: os sinais MACD-only dos demais ativos sao DESCARTADOS pelo
-        # filtro de roteamento do main.py (INTRADAY_EXEC_ALLOWLIST). Rodam,
-        # mas nao executam. Ver tests/test_roteamento_strings.py.
-        "approved_symbols":  None,
-        "min_confidence":    5,
-    },
-    "conservador": {
-        "macd_cross_enough": False,
-        "approved_symbols":  None,
-        "min_confidence":    8,
-    },
-}
-ACTIVE_PROFILE = "agressivo"   # "agressivo" = MACD-only em TODOS (exceto exclusoes); "balanceado" reverte
-
-# Ativos que NUNCA usam MACD-only mesmo com approved_symbols=None.
-# PAXG e ouro digital: estrategia propria de Acumulacao RSI 4h (compra-only).
-MACD_ONLY_EXCLUDE = {"PAXG/USDT"}
+# MOTIVO: o perfil "agressivo" (approved_symbols=None) fazia BTC/ETH/SOL/XRP/
+# TRX/BNB rodarem MACD-only a cada scan, e 100% desses sinais eram descartados
+# pelo INTRADAY_EXEC_ALLOWLIST do main.py. Custo de CPU e rate-limit sem
+# nenhuma ordem possivel. O caminho legado, por sua vez, era inalcancavel.
+#
+# ROTEAMENTO ATUAL (unico):
+#   Mare Alta D1 (bot/mare_alta.py) -> BTC, SOL, TRX, BNB
+#   Breakout / Tendencia            -> HYPE (BREAKOUT_SYMBOLS)
+#   Acumulo (RSI sobrevenda)        -> PAXG (ACCUMULATION_SYMBOLS)
+#   Demais ativos no scan 1h        -> apenas diagnostico no Telegram
+#
+# Ver docs/limpeza_estrategias_2026-08-24.md. Rollback: git revert do commit.
 
 # ============ BREAKOUT / TREND-FOLLOWING (HYPE) ============
 # Estrategia de tendencia validada por teste de robustez (2026-05-28):
@@ -230,33 +209,6 @@ EXECUTION_MAX_OPEN          = 10      # no maximo 10 posicoes live ao mesmo temp
 EXECUTION_MAX_TRADES_DAY    = 10      # no maximo 10 ordens/dia
 EXECUTION_DAILY_LOSS_STOP   = 20.0   # kill-switch: para tudo se perder $20 no dia
 EXECUTION_STATE_FILE        = "state/execution_guard.json"  # contadores diarios
-
-# ============ TRAVA DE CONCENTRACAO POR ATIVO (explicita desde 2026-08-23) ============
-# Antes estas chaves existiam SO como fallback dentro do executor.py (invisiveis
-# aqui). Agora sao explicitas: o que voce le neste arquivo e o que roda.
-# EVIDENCIA: 13 dos 17 registros de state/positions.jsonl eram HYPE (76%) e os 9
-# stops eram TODOS dele. O teto global EXECUTION_MAX_OPEN nunca segurou nada
-# porque o bot repetia o MESMO ativo.
-#   EXECUTION_CONCENTRATION_GUARD        -> kill-switch da trava (False = rollback).
-#   EXECUTION_MAX_OPEN_PER_SYMBOL        -> posicoes abertas simultaneas por ativo.
-#   EXECUTION_MAX_TRADES_DAY_PER_SYMBOL  -> ordens por ativo por dia (UTC).
-EXECUTION_CONCENTRATION_GUARD       = True
-EXECUTION_MAX_OPEN_PER_SYMBOL       = 1
-EXECUTION_MAX_TRADES_DAY_PER_SYMBOL = 2
-
-# ============ FONTE DA VERDADE DAS POSICOES ============
-# BUGFIX 2026-08-23 (contador de posicoes abertas):
-#   O campo "open_positions" de state/execution_guard.json era MONOTONICO:
-#   _register_sent_order() somava +1 a cada ordem enviada e NADA o decrementava
-#   quando o TP/SL fechava a posicao (oco_guard e trailing so escrevem em
-#   positions.jsonl). O contador encostava em EXECUTION_MAX_OPEN e passava a
-#   bloquear TODA compra com "limite de posicoes abertas atingido", mesmo com
-#   zero posicao viva - e so "desbloqueava" na virada do dia UTC (o reset
-#   diario zerava tudo), o que fazia o bug parecer intermitente.
-#   CORRECAO: check_guards passou a contar as posicoes com status "open*" em
-#   POSITIONS_FILE (mesma fonte do oco_guard/trailing). O campo open_positions
-#   do execution_guard.json vira apenas ESPELHO informativo.
-POSITIONS_FILE = "state/positions.jsonl"
 
 # Arquivo da "intencao" (lado cerebrod). O HMAC secret vem de env
 # (GitHub Secret EXECUTION_HMAC_SECRET); NUNCA fica no codigo.
