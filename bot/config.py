@@ -12,11 +12,19 @@ EXCHANGE_ID = "gateio"
 # Formato ccxt: BASE/QUOTE
 #
 # FONTE DE VERDADE UNICA (2026-08-24): esta lista define o universo de scan.
-# Antes state/runtime_config.json sobrescrevia isto e vencia - mas ele e um
-# ARTEFATO GERADO (o job commita state/ por cima a cada scan), entao watchlist
-# editada la se perdia em ~5min. Pior: o PAXG havia sumido do runtime e o
-# fast-path de acumulo virou codigo morto silencioso por ~2 meses.
+# Antes state/runtime_config.json sobrescrevia isto e vencia - DUPLA FONTE DE
+# VERDADE. A divergencia era silenciosa: o PAXG havia sumido do runtime e o
+# fast-path de acumulo virou codigo morto por ~2 meses sem ninguem notar.
 # runtime_config._static_watchlist() agora forca esta lista.
+#
+# CORRECAO: a versao anterior deste comentario justificava a mudanca dizendo
+# que "o job commita state/ por cima, entao watchlist editada la se perdia em
+# ~5min". FALSO - mark_scan_ran() faz load()->save() e regrava a watchlist
+# intacta (verificado: o scan das 02:07Z preservou o que foi commitado as
+# 01:04Z). O motivo valido e a fonte unica, nao a nao-persistencia.
+#
+# EFEITO COLATERAL: /add e /rm da watchlist no Telegram Commander ficaram
+# INERTES. Mudar o universo = editar esta lista e dar push.
 # Ver docs/watchlist_runtime_2026-08-24.md
 #
 # ETH e XRP REMOVIDOS (2026-08-24): fora do universo do Mare Alta D1 desde
