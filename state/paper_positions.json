@@ -12,6 +12,19 @@
       "peak": 1.4945,
       "opened_at": "2026-08-23T12:00:00+00:00",
       "opened_scan_utc": "2026-08-23T13:09:40.440157+00:00"
+    },
+    {
+      "signal_id": "72898a867a283ee6",
+      "symbol": "PAXG/USDT",
+      "strategy": "Acúmulo (RSI sobrevenda)",
+      "exit_kind": "hold",
+      "entry": 4460.27,
+      "stop": null,
+      "risk_dist": null,
+      "tp": null,
+      "peak": 4460.27,
+      "opened_at": "2026-08-28T16:00:00+00:00",
+      "opened_scan_utc": "2026-08-28T20:09:17.059204+00:00"
     }
   ],
   "closed": [
