@@ -371,3 +371,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-08-28T20:09:02.306579+00:00,72898a867a283ee6,PAXG/USDT,buy,10.0,4460.27,4461.67,,REAL,filled,
 2026-08-31T00:04:24.614243+00:00,4be944a71d733714,PAXG/USDT,buy,10.0,4453.35,,,REAL,blocked_by_guard,concentracao: ja ha 1 posicao(oes) aberta(s) em PAXG/USDT (max 1)
 2026-09-01T12:01:29.453597+00:00,6ae552f53bdbe1e6,PAXG/USDT,buy,10.0,4380.01,4379.47,,REAL,filled,
+2026-09-03T16:07:58.475278+00:00,a54adac21053b70e,HYPE/USDT,buy,10.0,84.5,,,REAL,blocked_by_guard,concentracao: ja ha 1 posicao(oes) aberta(s) em HYPE/USDT (max 1)
