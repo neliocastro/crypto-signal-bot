@@ -5,8 +5,7 @@
     "SOL/USDT",
     "TRX/USDT",
     "BNB/USDT",
-    "HYPE/USDT",
-    "PAXG/USDT"
+    "HYPE/USDT"
   ],
   "dnd_enabled": false,
   "dnd_start_hour_local": 23,
@@ -14,7 +13,7 @@
   "dnd_interval_min": 60,
   "timezone": "America/Bahia",
   "paused": false,
-  "last_scan_utc": "2026-09-04T01:31:33.844694+00:00",
-  "_updated_at_utc": "2026-09-04T01:31:33.844713+00:00",
+  "last_scan_utc": "2026-09-04T01:36:44.420235+00:00",
+  "_updated_at_utc": "2026-09-04T01:36:44.420254+00:00",
   "_updated_by": "scan"
 }
