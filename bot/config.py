@@ -32,14 +32,6 @@ EXCHANGE_ID = "gateio"
 # nenhuma rota ate ordem real. Ficavam so para diagnostico MTF no Telegram, ao
 # custo de ~6 fetches/scan. Trade-off assumido: perde-se a visibilidade deles
 # no resumo. ROLLBACK: reinserir as duas linhas aqui e dar push.
-#
-# PAXG REMOVIDO (2026-09-04): a estrategia de acumulo finalmente rodou de fato
-# (era codigo morto ate 24/08) e o resultado real foi 2 trades, 2 stops:
-#   28/08 entrada 4461.67 -> SL 4401.85 (closed_sl em 31/08)
-#   01/09 entrada 4379.47 -> SL 4342.77 (closed_sl no mesmo dia)
-# Somado a 3 backtests anteriores sem edge, nao ha rota validada ate ordem.
-# ROLLBACK: reinserir "PAXG/USDT" aqui + ACCUMULATION_ENABLED = True.
-# Ver docs/paxg_removido_2026-09-04.md
 WATCHLIST = [
     "BTC/USDT",
     "SOL/USDT",
@@ -123,7 +115,7 @@ INDICATOR_CONFIG = INDICATORS
 # ROTEAMENTO ATUAL (unico):
 #   Mare Alta D1 (bot/mare_alta.py) -> BTC, SOL, TRX, BNB
 #   Breakout / Tendencia            -> HYPE (BREAKOUT_SYMBOLS)
-#   Acumulo (RSI sobrevenda)        -> DESLIGADO (2026-09-04, PAXG fora)
+#   Acumulo (RSI sobrevenda)        -> PAXG (ACCUMULATION_SYMBOLS)
 #   Demais ativos no scan 1h        -> apenas diagnostico no Telegram
 #
 # Ver docs/limpeza_estrategias_2026-08-24.md. Rollback: git revert do commit.
@@ -172,16 +164,11 @@ BREAKOUT_SYMBOLS = {
 # nunca era chamado para ele e este fast-path era INALCANCAVEL. Nao era
 # raridade estatistica, era codigo morto. Com a watchlist unificada em
 # config.py, a estrategia passa a ser avaliada de fato pela primeira vez.
-#
-# DESLIGADO (2026-09-04): 11 dias de avaliacao real -> 2 sinais, 2 stops.
-#   28/08 20:09Z entrada 4461.67, SL 4401.85 -> closed_sl 31/08 02:52Z
-#   01/09 12:01Z entrada 4379.47, SL 4342.77 -> closed_sl 01/09 13:19Z
-# Observacao importante: o executor anexou SL/TP a compra (EXECUTION_TPSL_ENABLED),
-# ou seja, na pratica o "acumulo sem stop" NUNCA existiu - a intencao da
-# estrategia (DCA sem stop) e a execucao real (stop 2.5xATR) eram incompativeis.
-# Somado a 3 backtests sem edge, PAXG sai da watchlist e este fast-path fica
-# inerte. ROLLBACK: True + reinserir "PAXG/USDT" na WATCHLIST.
-# Ver docs/paxg_removido_2026-09-04.md
+# ATENCAO: acumulo compra SEM stop-loss (BUY only). Travas de capital abaixo
+# (teto $10/ordem, max 10/dia, stop $20/dia) continuam valendo.
+# DESLIGADO 2026-09-04: PAXG fora da watchlist (2 stops seguidos em 28/08 e
+# 01/09 + reprovado em 3 backtests: sem edge). Rollback: True + reinserir
+# "PAXG/USDT" na WATCHLIST.
 ACCUMULATION_ENABLED = False
 ACCUMULATION_SYMBOLS = {
     "PAXG/USDT": {
