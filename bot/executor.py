@@ -48,6 +48,14 @@ try:
         from .config import EXECUTION_MIN_STOP_PCT
     except Exception:
         EXECUTION_MIN_STOP_PCT = 0.8
+    # --- OVERRIDE DE STOP POR SIMBOLO (2026-09-16) ---
+    # Aditivo e opcional: se a chave nao existir no config.py, vale {} e o
+    # comportamento e IDENTICO ao anterior (EXECUTION_ATR_MULT_SL global).
+    # ROLLBACK de 1 linha: EXECUTION_ATR_MULT_SL_OVERRIDES = {} em config.py.
+    try:
+        from .config import EXECUTION_ATR_MULT_SL_OVERRIDES
+    except Exception:
+        EXECUTION_ATR_MULT_SL_OVERRIDES = {}
     # --- TRAVA DE CONCENTRACAO (2026-08-23) ---
     # Aditiva: se as chaves nao existirem no config.py, valem estes defaults
     # (ja LIGADOS). Para desligar/ajustar, basta declarar em bot/config.py:
@@ -82,6 +90,7 @@ except Exception:  # degradacao segura: sem config -> camada inerte
     EXECUTION_MAX_NOTIONAL_USDT = 5.0
     EXECUTION_MIN_NOTIONAL_USDT = 3.0
     EXECUTION_ATR_MULT_SL = 2.0
+    EXECUTION_ATR_MULT_SL_OVERRIDES = {}
     EXECUTION_MIN_STOP_PCT = 0.8  # piso de afastamento do stop (% do preco)
     EXECUTION_TP_RR = 2.0
     EXECUTION_TPSL_ENABLED = True
@@ -296,6 +305,7 @@ def build_order(signal: dict, balance_usdt: float) -> dict:
     # SL = entrada - (mult * ATR)  |  TP = entrada + (RR * risco)
     sl_price = None
     tp_price = None
+    _mult = None
     try:
         if isinstance(signal, dict):
             atr = float(signal.get("atr") or 0)
@@ -304,7 +314,20 @@ def build_order(signal: dict, balance_usdt: float) -> dict:
     except (TypeError, ValueError):
         atr = 0.0
     if EXECUTION_TPSL_ENABLED and price and atr > 0:
-        risco = float(EXECUTION_ATR_MULT_SL) * atr   # distancia do stop em $
+        # MULTIPLO DO STOP: global, com OVERRIDE POR SIMBOLO (2026-09-16).
+        # O HYPE (breakout 1h) tem otimo em 3.0xATR (PF 1.50 vs 1.31 em 2.5x,
+        # backtest 180d), enquanto o Mare Alta D1 fica melhor em 2.5x (supera
+        # 3.0x em 5 dos 6 ativos). Antes um unico valor global servia os dois
+        # trilhos e um deles sempre saia perdendo. Degradacao segura: chave
+        # ausente/valor invalido -> cai no global.
+        _mult = float(EXECUTION_ATR_MULT_SL)
+        try:
+            _ov = EXECUTION_ATR_MULT_SL_OVERRIDES.get(signal.get("symbol"))
+            if _ov is not None and float(_ov) > 0:
+                _mult = float(_ov)
+        except Exception:
+            _mult = float(EXECUTION_ATR_MULT_SL)
+        risco = _mult * atr                          # distancia do stop em $
         # PISO DE VOLATILIDADE (bug TRX): em ativos de baixa vol (ATR ~0.25%),
         # 2*ATR gera stop coladissimo (-0.5%) -> estopado por ruido. Garante um
         # afastamento minimo do preco (EXECUTION_MIN_STOP_PCT, default 0.8%).
@@ -330,6 +353,7 @@ def build_order(signal: dict, balance_usdt: float) -> dict:
         "qty": qty,
         "ref_price": price,                  # preco no momento do sinal
         "atr": atr,                          # ATR usado p/ dimensionar SL/TP
+        "atr_mult_sl": (_mult if (EXECUTION_TPSL_ENABLED and price and atr > 0) else None),  # multiplo efetivo (override por simbolo)
         "sl_price": sl_price,                # stop-loss (None se ATR ausente)
         "tp_price": tp_price,                # take-profit
         "dry_run": bool(EXECUTION_DRY_RUN),
