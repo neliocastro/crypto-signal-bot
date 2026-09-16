@@ -136,10 +136,6 @@ INDICATOR_CONFIG = INDICATORS
 #   PF 0.60 - MUITO abaixo do backtest (2.55). Diagnostico: o stop de 2.0xATR
 #   aplicado pelo executor estava dentro do ruido intraday. Ver mudanca em
 #   EXECUTION_ATR_MULT_SL abaixo e docs/ajuste_stop_2026-08.md.
-#
-# ATENCAO (2026-09-16): o `atr_mult` DESTE dict pertence a ESTRATEGIA (calculo
-# do sinal). O stop da ORDEM REAL e definido no bloco de execucao, agora via
-# EXECUTION_ATR_MULT_SL_OVERRIDES (HYPE = 3.0x). Nao confunda os dois.
 BREAKOUT_ENABLED = True
 BREAKOUT_SHADOW_MODE = False
 BREAKOUT_SYMBOLS = {
@@ -214,7 +210,7 @@ EXECUTION_PAPER_BALANCE = 1000.0    # USDT hipoteticos (sizing do paper trading)
 #   EXECUTION_MAX_OPEN          -> maximo de posicoes live simultaneas.
 #   EXECUTION_MAX_TRADES_DAY    -> maximo de ordens enviadas por dia (UTC).
 #   EXECUTION_DAILY_LOSS_STOP   -> se a perda do dia (USDT) atingir isto, PARA.
-EXECUTION_MAX_NOTIONAL_USDT = 10.0   # DEGRAU 2 (2026-08-12): $5 -> $10 apos infra provada em 9 trades; proximo degrau ($20) SO no 20o trade com P&L>0 e PF>=1 ex-ETH. AUDITORIA 23/08: 3 de 3 criterios FALHAM (14 trades, P&L -$0.23 ex-ETH, PF 0.60) -> NAO subir. REAUDITORIA 16/09: decisao MANTIDA - teto segue $10 e o degrau $20 fica CONGELADO ate 20 trades com P&L>0 e PF>=1 ex-ETH (nenhum dos 3 criterios foi atingido). Ver docs/prioridade1_2026-09-16.md.
+EXECUTION_MAX_NOTIONAL_USDT = 10.0   # DEGRAU 2 (2026-08-12): $5 -> $10 apos infra provada em 9 trades; proximo degrau ($20) SO no 20o trade com P&L>0 e PF>=1 ex-ETH. AUDITORIA 23/08: 3 de 3 criterios FALHAM (14 trades, P&L -$0.23 ex-ETH, PF 0.60) -> NAO subir.
 EXECUTION_MIN_NOTIONAL_USDT = 3.0    # piso: Gate.io rejeita ordem < $3 (too small)
 # --- Saida automatica (TP/SL nativos na Gate.io, anexados a cada compra) ---
 #
@@ -227,24 +223,20 @@ EXECUTION_MIN_NOTIONAL_USDT = 3.0    # piso: Gate.io rejeita ordem < $3 (too sma
 #       (BTC 1.28 vs 1.07 | SOL 4.51 vs 3.77 | TRX 2.21 vs 2.13 | BNB 2.15 vs 1.79).
 #       No HYPE 1h (180d): PF 1.18 (2.0x) -> 1.31 (2.5x) -> 1.50 (3.0x).
 #   Escolha: 2.5x melhora os DOIS trilhos. O otimo do HYPE (3.0x) exigiria um
-#   override por simbolo no executor.build_order() - RESOLVIDO em 2026-09-16
-#   (ver EXECUTION_ATR_MULT_SL_OVERRIDES abaixo).
-#   Ver docs/decisao_stop_e_universo_2026-08-23.md.
+#   override por simbolo no executor.build_order() - commit isolado, ainda nao
+#   feito. Ver docs/decisao_stop_e_universo_2026-08-23.md.
 #   ROLLBACK: volte para 2.0.
-EXECUTION_ATR_MULT_SL = 2.5    # Stop-Loss = entrada - (mult * ATR) [default global]
-
-# EXECUTION_ATR_MULT_SL_OVERRIDES (2026-09-16): FECHA A PENDENCIA acima.
-# O executor.build_order() agora aceita multiplo de stop POR SIMBOLO. Motivo:
-# um unico valor global servia dois trilhos com otimos diferentes -
-#   Mare Alta D1 (BTC/SOL/TRX/BNB): 2.5x supera 3.0x em 5 dos 6 ativos
-#   HYPE 1h breakout (180d):        PF 1.18 (2.0x) -> 1.31 (2.5x) -> 1.50 (3.0x)
-# ...e o HYPE sempre saia perdendo. Agora cada trilho roda no seu otimo.
-# Simbolo ausente deste dict -> usa EXECUTION_ATR_MULT_SL (2.5).
-# O piso EXECUTION_MIN_STOP_PCT continua sendo aplicado por cima.
-# ROLLBACK de 1 linha: deixe o dict VAZIO ({}) -> volta ao global para todos.
-# Ver docs/prioridade1_2026-09-16.md.
-EXECUTION_ATR_MULT_SL_OVERRIDES = {
-    "HYPE/USDT": 3.0,          # otimo do breakout 1h (PF 1.50 no backtest 180d)
+EXECUTION_ATR_MULT_SL = 2.5    # Stop-Loss = entrada - (mult * ATR)
+#
+# OVERRIDE POR SIMBOLO (2026-09-16): fecha a pendencia registrada no comentario
+# acima ("o otimo do HYPE (3.0x) exigiria um override por simbolo no
+# executor.build_order() - commit isolado, ainda nao feito").
+# Vazio = todos usam EXECUTION_ATR_MULT_SL. ROLLBACK: {} (uma linha).
+# Evidencia HYPE 1h 180d: PF 1.18 (2.0x) -> 1.31 (2.5x) -> 1.50 (3.0x).
+# NAO mexe nos 4 ativos do Mare Alta D1, que seguem em 2.5x.
+# Ver docs/override_stop_por_simbolo.md.
+EXECUTION_ATR_MULT_SL_BY_SYMBOL = {
+    "HYPE/USDT": 3.0,
 }
 EXECUTION_TP_RR       = 2.0    # Take-Profit = entrada + (RR * risco). RR 2.0 = alvo 2x o risco
 EXECUTION_TPSL_ENABLED = True  # kill-switch: False = volta a comprar sem TP/SL
@@ -287,10 +279,4 @@ MARE_ALTA_SYMBOLS          = []     # vazio = qualquer posicao aberta registrada
 # LIMITE: so reconcilia pares registrados em state/positions.jsonl (ordens do
 # bot). Ordens MANUAIS criadas na corretora NAO sao cobertas.
 # Degradacao segura: falha nunca derruba o scan; nunca cria ordem.
-# GAP CONHECIDO E ACEITO (2026-09-16): ordens MANUAIS (ex: a posicao propria de
-# BTC protegida por ~/btc_tp.php) NAO entram no oco_guard, porque ele so le
-# pares registrados em state/positions.jsonl. Cobri-las exigiria varrer as
-# open_orders da conta no relay PHP - risco de o bot cancelar ordem que nao
-# criou. DECISAO: nao automatizar; reconciliacao manual documentada em
-# docs/runbook_btc_manual.md. Ver docs/prioridade1_2026-09-16.md (item 4).
 OCO_GUARD_ENABLED = True   # kill-switch do OCO emulado
