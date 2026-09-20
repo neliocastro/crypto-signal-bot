@@ -386,3 +386,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-09-18T09:58:54.519241+00:00,99feccb39279754c,HYPE/USDT,buy,10.0,88.68,,,REAL,blocked_by_guard,concentracao: ja ha 1 posicao(oes) aberta(s) em HYPE/USDT (max 1)
 2026-09-20T00:25:15.777041+00:00,93f0aec46bac956b,SOL/USDT,buy,10.0,111.06,110.71,,REAL,filled,
 2026-09-20T00:25:16.195210+00:00,e38627257a5227b3,TRX/USDT,buy,10.0,0.3399,,,REAL,blocked_by_guard,concentracao: ja ha 1 posicao(oes) aberta(s) em TRX/USDT (max 1)
+2026-09-20T23:32:09.079990+00:00,c9b6ebcf8d5dc163,HYPE/USDT,buy,10.0,93.79,,,REAL,blocked_by_guard,concentracao: ja ha 1 posicao(oes) aberta(s) em HYPE/USDT (max 1)
