@@ -32,10 +32,10 @@
       "strategy": "Breakout / Tendência",
       "exit_kind": "trailing",
       "entry": 85.14,
-      "stop": 93.88855377,
+      "stop": 94.64855377,
       "risk_dist": 2.691446229999997,
       "tp": 93.21433869,
-      "peak": 96.58,
+      "peak": 97.34,
       "opened_at": "2026-09-17T23:00:00+00:00",
       "opened_scan_utc": "2026-09-18T00:58:14.417846+00:00"
     }
