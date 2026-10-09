@@ -1,8 +1,9 @@
-# Estado Atual do Bot — Consolidado (set/2026)
+# Estado Atual do Bot — Consolidado (out/2026)
 
 > Documento de referencia do roteamento e da camada de execucao vigentes no
-> `main`. **Atualizado em 2026-09-16** (override de stop por simbolo + reauditoria
-> do degrau de teto). Revisao anterior: 2026-09-04 (remocao do PAXG).
+> `main`. **Atualizado em 2026-10-08** (correcao do nome do override, resultado
+> ao vivo com 22 trades e reauditoria formal do degrau). Revisoes anteriores:
+> 2026-09-16 (override de stop por simbolo) e 2026-09-04 (remocao do PAXG).
 > Mapa complementar de estrategias: **`docs/mapa_estrategias.md`**.
 
 ## Roteamento por ativo (producao) — 1 token = 1 trilho
@@ -46,15 +47,18 @@ BREAKOUT_SHADOW_MODE = False
 BREAKOUT_SYMBOLS = {
     "HYPE/USDT": {"lookback": 30, "atr_mult": 2.5},   # parametro da ESTRATEGIA
 }
-EXECUTION_ATR_MULT_SL_OVERRIDES = {"HYPE/USDT": 3.0}  # stop da ORDEM REAL
+EXECUTION_ATR_MULT_SL_BY_SYMBOL = {"HYPE/USDT": 3.0}  # stop da ORDEM REAL
 ```
 
 - Entrada (1h): EMA9 > EMA21 > EMA50 + rompe maxima de 30 velas + RSI > 50.
 - Saida: stop **3.0xATR** (desde 16/09) + trailing stop manual.
 - Validado por teste de robustez (PF 2.55, +67% em 150d no backtest).
+- **Nome real do override (corrigido em 08/10):** `EXECUTION_ATR_MULT_SL_BY_SYMBOL`
+  (lido por `executor._atr_mult_for()`). Versoes anteriores deste doc e o
+  `prioridade1_2026-09-16.md` citavam `..._OVERRIDES`, nome que **nao existe** no codigo.
 - **Cuidado com os dois parametros homonimos:** o `atr_mult` de `BREAKOUT_SYMBOLS`
   pertence ao calculo do sinal; o stop da ordem enviada a Gate.io vem de
-  `EXECUTION_ATR_MULT_SL_OVERRIDES`. Ver `docs/prioridade1_2026-09-16.md`.
+  `EXECUTION_ATR_MULT_SL_BY_SYMBOL`. Ver `docs/prioridade1_2026-09-16.md`.
 
 ---
 
@@ -89,7 +93,7 @@ EXECUTION_ATR_MULT_SL_OVERRIDES = {"HYPE/USDT": 3.0}  # stop da ORDEM REAL
 | `EXECUTION_MAX_NOTIONAL_USDT` | **`10.0`** | teto por ordem (degrau 2 desde 2026-08-12) |
 | `EXECUTION_MIN_NOTIONAL_USDT` | `3.0` | piso da Gate.io |
 | `EXECUTION_ATR_MULT_SL` | **`2.5`** | stop-loss global = entrada - (2.5 * ATR) [ajustado em 23/08 de 2.0 p/ 2.5] |
-| `EXECUTION_ATR_MULT_SL_OVERRIDES` | **`{"HYPE/USDT": 3.0}`** | override por simbolo (2026-09-16): HYPE usa 3.0xATR; demais usam o global. Rollback: dict vazio |
+| `EXECUTION_ATR_MULT_SL_BY_SYMBOL` | **`{"HYPE/USDT": 3.0}`** | override por simbolo (2026-09-16): HYPE usa 3.0xATR; demais usam o global. Rollback: dict vazio |
 | `EXECUTION_TP_RR` | `2.0` | take-profit = entrada + (2.0 * risco) |
 | `EXECUTION_TPSL_ENABLED` | `True` | TP/SL nativos anexados a compra |
 | `EXECUTION_MIN_STOP_PCT` | `0.8` | piso de afastamento do stop (% do preco), aplicado por cima do multiplo |
@@ -98,7 +102,7 @@ EXECUTION_ATR_MULT_SL_OVERRIDES = {"HYPE/USDT": 3.0}  # stop da ORDEM REAL
 | `EXECUTION_DAILY_LOSS_STOP` | `20.0` | para tudo se perder $20 no dia |
 | `REQUIRE_PROTECTION` (PHP) | `true` | compra SEM TP nem SL e recusada |
 
-Proximo degrau ($20): **CONGELADO**. Reauditado em 2026-09-16 — nenhum dos 3 criterios atingido (so no 20o trade, com P&L>0 e PF>=1 ex-ETH). Ver `docs/prioridade1_2026-09-16.md`.
+Proximo degrau ($20): **CONGELADO**. Reauditado em 2026-10-08 — o 20o trade ja fechou (22 no total), mas P&L (-$1.28) e PF ex-ETH (0.37) **reprovaram**. Ver `docs/reauditoria_degrau_2026-10-08.md`.
 
 - Cada ordem registra o multiplo efetivo do stop (`atr_mult_sl`) em `state/paper_trades.jsonl` — auditavel por trade.
 - Modulos: `bot/executor.py`, `server/execute.php`, `bot/paper_evaluator.py`.
@@ -136,3 +140,17 @@ Protegida por ordens manuais via script `~/btc_tp.php` no servidor:
 - SL: 69.200 (0.0040 BTC)
 - Runner livre: 0.00127384 BTC
 **Nao gerenciada pelo bot** (ver `docs/runbook_btc_manual.md`).
+
+---
+
+## Resultado ao vivo (snapshot 2026-10-08)
+
+Recalculado de `state/positions.jsonl` (estimativa com fee 0.1% ida+volta). Detalhe em `docs/resultado_financeiro.md` (secao 5).
+
+| Recorte | Trades | Wins | P&L aprox. | PF |
+|---|---|---|---|---|
+| Todos os fechados | 22 | 5 | -$1.28 | ~0.70 |
+| Sem o ETH | 21 | 4 | -$2.70 | ~0.37 |
+| Desde 04/09 (universo atual) | 6 | 0 | -$2.41 | 0 |
+
+Sem posicao aberta do bot apos 08/10 17:40 UTC (SOL, BNB e BTC fecharam no stop no mesmo minuto — causa a investigar no `execution_log.jsonl`). Resta so o lote legado de HYPE (`open_unmanaged_protected`, nao gerenciado pelo bot).

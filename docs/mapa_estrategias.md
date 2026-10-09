@@ -1,151 +1,98 @@
 # Mapa de Estrategias — 1 token = 1 trilho
 
-> Documento de referencia rapida. **Verificado diretamente no codigo do `main`**
-> em 2026-08-23 (`bot/config.py`, `bot/strategies.py`, `bot/mare_alta.py`,
-> `bot/main.py`). Substitui, no que houver divergencia, o que estiver escrito em
-> `docs/estado_atual.md` (ver secao "Correcoes" no fim).
+> Referencia rapida. **Reverificado no codigo do `main` em 2026-10-08** (HEAD `84388d2`:
+> `bot/config.py`, `bot/strategies.py`, `bot/mare_alta.py`, `bot/main.py`, `bot/executor.py`).
+> Substitui a versao de 2026-08-23, que ainda citava ETH, XRP, PAXG e o MACD-only.
 
-## 1. Resposta curta (para explicar a qualquer um)
+## 1. Resposta curta
 
 ```
-Mare Alta D1   -> BTC  ETH  SOL  XRP  TRX  BNB      (diario)
-Breakout       -> HYPE                              (1h)
-Acumulacao RSI -> PAXG                              (4h)
+Mare Alta D1 -> BTC  SOL  TRX  BNB     (diario)
+Breakout     -> HYPE                   (1h)
 ```
 
-**Cada ativo opera por UM unico trilho executor.** Nao ha ativo com duas
-estrategias enviando ordem.
+**Cada ativo opera por UM unico trilho executor.** Watchlist (5): BTC, SOL, TRX, BNB, HYPE.
 
 ## 2. Tabela por ativo
 
-| Ativo | Estrategia que EXECUTA | TF | Modulo |
-|---|---|---|---|
-| BTC/USDT | Mare Alta D1 | 1d | `bot/mare_alta.py` |
-| ETH/USDT | Mare Alta D1 | 1d | `bot/mare_alta.py` |
-| SOL/USDT | Mare Alta D1 | 1d | `bot/mare_alta.py` |
-| XRP/USDT | Mare Alta D1 | 1d | `bot/mare_alta.py` |
-| TRX/USDT | Mare Alta D1 | 1d | `bot/mare_alta.py` |
-| BNB/USDT | Mare Alta D1 | 1d | `bot/mare_alta.py` |
-| HYPE/USDT | Breakout / Tendencia (lb=30, atr=2.5) | 1h | `bot/strategies.py` |
-| PAXG/USDT | Acumulo (RSI sobrevenda) — BUY only | 4h | `bot/strategies.py` |
-
-## 3. Estrategias existentes no codigo
-
-| # | Estrategia | Arquivo | Kill-switch | Estado |
+| Ativo | Estrategia que EXECUTA | TF | Stop inicial da ordem | Modulo |
 |---|---|---|---|---|
-| 1 | Mare Alta D1 | `mare_alta.py` | `MARE_ALTA_ENABLED` | producao (shadow OFF) |
-| 2 | Breakout / Tendencia | `strategies.py` | `BREAKOUT_ENABLED` | producao (shadow OFF) |
-| 3 | Acumulacao RSI | `strategies.py` | `ACCUMULATION_ENABLED` | producao |
-| 4 | MACD-only Agressivo | `strategies.py` | `ACTIVE_PROFILE` | **roda, mas o sinal e descartado** |
-| 5 | Integrada Curto Prazo | `strategies.py` | perfil `balanceado` | **codigo morto** (perfil ativo e `agressivo`) |
+| BTC/USDT | Mare Alta D1 | 1d | 2.5x ATR | `bot/mare_alta.py` |
+| SOL/USDT | Mare Alta D1 | 1d | 2.5x ATR | `bot/mare_alta.py` |
+| TRX/USDT | Mare Alta D1 | 1d | 2.5x ATR | `bot/mare_alta.py` |
+| BNB/USDT | Mare Alta D1 | 1d | 2.5x ATR | `bot/mare_alta.py` |
+| HYPE/USDT | Breakout / Tendencia (lb=30) | 1h | **3.0x ATR** (override) | `bot/strategies.py` |
 
-### Por que a #4 nao executa
+## 3. Estrategias no codigo
 
-Com `ACTIVE_PROFILE = "agressivo"` e `approved_symbols = None`, o MACD-only 1h
-ainda **gera** sinal para os 6 ativos do Mare Alta. Esse sinal e **filtrado**
-no `main.py` (secao 5) e nunca vira Telegram nem ordem. E desperdicio de CPU,
-nao risco financeiro.
+| Estrategia | Onde | Kill-switch | Estado |
+|---|---|---|---|
+| Mare Alta D1 | `mare_alta.py` | `MARE_ALTA_ENABLED` | producao (shadow OFF) |
+| Breakout / Tendencia | `strategies.py` | `BREAKOUT_ENABLED` | producao (shadow OFF) |
+| Acumulo RSI (PAXG) | `strategies.py` | `ACCUMULATION_ENABLED = False` | **desligado** desde 04/09 (codigo mantido) |
+| MACD-only / Integrada / Tendencia MACD / Confluencia | — | — | **removidas do codigo** em 24/08 |
+| SHORT | — | — | descartado permanentemente |
 
-### Por que a #5 nao roda
-
-Os tres fast-paths do `evaluate_signal` fazem `return` antes de chegar no
-caminho normal (linha 557+). Com a watchlist atual, nenhum ativo alcanca a
-Integrada.
-
-## 4. Roteamento dentro do `evaluate_signal` (`bot/strategies.py`)
+## 4. Roteamento no `evaluate_signal` (`bot/strategies.py`)
 
 ```
 evaluate_signal(symbol, df, ...)
-  L491  df < 210 velas -> None
-  L499  fast-path BREAKOUT      -> HYPE  ... return
-  L516  fast-path ACUMULACAO    -> PAXG  ... return
-  L542  fast-path MACD-ONLY     -> demais ... return
-  L557+ caminho normal (Integrada + Tendencia MACD + gating MTF)  [inalcancavel hoje]
+  fast-path BREAKOUT  -> symbol em BREAKOUT_SYMBOLS (HYPE)              -> return
+  fast-path ACUMULO   -> so se ACCUMULATION_ENABLED (hoje False)        -> return
+  sem fast-path       -> return None (nao ha mais caminho legado)
 ```
 
-Cada fast-path e exclusivo (`return` direto) e envolto em `try/except` com
-degradacao segura.
+Ativos do Mare Alta nao geram sinal intraday: retornam `None` aqui e operam so pelo bloco D1.
 
-## 5. A trava que garante 1 trilho por ativo (`bot/main.py`, L226-252)
+## 5. A trava de 1 trilho por ativo (`bot/main.py` ~L234)
 
 ```python
-# --- ROTEAMENTO POR TRILHO (2026-07-10) ---
 INTRADAY_EXEC_ALLOWLIST = {
     ("HYPE/USDT", "Breakout / Tendência"),
-    ("PAXG/USDT", "Acúmulo (RSI sobrevenda)"),
+    ("PAXG/USDT", "Acúmulo (RSI sobrevenda)"),   # inerte: acumulo desligado
 }
-qualified_signals = [s for s in qualified_signals
-                     if (s["symbol"], s["strategy"]) in INTRADAY_EXEC_ALLOWLIST]
 ```
 
-Motivo historico registrado no proprio codigo: *"fim da duplicidade que comprou
-ETH pelo trilho errado em 05/07"*.
+O Mare Alta roda **fora** desse filtro, em bloco proprio (`main.py` ~L405):
+`run_mare_alta(notify=send)` -> `_executor.maybe_execute(...)`, com universo
+proprio (`MARE_ALTA_UNIVERSE`) e `fetch_ohlcv` D1 proprio.
 
-O Mare Alta roda **fora** desse filtro, em bloco proprio (`main.py` L402-406):
+## 6. Fragilidades conhecidas
 
-```python
-from .mare_alta import run_mare_alta
-_ma_signals = run_mare_alta(notify=send)
-for _ma_sig in _ma_signals:
-    _executor.maybe_execute(_ma_sig, _paper_balance)
-```
+1. **Allowlist casa por STRING EXATA** (com acento). Mudar o campo `strategy` em
+   `strategies.py` faz o ativo parar de operar em silencio. Canario:
+   `tests/test_roteamento_strings.py`. Alterar os dois arquivos no mesmo commit.
+2. **`[SHADOW]` no nome quebra o match de proposito:** se `BREAKOUT_SHADOW_MODE=True`,
+   a string vira `"Breakout / Tendência [SHADOW]"` e nao passa na allowlist (sem ordem).
+3. **Dois `atr_mult` diferentes no HYPE:** `BREAKOUT_SYMBOLS["HYPE/USDT"]["atr_mult"]=2.5`
+   e do SINAL; o stop da ORDEM vem de `EXECUTION_ATR_MULT_SL_BY_SYMBOL = {"HYPE/USDT": 3.0}`.
+4. A entrada PAXG na allowlist e residuo inofensivo; remover so junto com o codigo do acumulo.
 
-Ele tem universo proprio (`MARE_ALTA_UNIVERSE`) e faz o proprio `fetch_ohlcv`,
-portanto **nao depende da WATCHLIST**.
-
-## 6. Fragilidades conhecidas (ler antes de mexer)
-
-1. **A allowlist casa por STRING EXATA da estrategia.** Mudar o texto do campo
-   `strategy` em `strategies.py` (ate corrigir um acento) faz o ativo **parar de
-   operar silenciosamente**, sem erro e sem log de falha. Os dois valores
-   acoplados sao `"Breakout / Tendência"` e `"Acúmulo (RSI sobrevenda)"`.
-   **NAO ALTERAR** sem atualizar `main.py` no mesmo commit.
-2. **A watchlist pode ser sobrescrita em runtime** (`main.py` L170,
-   `state/runtime_config.json` via Telegram Commander). Um ativo adicionado por
-   la entra no scan mas **nao tem trilho executor** -> sera filtrado e nunca
-   virara ordem.
-3. **MACD-only queimando CPU** para 6 ativos cujo sinal e descartado. Limpeza
-   opcional: adicionar os 6 a `MACD_ONLY_EXCLUDE`. Atencao: isso os joga no
-   **caminho normal** (Integrada), nao os deixa sem estrategia.
-
-## 7. Camada comum de execucao (nao e estrategia)
-
-Vale para qualquer sinal que passe pelo executor:
+## 7. Camada comum de execucao
 
 | Trava | Valor |
 |---|---|
 | `EXECUTION_PCT` | 2% do saldo por ordem |
-| `EXECUTION_MAX_NOTIONAL_USDT` | $10 (degrau 2) |
-| `EXECUTION_MIN_NOTIONAL_USDT` | $3 (piso da Gate.io) |
-| `EXECUTION_MAX_OPEN` | 10 posicoes |
-| `EXECUTION_MAX_TRADES_DAY` | 10 ordens/dia |
+| `EXECUTION_MAX_NOTIONAL_USDT` | $10 (degrau $20 **congelado**, ver `reauditoria_degrau_2026-10-08.md`) |
+| `EXECUTION_MIN_NOTIONAL_USDT` | $3 |
+| `EXECUTION_ATR_MULT_SL` / `..._BY_SYMBOL` | 2.5x global / HYPE 3.0x |
+| `EXECUTION_TP_RR` / `EXECUTION_MIN_STOP_PCT` | 2.0 / 0.8% |
+| `EXECUTION_MAX_OPEN` / `EXECUTION_MAX_TRADES_DAY` | 10 / 10 |
 | `EXECUTION_DAILY_LOSS_STOP` | $20/dia |
-| `EXECUTION_TPSL_ENABLED` | SL 2.0xATR, TP RR 2.0, piso stop 0.8% |
-| `REQUIRE_PROTECTION` (PHP) | compra sem TP/SL e RECUSADA |
-| `OCO_GUARD_ENABLED` | reconcilia TP<->SL (Gate.io nao tem OCO nativo) |
-| `MARE_ALTA_TRAILING_ENABLED` | trailing D1 3.0xATR, catraca so sobe |
+| `EXECUTION_CONCENTRATION_GUARD` | 1 posicao viva + 2 ordens/dia por ativo |
+| `REQUIRE_PROTECTION` (PHP) | compra sem TP/SL e recusada |
+| `OCO_GUARD_ENABLED` | OCO emulado (so ordens do bot) |
+| `MARE_ALTA_TRAILING_ENABLED` | trailing D1 3.0x ATR, catraca so sobe |
 
-## 8. Correcoes ao `docs/estado_atual.md`
+## 8. Historico do universo
 
-O documento anterior esta desatualizado nos seguintes pontos:
-
-| `estado_atual.md` diz | Realidade no `main` (2026-08-23) |
+| Data | Mudanca |
 |---|---|
-| Mare Alta com 7 ativos, incluindo LINK | 6 ativos; **LINK saiu** |
-| "Ponta solta do LINK" (Mare Alta + MACD-only) | **nao existe mais**: LINK fora da watchlist |
-| `EXECUTION_MAX_NOTIONAL_USDT = 5.0` | **10.0** (degrau 2, desde 12/08) |
-| LINK na tabela de roteamento | removido (reprovado; ver reavaliacao 12/08 em `config.py`) |
-
-Watchlist real (8): BTC, ETH, SOL, XRP, TRX, BNB, HYPE, PAXG.
-
-## 9. Nota de risco herdada
-
-ETH e XRP foram **reprovados no walk-forward original** do Mare Alta e entraram
-por decisao de negocio. O docstring do `mare_alta.py` ainda registra:
-*"Universo validado: BTC, SOL, TRX, BNB (ETH e XRP reprovados nesta logica)"*.
-Acompanhar de perto.
+| 12/08 | LINK e AAVE removidos (sem edge em 165d) |
+| 23-24/08 | ETH e XRP removidos (PF 0.43 / 0.55 no backtest fiel); MACD-only e legado removidos |
+| 04/09 | PAXG removido; `ACCUMULATION_ENABLED=False` |
+| 16/09 | override de stop do HYPE (3.0x ATR) |
 
 ---
 
-_Gerado a partir de leitura direta do codigo em 2026-08-23. Ao alterar
-roteamento, atualizar este arquivo no mesmo commit._
+_Reverificado no codigo em 2026-10-08. Ao alterar roteamento, atualizar este arquivo no mesmo commit._
