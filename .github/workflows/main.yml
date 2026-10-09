@@ -65,6 +65,11 @@ jobs:
       # Redundancia INDEPENDENTE do cron best-effort do GitHub.
       # So roda se o secret SELF_DISPATCH_PAT existir (kill-switch natural:
       # sem PAT, este passo nao faz nada e o cron */15 segue como fallback).
+      #
+      # 2026-10-09: o passo agora CONFERE o HTTP de resposta e FALHA (run
+      # vermelho) se nao for 204. Antes, `curl -s` retornava sucesso mesmo
+      # com HTTP 401, e o token expirado em 14/09 passou 24 dias invisivel.
+      # Ver docs/incidente_2026-10-08_stops_e_cadencia.md
       # ---------------------------------------------------------------
       - name: Re-arm next scan (self-schedule)
         if: ${{ always() }}
@@ -77,10 +82,14 @@ jobs:
           fi
           echo "Aguardando 240s antes de re-armar o proximo scan..."
           sleep 240
-          curl -s -X POST \
+          code=$(curl -s -o /tmp/dispatch_resp.txt -w "%{http_code}" -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/${{ github.repository }}/actions/workflows/main.yml/dispatches \
-            -d '{"ref":"main","inputs":{"self_chain":"true"}}' \
-            && echo "Proximo scan re-armado (self-chain)." \
-            || echo "Falha ao re-armar - cron */15 cobre como fallback."
+            -d '{"ref":"main","inputs":{"self_chain":"true"}}' || echo "000")
+          if [ "$code" = "204" ]; then
+            echo "Proximo scan re-armado (self-chain). HTTP 204."
+          else
+            echo "::error title=Self-dispatch falhou::HTTP $code ao re-armar o proximo scan. 401 = SELF_DISPATCH_PAT expirado/revogado; 403 = falta permissao Actions RW; 404 = repo nao selecionado no token. Cron */15 segue como fallback. Resposta: $(head -c 300 /tmp/dispatch_resp.txt 2>/dev/null)"
+            exit 1
+          fi
