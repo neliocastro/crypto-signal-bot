@@ -25,6 +25,19 @@
       "peak": 4460.27,
       "opened_at": "2026-08-28T16:00:00+00:00",
       "opened_scan_utc": "2026-08-28T20:09:17.059204+00:00"
+    },
+    {
+      "signal_id": "cb780ea49dec0d4c",
+      "symbol": "HYPE/USDT",
+      "strategy": "Breakout / Tendência",
+      "exit_kind": "trailing",
+      "entry": 86.83,
+      "stop": 85.52159646,
+      "risk_dist": 1.41840354,
+      "tp": 91.08521061,
+      "peak": 86.94,
+      "opened_at": "2026-10-11T15:00:00+00:00",
+      "opened_scan_utc": "2026-10-11T16:08:22.967427+00:00"
     }
   ],
   "closed": [
