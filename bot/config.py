@@ -136,7 +136,7 @@ INDICATOR_CONFIG = INDICATORS
 #   PF 0.60 - MUITO abaixo do backtest (2.55). Diagnostico: o stop de 2.0xATR
 #   aplicado pelo executor estava dentro do ruido intraday. Ver mudanca em
 #   EXECUTION_ATR_MULT_SL abaixo e docs/ajuste_stop_2026-08.md.
-BREAKOUT_ENABLED = True
+BREAKOUT_ENABLED = False  # desligado em 13/10/2026 (decisao do usuario apos reconciliacao 11/10)
 BREAKOUT_SHADOW_MODE = False
 BREAKOUT_SYMBOLS = {
     "HYPE/USDT": {"lookback": 30, "atr_mult": 2.5},

@@ -124,3 +124,26 @@ Ganho medio por TP: +$0.60 | Perda media por SL: -$0.10 (assimetria ~6:1 no trad
 6. As posicoes manuais (BTC, PAXG, XRP, HYPE legado) **nao foram reprecificadas** nesta atualizacao. As secoes 2-4 continuam sendo o snapshot de 12/08.
 
 *Atualizado em 08/10/2026. Decisao de capital derivada: `docs/reauditoria_degrau_2026-10-08.md`.*
+
+## 6. RECONCILIACAO 11/10/2026 - fills reais da Gate.io
+
+**Fonte:** prints do Historico de negociacoes (fills reais, taxa incluida) e do portfolio, enviados pelo usuario. Nao altera a secao 5 (estimativa por preco de TP/SL); a confere.
+
+| Trade do bot | P&L real |
+|---|---|
+| BTC 03/09 (stop 15/09) | ~-0.76 (estimado; fill de venda nao conferido) |
+| BNB 04/09 | -0.21 |
+| TRX 09/09 | -0.14 |
+| SOL 19/09 | -0.22 |
+| BNB 20/09 | -0.43 |
+| BTC 21/09 | -0.58 |
+| **Desde 04/09** | **~-2.33** (secao 5: -2.41) |
+
+**Fora do bot (manual/legado):**
+- BTC manual, TP1 em 21/09: ~+$50.7 realizado (0.0021 a 84.981,6 contra custo ~60.749,8).
+- Lote HYPE legado: encerrado em 13/08, ~-$2.41 realizado (custo 64.20).
+- Abertos no portfolio (11/10): BTC 0.0031756 (~$266, ~+$70 nao realizado), PAXG 0.0529 (~$222, ~-$13.6 nao realizado), BNB 0.00281 (poeira). USDT $664,55.
+- Todos sem ordens condicionais e fora do bot.
+
+*Estimativas de nao realizado usam o custo medio exibido pela Gate. Detalhe: `docs/reconciliacao_2026-10-11.md`.*
+

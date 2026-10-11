@@ -1,5 +1,13 @@
 # Runbook — ordens MANUAIS de BTC (fora do bot)
 
+> **ATUALIZACAO 11/10/2026 - RUNBOOK SEM ORDENS VIGENTES.** O TP1 disparou em
+> 21/09 (0.0021 BTC a 84.981,6, ~+$50.7). TP2 e SL **nao existem mais** (confirmado
+> pelo usuario: sem ordens abertas). Saldo atual: 0.0031756 BTC (~$266), sem
+> protecao. A tabela e o check abaixo descrevem o estado de 22/08 e ficam como
+> historico; o check semanal hoje deve retornar **0**, nao 3.
+> Se quiser reproteger, criar novas ordens com `~/btc_tp.php` (decisao do usuario).
+> Detalhe em `docs/reconciliacao_2026-10-11.md`.
+
 > Posicao **manual** do usuario na Gate.io. NAO foi criada pelo bot, NAO esta em
 > `state/positions.jsonl` e **NAO e coberta pelo OCO Guard** (que so reconcilia
 > pares registrados pelo bot). Reconciliacao e 100% manual.

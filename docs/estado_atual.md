@@ -14,7 +14,7 @@
 | SOL/USDT | Mare Alta D1 | D1 | 2.5x ATR | validado no walk-forward |
 | TRX/USDT | Mare Alta D1 | D1 | 2.5x ATR | validado no walk-forward |
 | BNB/USDT | Mare Alta D1 | D1 | 2.5x ATR | validado no walk-forward |
-| HYPE/USDT | Breakout / Tendencia (lb=30) | 1h | **3.0x ATR** (override 16/09) | fast-path dedicado, operando real |
+| HYPE/USDT | Breakout / Tendencia (lb=30) | 1h | **3.0x ATR** (override 16/09) | fast-path dedicado, **DESLIGADO** desde 13/10 (`BREAKOUT_ENABLED = False`) |
 
 **WATCHLIST ativa (5 ativos):** `BTC/USDT`, `SOL/USDT`, `TRX/USDT`, `BNB/USDT`, `HYPE/USDT`.
 
@@ -42,7 +42,7 @@ MARE_ALTA_UNIVERSE = ["BTC/USDT", "SOL/USDT", "TRX/USDT", "BNB/USDT"]
 ## Breakout / Trend-Following (HYPE/USDT)
 
 ```python
-BREAKOUT_ENABLED = True
+BREAKOUT_ENABLED = False   # kill switch ligado em 13/10/2026: HYPE sem sinal e sem ordem
 BREAKOUT_SHADOW_MODE = False
 BREAKOUT_SYMBOLS = {
     "HYPE/USDT": {"lookback": 30, "atr_mult": 2.5},   # parametro da ESTRATEGIA
@@ -133,13 +133,14 @@ Desde 2026-08-24 (`docs/watchlist_runtime_2026-08-24.md`), `bot/config.py` e a f
 
 ## Posicao Manual de BTC (Gate.io)
 
-Posicao propria do usuario (0.00527384 BTC, preco medio ~$60.749,8).
-Protegida por ordens manuais via script `~/btc_tp.php` no servidor:
-- TP1: 85.000 (0.0021 BTC)
-- TP2: 95.000 (0.0019 BTC)
-- SL: 69.200 (0.0040 BTC)
-- Runner livre: 0.00127384 BTC
-**Nao gerenciada pelo bot** (ver `docs/runbook_btc_manual.md`).
+**Atualizado em 11/10/2026** (ver `docs/reconciliacao_2026-10-11.md`).
+
+- O TP1 disparou em 21/09 (0.0021 BTC a 84.981,6): cerca de +$50.7 realizado.
+- Restam **0.0031756 BTC** (~$266) na carteira, **sem nenhuma ordem condicional aberta** (TP2 e SL nao existem mais; o SL do runbook nao foi recriado apos o TP1).
+- Posicao propria do usuario, **nao gerenciada pelo bot** e hoje **sem protecao**.
+- Historico (22/08): TP1 85.000 / TP2 95.000 / SL 69.200, preco medio ~$60.749,8.
+
+Tambem sem protecao e fora do bot: PAXG 0.0529 (~$222, custo medio $4.453).
 
 ---
 
@@ -153,4 +154,6 @@ Recalculado de `state/positions.jsonl` (estimativa com fee 0.1% ida+volta). Deta
 | Sem o ETH | 21 | 4 | -$2.70 | ~0.37 |
 | Desde 04/09 (universo atual) | 6 | 0 | -$2.41 | 0 |
 
-Sem posicao aberta do bot apos 08/10 17:40 UTC (SOL, BNB e BTC fecharam no stop no mesmo minuto — causa a investigar no `execution_log.jsonl`). Resta so o lote legado de HYPE (`open_unmanaged_protected`, nao gerenciado pelo bot).
+Sem posicao aberta do bot apos 08/10 17:40 UTC (SOL, BNB e BTC fecharam no stop no mesmo minuto; queda correlacionada do mercado, SL nativos funcionaram).
+O lote legado de HYPE **foi encerrado em 13/08** (TP 57.91) e o registro foi fechado em 11/10 (`closed_manual`). Nao ha mais `open_unmanaged_protected`.
+Placar por fills reais da Gate (11/10): 6 trades desde 04/09 somam ~-$2.33 (o fill do BTC de 03/09 nao foi conferido; usado o preco do stop).
