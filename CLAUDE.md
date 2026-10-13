@@ -12,6 +12,7 @@ neste arquivo para o estado atual.** Leia sempre:
 - `state/positions.jsonl` — fonte da verdade das posições do bot
 - `state/paper_trades.jsonl` — ordens enviadas e bloqueios de guarda
 - `docs/estado_atual.md`, `docs/resultado_financeiro.md` — estado consolidado (datados)
+- `docs/README.md` — índice: o que é doc vivo, registro datado ou superado
 - `bot/config.py` — **fonte única de verdade** de watchlist, kill-switches e execução
 
 ## Arquitetura (cérebro / braço)
@@ -21,6 +22,7 @@ neste arquivo para o estado atual.** Leia sempre:
   roda sanity checks e envia para a Gate.io API v4. Log em `execution_log.jsonl` (**UTC**).
 - **Roteamento "1 token = 1 trilho":** cada ativo tem uma só estratégia que executa. Maré Alta D1
   (`bot/mare_alta.py`) para BTC/SOL/TRX/BNB; Breakout 1h (`bot/strategies.py`) para HYPE.
+  **Desde 13/10 o Breakout está desligado** (`BREAKOUT_ENABLED = False`): o HYPE é escaneado mas não opera.
   O filtro de `bot/main.py` casa por string exata da estratégia: o teste canário protege isso.
 - **OCO emulado:** a Gate.io spot não tem OCO nativo. TP e SL são ordens independentes e o
   `bot/oco_guard.py` reconcilia os pares. Só cobre ordens **criadas pelo bot**.
@@ -74,6 +76,16 @@ Backtests em `scripts/` (sob demanda; ver também `.github/workflows/backtest.ym
   Em divergência doc × código, **confie no código**.
 - O cooldown de 4h vive em `state/last_signals.json`. 🟢 PRONTO no Telegram não significa que houve ordem.
 - Precisão por par: consulte `/spot/currency_pairs/{PAR}`; casas a mais retornam HTTP 400.
+- `state/paper_positions.json` tem 2 posições-papel obsoletas (XRP 23/08, PAXG 28/08) que nunca fecham
+  porque os ativos saíram do scan. **Ignore**: não são ordens reais (decisão do usuário, 13/10).
+
+## Documentação (`docs/`)
+- **Não renomeie nem mova** arquivos de `docs/`: código, workflows e o teste canário citam os caminhos.
+- `docs/README.md` classifica cada doc. **Vivos** (`estado_atual`, `mapa_estrategias`,
+  `resultado_financeiro`, `runbook_btc_manual`) se atualizam no MESMO commit da mudança que os afeta,
+  com a data de revisão no topo e no índice. **Registros datados** não se reescrevem: crie um novo.
+- Toda decisão nova: `docs/<tema>_AAAA-MM-DD.md` (contexto, evidência, decisão, rollback) + linha no índice.
+- `docs/data/latest.json` e `docs/backtest_report.md` são gerados por automação: não edite à mão.
 
 ## Servidor (jailshell do cPanel)
 `/tmp` é `noexec`: grave scripts em `~/` e rode com `bash ~/script.sh`. Use `tail -n 0` (não `tail -0`).

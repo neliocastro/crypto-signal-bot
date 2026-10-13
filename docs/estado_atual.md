@@ -1,10 +1,11 @@
 # Estado Atual do Bot — Consolidado (out/2026)
 
 > Documento de referencia do roteamento e da camada de execucao vigentes no
-> `main`. **Atualizado em 2026-10-08** (correcao do nome do override, resultado
-> ao vivo com 22 trades e reauditoria formal do degrau). Revisoes anteriores:
+> `main`. **Atualizado em 2026-10-13** (HYPE desligado, posicoes-papel obsoletas;
+> ver `docs/decisao_2026-10-13_hype_desligado_e_paper.md`). Revisoes anteriores:
+> 2026-10-11 (reconciliacao), 2026-10-08 (override, 22 trades, degrau),
 > 2026-09-16 (override de stop por simbolo) e 2026-09-04 (remocao do PAXG).
-> Mapa complementar de estrategias: **`docs/mapa_estrategias.md`**.
+> Mapa complementar de estrategias: **`docs/mapa_estrategias.md`**. Indice: `docs/README.md`.
 
 ## Roteamento por ativo (producao) — 1 token = 1 trilho
 
@@ -17,6 +18,10 @@
 | HYPE/USDT | Breakout / Tendencia (lb=30) | 1h | **3.0x ATR** (override 16/09) | fast-path dedicado, **DESLIGADO** desde 13/10 (`BREAKOUT_ENABLED = False`) |
 
 **WATCHLIST ativa (5 ativos):** `BTC/USDT`, `SOL/USDT`, `TRX/USDT`, `BNB/USDT`, `HYPE/USDT`.
+
+> **HYPE escaneado, mas sem operar (desde 13/10).** Continua na `WATCHLIST`, porem com
+> `BREAKOUT_ENABLED = False` o `evaluate_signal` devolve `None`. Hoje **so o Mare Alta D1
+> (BTC, SOL, TRX, BNB) pode gerar ordem real.**
 
 ### Historico de remocoes da Watchlist
 - **PAXG/USDT (removido em 2026-09-04):** saiu da watchlist e `ACCUMULATION_ENABLED = False`. Motivo: 2 stops seguidos (28/08 e 01/09) e incompatibilidade estrutural entre acumulacao BUY-only ("sem stop") e a trava global de protecao `REQUIRE_PROTECTION` / `EXECUTION_TPSL_ENABLED`. Ver `docs/paxg_removido_2026-09-04.md`.
@@ -64,7 +69,8 @@ EXECUTION_ATR_MULT_SL_BY_SYMBOL = {"HYPE/USDT": 3.0}  # stop da ORDEM REAL
 
 ## Estrategias Desativadas / Limpas do Codigo
 
-1. **Acumulo (PAXG - RSI sobrevenda 4h):** `ACCUMULATION_ENABLED = False`. Desligado em 2026-09-04.
+0. **Breakout HYPE:** `BREAKOUT_ENABLED = False` desde 2026-10-13 (decisao do usuario; PF ao vivo ~0.78). Codigo mantido. Religar: `True`.
+1. **Acumulo (PAXG - RSI sobrevenda 4h):** `ACCUMULATION_ENABLED = False`. Desligado em 2026-09-04 (lado Python). O cron do servidor `paxg_rsi_check.php` tem status **a confirmar** (ver `docs/README.md`, secao 3).
 2. **MACD-only agressivo:** removido do codigo em 2026-08-24. Nao existe mais.
 3. **Caminho legado (Integrada / Tendencia MACD / Confluencia):** removido em 2026-08-24. `strategies.py` agora contem apenas a logica de breakout do HYPE.
 
@@ -157,3 +163,13 @@ Recalculado de `state/positions.jsonl` (estimativa com fee 0.1% ida+volta). Deta
 Sem posicao aberta do bot apos 08/10 17:40 UTC (SOL, BNB e BTC fecharam no stop no mesmo minuto; queda correlacionada do mercado, SL nativos funcionaram).
 O lote legado de HYPE **foi encerrado em 13/08** (TP 57.91) e o registro foi fechado em 11/10 (`closed_manual`). Nao ha mais `open_unmanaged_protected`.
 Placar por fills reais da Gate (11/10): 6 trades desde 04/09 somam ~-$2.33 (o fill do BTC de 03/09 nao foi conferido; usado o preco do stop).
+
+---
+
+## Paper trading (simulacao) - posicoes obsoletas
+
+`state/paper_positions.json` mostra 2 posicoes-papel "abertas" (XRP 23/08 e PAXG 28/08).
+**Sao obsoletas e devem ser ignoradas** (confirmado pelo usuario em 13/10): os ativos sairam do
+scan, entao o `paper_evaluator` nunca recebe preco para fecha-las. Por isso o log mostra
+`paper_evaluator: 2 aberta(s)`. Nao afetam ordens reais nem o P&L do bot.
+Ver `docs/decisao_2026-10-13_hype_desligado_e_paper.md`.

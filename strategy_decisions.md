@@ -1,5 +1,8 @@
 # Strategy Decisions — Diario de Bordo do crypto-signal-bot
 
+> **Registro historico (16-17/06/2026).** Estrategias, tetos e travas citados aqui foram
+> alterados depois. Estado atual: `docs/estado_atual.md`. Indice: `docs/README.md`.
+
 Registro cronologico de decisoes de estrategia e correcoes tecnicas.
 Evita que decisoes conscientes sejam revertidas por engano no futuro.
 

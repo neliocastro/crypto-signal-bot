@@ -1,5 +1,9 @@
 # 🧪 Backtest MACD Crossover
 
+> **SUPERADO (marcado em 2026-10-13).** A estrategia MACD-only foi removida do codigo
+> em 24/08 (`docs/limpeza_estrategias_2026-08-24.md`). O script continua no repo so
+> como ferramenta de pesquisa. Indice: `docs/README.md`.
+
 Script: [`scripts/backtest_macd.py`](../scripts/backtest_macd.py)
 Workflow: [`.github/workflows/backtest.yml`](../.github/workflows/backtest.yml)
 

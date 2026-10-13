@@ -1,5 +1,8 @@
 # Mapa de Estratégias (roteamento por trilho — vigente desde 2026-07-10)
 
+> **SUPERADO (marcado em 2026-10-13).** Retrato de 10/07, com ETH, XRP e PAXG.
+> O mapa vigente e `docs/mapa_estrategias.md`. Indice: `docs/README.md`.
+
 | Trilho | Ativos | Timeframe | Executa ordem? | Telegram? |
 |---|---|---|---|---|
 | Maré Alta D1 | BTC, ETH, SOL, XRP, TRX, BNB | D1 | SIM (único p/ esses 6) | SIM |

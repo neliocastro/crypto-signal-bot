@@ -1,6 +1,7 @@
 # Mapa de Estrategias — 1 token = 1 trilho
 
-> Referencia rapida. **Reverificado no codigo do `main` em 2026-10-08** (HEAD `84388d2`:
+> Referencia rapida. **Revisado em 2026-10-13** (HYPE desligado). Reverificacao completa
+> no codigo do `main` em 2026-10-08 (HEAD `84388d2`:
 > `bot/config.py`, `bot/strategies.py`, `bot/mare_alta.py`, `bot/main.py`, `bot/executor.py`).
 > Substitui a versao de 2026-08-23, que ainda citava ETH, XRP, PAXG e o MACD-only.
 
@@ -8,7 +9,7 @@
 
 ```
 Mare Alta D1 -> BTC  SOL  TRX  BNB     (diario)
-Breakout     -> HYPE                   (1h)
+Breakout     -> HYPE                   (1h)  DESLIGADO desde 13/10 (BREAKOUT_ENABLED = False)
 ```
 
 **Cada ativo opera por UM unico trilho executor.** Watchlist (5): BTC, SOL, TRX, BNB, HYPE.
@@ -21,14 +22,14 @@ Breakout     -> HYPE                   (1h)
 | SOL/USDT | Mare Alta D1 | 1d | 2.5x ATR | `bot/mare_alta.py` |
 | TRX/USDT | Mare Alta D1 | 1d | 2.5x ATR | `bot/mare_alta.py` |
 | BNB/USDT | Mare Alta D1 | 1d | 2.5x ATR | `bot/mare_alta.py` |
-| HYPE/USDT | Breakout / Tendencia (lb=30) | 1h | **3.0x ATR** (override) | `bot/strategies.py` |
+| HYPE/USDT | Breakout / Tendencia (lb=30) - **desligado desde 13/10** | 1h | **3.0x ATR** (override) | `bot/strategies.py` |
 
 ## 3. Estrategias no codigo
 
 | Estrategia | Onde | Kill-switch | Estado |
 |---|---|---|---|
 | Mare Alta D1 | `mare_alta.py` | `MARE_ALTA_ENABLED` | producao (shadow OFF) |
-| Breakout / Tendencia | `strategies.py` | `BREAKOUT_ENABLED` | producao (shadow OFF) |
+| Breakout / Tendencia | `strategies.py` | `BREAKOUT_ENABLED = False` | **desligado** desde 13/10 (codigo mantido) |
 | Acumulo RSI (PAXG) | `strategies.py` | `ACCUMULATION_ENABLED = False` | **desligado** desde 04/09 (codigo mantido) |
 | MACD-only / Integrada / Tendencia MACD / Confluencia | — | — | **removidas do codigo** em 24/08 |
 | SHORT | — | — | descartado permanentemente |
@@ -37,7 +38,7 @@ Breakout     -> HYPE                   (1h)
 
 ```
 evaluate_signal(symbol, df, ...)
-  fast-path BREAKOUT  -> symbol em BREAKOUT_SYMBOLS (HYPE)              -> return
+  fast-path BREAKOUT  -> so se BREAKOUT_ENABLED (hoje False) e HYPE    -> return
   fast-path ACUMULO   -> so se ACCUMULATION_ENABLED (hoje False)        -> return
   sem fast-path       -> return None (nao ha mais caminho legado)
 ```
@@ -92,7 +93,8 @@ proprio (`MARE_ALTA_UNIVERSE`) e `fetch_ohlcv` D1 proprio.
 | 23-24/08 | ETH e XRP removidos (PF 0.43 / 0.55 no backtest fiel); MACD-only e legado removidos |
 | 04/09 | PAXG removido; `ACCUMULATION_ENABLED=False` |
 | 16/09 | override de stop do HYPE (3.0x ATR) |
+| 13/10 | Breakout HYPE desligado (`BREAKOUT_ENABLED = False`); HYPE segue na watchlist sem operar |
 
 ---
 
-_Reverificado no codigo em 2026-10-08. Ao alterar roteamento, atualizar este arquivo no mesmo commit._
+_Revisado em 2026-10-13. Ao alterar roteamento, atualizar este arquivo no mesmo commit (ver `docs/README.md`)._
