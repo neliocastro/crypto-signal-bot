@@ -47,7 +47,7 @@ Breakout 1h   -> HYPE                 DESLIGADO desde 2026-10-13 (D-013)
 ## Desligadas ou removidas
 | Estratégia | Estado |
 |---|---|
-| Acúmulo RSI 4h (PAXG) | `ACCUMULATION_ENABLED = False` desde 2026-09-04 (código mantido). **O cron do servidor segue ativo** (pendência em `memoria.md`) |
+| Acúmulo RSI 4h (PAXG) | `ACCUMULATION_ENABLED = False` desde 2026-09-04 (código mantido). **O cron do servidor segue ativo por decisão do usuário (D-032)**; compra fora do bot |
 | MACD-only, Integrada, Tendência MACD, Confluência | removidas do código em 2026-08-24 |
 | SHORT | descartado em definitivo (D-002) |
 

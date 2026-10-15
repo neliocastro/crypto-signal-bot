@@ -69,6 +69,13 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 ### Processo e documentação
 - **D-030 (2026-10-15)** Estrutura de documentação: `CLAUDE.md` (regras) + `memoria.md` (este arquivo) +
   `docs/{arquitetura, estrategias, operacao, resultado_financeiro}.md` + `docs/historico/` (evidência, sem edição).
+- **D-032 (2026-10-15)** **O cron de acumulação do PAXG no servidor permanece ATIVO**, por decisão explícita do
+  usuário: deve continuar comprando PAXG quando o RSI 4h ficar abaixo de 30 (`server/paxg_rsi_check.php`, crontab do
+  `ineocom`, de hora em hora). É uma exceção ao D-012: essa compra fica fora do bot (sem `positions.jsonl`, sem OCO
+  guard, sem trava de concentração, sem alerta próprio no Telegram) e o usuário aceita esse risco. Parâmetros
+  conforme a documentação do cron (confirmar no servidor, pois `gerar_teste_paxg.php` não está no repositório):
+  RSI 14 em 4h, limiar < 30, cooldown 12 h, US$ 10 por compra, SL −15%, sem TP.
+  Para pausar: `touch .paxg_pause` no servidor (`docs/operacao.md`, seção 4).
 - **D-031** Toda feature nova tem kill-switch booleano e rollback de 1 linha; mudanças aditivas; imports opcionais
   com degradação segura.
 
@@ -122,8 +129,9 @@ Formato: problema → causa → regra que ficou.
 ---
 
 ## Pendências
-- **Cron PAXG no servidor ativo** (conferido em 10/15): compra US$ 10 de PAXG com RSI 4h < 30, fora do bot
-  (sem `positions.jsonl`, OCO ou travas). Contradiz D-012. Decisão do usuário: pausar (`.paxg_pause`) ou manter.
+- **Cron PAXG no servidor: decidido manter (D-032).** Pendente só confirmar no servidor, por `gerar_teste_paxg.php`,
+  os valores de US$ 10 e SL −15%, e avaliar se vale passar a registrar essas compras em `positions.jsonl` para entrar
+  no placar e na trava de concentração (não decidido).
 - **Gatilhos expiram em 30 dias**: trade longo do Maré Alta perde o TP1 (o trailing recria só o SL ao subir).
 - **Placar**: `closed_sl` não grava `exit_price`; com TP1 parcial, somar a perna do TP1 (`tp1_price × tp1_qty`).
 - **Próxima reauditoria do degrau**: marcar `cadencia_degradada` nos trades abertos entre 2026-09-14 21:13 e
