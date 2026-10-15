@@ -135,7 +135,8 @@ Formato: problema → causa → regra que ficou.
 ## Pendências
 - **Cron PAXG no servidor: decidido manter (D-032).** Confirmado no servidor em 2026-10-15 (`gerar_teste_paxg.php`,
   sha256 `df762466…`): US$ 10, SL −15%, sem TP, `signal_id` único por compra. As compras falhavam (P-16); o fix
-  precisa de **deploy manual** do `paxg_rsi_check.php` conferido por hash. Ainda em aberto: registrar essas compras em
+  foi deployado em 2026-10-15 (commit `8dc5668a`, sha256 `0e3624f6…`, backup `paxg_rsi_check.php.bak-20261015`),
+  mas ainda falta ver o primeiro `COMPRA OK` no log e o SL na Gate. Ainda em aberto: registrar essas compras em
   `positions.jsonl` (não decidido) e alertar no Telegram quando o cron falhar. A whitelist do PHP **precisa** manter
   PAXG enquanto o D-032 valer.
 - **Gatilhos expiram em 30 dias**: trade longo do Maré Alta perde o TP1 (o trailing recria só o SL ao subir).
