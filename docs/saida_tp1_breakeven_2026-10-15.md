@@ -56,11 +56,17 @@ breakeven (SL antigo mantido, 1 aviso); TP1 e SL no mesmo intervalo; posicao ant
 ## Deploy (ordem obrigatoria)
 
 1. Conferir o workflow **checks** verde no GitHub (lint do PHP + testes).
-2. Backup no servidor e subir `server/execute.php` para `/home/ineocom/public_html/cryptosignals/`:
-   `cp execute.php execute.php.bak-20261015` antes de substituir.
-3. Conferir no servidor (fix commitado != fix deployado):
-   `wc -c -l execute.php` -> **20996 bytes / 262 linhas** e
-   `sha256sum execute.php` -> `6e3da8cb72252d362a99d0abd4129bd2943aa3b9668e04212eaf482385499c23`.
+2. Pasta do relay: **`/home/ineocom/public_html/cryptosignals/`** (caminho absoluto; logado como
+   `root`, `~` e `/root`). Backup: `cp -p execute.php execute.php.bak-20261015`.
+   Versao em producao antes do deploy (conferida 15/10): 18344 bytes / 232 linhas, sha256
+   `2926114e...` = commit `4b78f981d` + os 2 hotfixes manuais de 20/08 (`sspot`->`spot`, teto 10.0).
+   Fora comentarios, identica ao `99aecc3ab`: o upload nao perde nada que so existia no servidor.
+   Baixar a versao fixada no commit, conferir o hash e so entao substituir:
+   `curl -fsSL https://raw.githubusercontent.com/neliocastro/crypto-signal-bot/b1b0f8fb82a2eca3732aa2086c3c49c2cec33df1/server/execute.php -o execute.php.new`
+3. Conferir (fix commitado != fix deployado): `execute.php.new` com **20996 bytes / 262 linhas** e
+   sha256 `6e3da8cb72252d362a99d0abd4129bd2943aa3b9668e04212eaf482385499c23`. Depois
+   `mv execute.php.new execute.php && chown ineocom:ineocom execute.php && chmod 644 execute.php`
+   (arquivo de root pode dar HTTP 500 no PHP da conta) e `curl` no endpoint: esperado HTTP 401.
 4. So entao: `MARE_ALTA_PARTIAL_TP_ENABLED = True` em `bot/config.py` (commit proprio).
 
 Ordem inversa (flag antes do PHP): o PHP antigo ignora `tp_frac` e cria o TP de +10% na base

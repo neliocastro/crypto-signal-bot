@@ -111,7 +111,7 @@ Os dois descrevem estrategias que **nao existem mais** (MACD-only, PAXG). O form
 
 | Documento | Duvida |
 |---|---|
-| [`paxg_acumulacao_automatica.md`](paxg_acumulacao_automatica.md) | Descreve um **cron no servidor** (`server/paxg_rsi_check.php`) que compra $10 de PAXG com RSI 4h < 30, **independente do Python**. A remocao de 04/09 (`paxg_removido_2026-09-04.md`) desligou so o lado Python (`ACCUMULATION_ENABLED = False`) e nao cita o cron. `server/execute.php` ainda aceita `PAXG/USDT`. Conferir no servidor: `crontab -l \| grep paxg`, existencia de `.paxg_pause` e `tail paxg_cron.log`. Depois, registrar o resultado e mover este doc para "Superados" ou "Vivos". |
+| [`paxg_acumulacao_automatica.md`](paxg_acumulacao_automatica.md) | **Conferido em 15/10: o cron ESTA ATIVO** (`0 * * * *` no crontab do `ineocom`, sem `.paxg_pause`). Log: RSI 4h entre 44 e 51, `dispara=NAO`, "ult.compra ha 9999h" (nunca comprou desde que o arquivo de ultima compra existe). Se o RSI 4h cair abaixo de 30 ele compra $10 de PAXG com SL -15%, **fora do bot** (sem `positions.jsonl`, sem OCO, sem trava). Decisao do usuario pendente: pausar (`touch .paxg_pause`) ou manter. Texto original: descreve um **cron no servidor** (`server/paxg_rsi_check.php`) que compra $10 de PAXG com RSI 4h < 30, **independente do Python**. A remocao de 04/09 (`paxg_removido_2026-09-04.md`) desligou so o lado Python (`ACCUMULATION_ENABLED = False`) e nao cita o cron. `server/execute.php` ainda aceita `PAXG/USDT`. Conferir no servidor: `crontab -l \| grep paxg`, existencia de `.paxg_pause` e `tail paxg_cron.log`. Depois, registrar o resultado e mover este doc para "Superados" ou "Vivos". |
 
 ---
 
