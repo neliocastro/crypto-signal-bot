@@ -1,6 +1,6 @@
 # Decisao 2026-10-13 - HYPE desligado e posicoes-papel obsoletas
 
-> Registro de decisao do usuario. Continua `docs/reconciliacao_2026-10-11.md`.
+> Registro de decisao do usuario. Continua `docs/historico/reconciliacao_2026-10-11.md`.
 > Commits: `4c0a58b5` (reconciliacao + kill switch) e `de5e4f5a` (CLAUDE.md).
 
 ## 1. Breakout HYPE desligado

@@ -60,7 +60,7 @@ def _static_watchlist(cfg: dict[str, Any]) -> dict[str, Any]:
     EFEITO COLATERAL: comandos de watchlist do Telegram Commander (/add, /rm)
     passam a ser inertes - a alteracao e ignorada na proxima leitura. Para
     mudar o universo: editar WATCHLIST em bot/config.py e dar push.
-    Ver docs/watchlist_runtime_2026-08-24.md
+    Ver docs/historico/watchlist_runtime_2026-08-24.md
     """
     try:
         from .config import WATCHLIST as _cfg_wl

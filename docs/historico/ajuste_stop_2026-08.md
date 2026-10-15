@@ -2,7 +2,7 @@
 
 > Rodado em 2026-08-23 sobre **4.321 candles 1h reais** da Gate.io
 > (24/02/2026 → 23/08/2026), pares HYPE_USDT, custo 0,1% ida + 0,1% volta.
-> Motivacao: `docs/revisao_ativos_2026-08.md` mostrou PF REAL 0,60 contra 2,55
+> Motivacao: `docs/historico/revisao_ativos_2026-08.md` mostrou PF REAL 0,60 contra 2,55
 > do backtest original. Hipotese testada: **o stop de 2,0xATR esta dentro do
 > ruido intraday do HYPE**.
 

@@ -261,7 +261,7 @@ def check_guards(order: dict) -> tuple[bool, str]:
     # 5/6) TRAVA DE CONCENTRACAO (por ativo). EVIDENCIA: 13 dos 17 registros de
     # state/positions.jsonl sao HYPE (76%) e os 9 stops sao TODOS dele. O teto
     # global EXECUTION_MAX_OPEN=10 nunca segurou nada porque o bot repetia o
-    # MESMO ativo. Ver docs/trava_concentracao_2026-08-23.md.
+    # MESMO ativo. Ver docs/historico/trava_concentracao_2026-08-23.md.
     if EXECUTION_CONCENTRATION_GUARD:
         sym = str(order.get("symbol", ""))
         abertas = _open_count_for_symbol(sym)
@@ -302,7 +302,7 @@ def _atr_mult_for(symbol) -> float:
     TODOS do HYPE.
 
     Degradacao segura: qualquer ausencia/erro cai no global (comportamento antigo).
-    Ver docs/override_stop_por_simbolo.md.
+    Ver docs/historico/override_stop_por_simbolo.md.
     """
     try:
         v = EXECUTION_ATR_MULT_SL_BY_SYMBOL.get(str(symbol))

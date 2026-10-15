@@ -1,27 +1,23 @@
 # Crypto Signal Bot 🤖
 
-Bot de sinais e **execução real** de cripto spot na Gate.io (só compra/LONG), rodando no GitHub Actions.
-O Python decide e assina com HMAC; o relay PHP (`server/execute.php`, servidor com IP fixo) envia as ordens.
+Bot de sinais e **execução real** de cripto spot na Gate.io (só compra). O Python roda no GitHub Actions, decide e
+assina as ordens; um relay PHP num servidor com IP fixo as envia à exchange.
 
-> ⚠️ Opera com **dinheiro real**. Leia [`CLAUDE.md`](CLAUDE.md) antes de mudar qualquer coisa.
-
-## Estratégias (resumo em 13/10/2026)
-- **Maré Alta D1** — BTC, SOL, TRX, BNB (único trilho que hoje pode gerar ordem).
-- **Breakout 1h** — HYPE, **desligado** desde 13/10 (`BREAKOUT_ENABLED = False`).
-
-O detalhe vigente fica em [`docs/estado_atual.md`](docs/estado_atual.md) e
-[`docs/mapa_estrategias.md`](docs/mapa_estrategias.md). Este resumo pode envelhecer; aqueles são
-revisados a cada mudança.
+> ⚠️ Opera com **dinheiro real**. Antes de mudar qualquer coisa, leia [`CLAUDE.md`](CLAUDE.md) e [`memoria.md`](memoria.md).
 
 ## Documentação
-Índice completo em [`docs/README.md`](docs/README.md) (documentos vivos, registros datados e superados).
-
-## Mudar a watchlist
-`bot/config.py` é a fonte única de verdade (`WATCHLIST`). O universo do Maré Alta é
-`MARE_ALTA_UNIVERSE` em `bot/mare_alta.py`. Atualize `docs/estado_atual.md` no mesmo commit.
+| Documento | Conteúdo |
+|---|---|
+| [`memoria.md`](memoria.md) | decisões aprovadas e rejeitadas, lições, pendências |
+| [`docs/arquitetura.md`](docs/arquitetura.md) | stack, módulos, relay, cadência, estado, servidor |
+| [`docs/estrategias.md`](docs/estrategias.md) | o que cada ativo opera e com quais parâmetros |
+| [`docs/operacao.md`](docs/operacao.md) | auditoria, deploy, diagnóstico, posições manuais |
+| [`docs/resultado_financeiro.md`](docs/resultado_financeiro.md) | placar real |
+| [`docs/historico/`](docs/historico/) | evidência original (incidentes, auditorias, backtests) |
 
 ## Verificar antes de commitar
 ```bash
 python -m py_compile bot/*.py
 python tests/test_roteamento_strings.py
+python tests/test_saida_tp1.py
 ```

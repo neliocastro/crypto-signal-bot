@@ -84,7 +84,7 @@ ao bot a capacidade de **cancelar ordens que ele nao criou**. Risco de dano muit
 maior que o beneficio.
 
 **Decisao:** nao automatizar. Reconciliacao manual, documentada em
-`docs/runbook_btc_manual.md`. Gap registrado no comentario do `config.py`.
+`docs/historico/runbook_btc_manual_2026-08-22.md`. Gap registrado no comentario do `config.py`.
 
 ---
 
@@ -95,6 +95,6 @@ maior que o beneficio.
 | `bot/executor.py` | override de stop por simbolo + `atr_mult_sl` na ordem |
 | `bot/config.py` | `EXECUTION_ATR_MULT_SL_OVERRIDES` + reauditoria do degrau + gap do OCO |
 | `docs/estado_atual.md` | tabela de execucao atualizada |
-| `docs/prioridade1_2026-09-16.md` | este documento |
+| `docs/historico/prioridade1_2026-09-16.md` | este documento |
 
 Nenhum kill-switch foi ligado ou desligado. Nenhuma trava de capital foi afrouxada.

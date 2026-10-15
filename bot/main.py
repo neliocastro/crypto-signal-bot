@@ -230,7 +230,7 @@ def main() -> int:
     #   3) Acumulacao    -> PAXG (intraday)
     # O scan 1h deixa de gerar sinal de Telegram E de execucao p/ outros pares
     # (fim da duplicidade que comprou ETH pelo trilho errado em 05/07).
-    # AAVE e LINK sairam da lista (reprovados; ver docs/backtests/2026-07-mare-alta-d1.md).
+    # AAVE e LINK sairam da lista (reprovados; ver docs/historico/backtest_2026-07-mare-alta-d1.md).
     INTRADAY_EXEC_ALLOWLIST = {
         ("HYPE/USDT", "Breakout / Tendência"),
         ("PAXG/USDT", "Acúmulo (RSI sobrevenda)"),

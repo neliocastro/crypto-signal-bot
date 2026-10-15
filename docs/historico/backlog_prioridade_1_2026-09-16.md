@@ -30,7 +30,7 @@
 > override por simbolo no executor.build_order() - **commit isolado, ainda nao
 > feito**."
 
-Backtest de referencia (ver `docs/decisao_stop_e_universo_2026-08-23.md`):
+Backtest de referencia (ver `docs/historico/decisao_stop_e_universo_2026-08-23.md`):
 
 | Trilho | 2.0x | 2.5x | 3.0x |
 |---|---|---|---|
@@ -104,7 +104,7 @@ classico de aumentar aposta com base em dado que nao vale mais.
 **Status:** pendente (baixo impacto, higiene).
 
 O PAXG foi removido em 2026-09-04 (`ACCUMULATION_ENABLED = False` + fora da
-`WATCHLIST`, ver `docs/paxg_removido_2026-09-04.md`), mas os arquivos de estado
+`WATCHLIST`, ver `docs/historico/paxg_removido_2026-09-04.md`), mas os arquivos de estado
 podem ainda carregar entradas antigas dele:
 
 - `state/last_signals.json` — chaves de cooldown de simbolo fora do universo.
@@ -131,7 +131,7 @@ da `WATCHLIST` vigente.
 
 **Status:** pendente. **Maior risco dos quatro.**
 
-**Limite documentado (`bot/config.py` e `docs/gateio_limitacoes.md` secao 7):**
+**Limite documentado (`bot/config.py` e `docs/historico/gateio_limitacoes.md` secao 7):**
 o `oco_guard` so reconcilia pares TP<->SL registrados em
 `state/positions.jsonl` — isto e, **ordens criadas pelo bot**. Ordens **manuais**
 criadas na corretora **nao sao cobertas**.

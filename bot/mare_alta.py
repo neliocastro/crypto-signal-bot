@@ -37,7 +37,7 @@ MARE_ALTA_SHADOW_MODE = False   # PRODUCAO: sinais vao ao executor (ordens reais
 #        BTC PF 1.28 | SOL PF 4.51 | TRX PF 2.21 | BNB PF 2.15
 #   O trailing AMPLIFICA quem tem tendencia real (SOL 1.81 -> 4.51) e nao
 #   salva quem serpenteia (ETH 0.56 -> 0.43). Detalhes e ressalvas de amostra
-#   (XRP tem apenas 6 trades no periodo) em docs/revisao_ativos_2026-08.md.
+#   (XRP tem apenas 6 trades no periodo) em docs/historico/revisao_ativos_2026-08.md.
 #   ROLLBACK: basta reinserir "ETH/USDT" e "XRP/USDT" na lista abaixo.
 MARE_ALTA_UNIVERSE    = ["BTC/USDT", "SOL/USDT", "TRX/USDT", "BNB/USDT"]
 

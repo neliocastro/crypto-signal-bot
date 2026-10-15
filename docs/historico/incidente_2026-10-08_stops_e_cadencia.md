@@ -32,7 +32,7 @@ O passo de re-disparo agora captura o HTTP (`-w "%{http_code}"`) e:
 O scan e o commit de estado ja rodaram antes desse passo, entao a falha nao
 perde dados — so torna o problema visivel.
 
-## Impacto na reauditoria do degrau (`docs/reauditoria_degrau_2026-10-08.md`)
+## Impacto na reauditoria do degrau (`docs/historico/reauditoria_degrau_2026-10-08.md`)
 
 Os **6 trades da janela "desde 04/09"** (0 wins, -$2.41) foram, em sua maioria,
 abertos/fechados **com o bot em cadencia degradada** (entradas e saidas

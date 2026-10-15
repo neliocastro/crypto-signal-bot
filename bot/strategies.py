@@ -18,7 +18,7 @@ REMOVIDO em 2026-08-24 (commit de limpeza) - eram codigo morto:
   - _check_integrada_long / _check_tendencia_macd_long e a fusao
     "Integrada + MACD (Confluencia)": inalcancaveis desde que o perfil
     agressivo passou a interceptar todos os ativos com `return`.
-Historico completo em docs/limpeza_estrategias_2026-08-24.md.
+Historico completo em docs/historico/limpeza_estrategias_2026-08-24.md.
 Rollback: `git revert` do commit de limpeza.
 
 Aceita chamadas em qualquer ordem/forma para evitar

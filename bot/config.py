@@ -25,7 +25,7 @@ EXCHANGE_ID = "gateio"
 #
 # EFEITO COLATERAL: /add e /rm da watchlist no Telegram Commander ficaram
 # INERTES. Mudar o universo = editar esta lista e dar push.
-# Ver docs/watchlist_runtime_2026-08-24.md
+# Ver docs/historico/watchlist_runtime_2026-08-24.md
 #
 # ETH e XRP REMOVIDOS (2026-08-24): fora do universo do Mare Alta D1 desde
 # 2026-08-23 (PF 0.43 e 0.55 no backtest fiel) e sem fast-path proprio ->
@@ -118,7 +118,7 @@ INDICATOR_CONFIG = INDICATORS
 #   Acumulo (RSI sobrevenda)        -> PAXG (ACCUMULATION_SYMBOLS)
 #   Demais ativos no scan 1h        -> apenas diagnostico no Telegram
 #
-# Ver docs/limpeza_estrategias_2026-08-24.md. Rollback: git revert do commit.
+# Ver docs/historico/limpeza_estrategias_2026-08-24.md. Rollback: git revert do commit.
 
 # ============ BREAKOUT / TREND-FOLLOWING (HYPE) ============
 # Estrategia de tendencia validada por teste de robustez (2026-05-28):
@@ -135,7 +135,7 @@ INDICATOR_CONFIG = INDICATORS
 # DESEMPENHO REAL (2026-08-23, state/positions.jsonl): 12 trades, WR 25%,
 #   PF 0.60 - MUITO abaixo do backtest (2.55). Diagnostico: o stop de 2.0xATR
 #   aplicado pelo executor estava dentro do ruido intraday. Ver mudanca em
-#   EXECUTION_ATR_MULT_SL abaixo e docs/ajuste_stop_2026-08.md.
+#   EXECUTION_ATR_MULT_SL abaixo e docs/historico/ajuste_stop_2026-08.md.
 BREAKOUT_ENABLED = False  # desligado em 13/10/2026 (decisao do usuario apos reconciliacao 11/10)
 BREAKOUT_SHADOW_MODE = False
 BREAKOUT_SYMBOLS = {
@@ -224,7 +224,7 @@ EXECUTION_MIN_NOTIONAL_USDT = 3.0    # piso: Gate.io rejeita ordem < $3 (too sma
 #       No HYPE 1h (180d): PF 1.18 (2.0x) -> 1.31 (2.5x) -> 1.50 (3.0x).
 #   Escolha: 2.5x melhora os DOIS trilhos. O otimo do HYPE (3.0x) exigiria um
 #   override por simbolo no executor.build_order() - commit isolado, ainda nao
-#   feito. Ver docs/decisao_stop_e_universo_2026-08-23.md.
+#   feito. Ver docs/historico/decisao_stop_e_universo_2026-08-23.md.
 #   ROLLBACK: volte para 2.0.
 EXECUTION_ATR_MULT_SL = 2.5    # Stop-Loss = entrada - (mult * ATR)
 #
@@ -234,7 +234,7 @@ EXECUTION_ATR_MULT_SL = 2.5    # Stop-Loss = entrada - (mult * ATR)
 # Vazio = todos usam EXECUTION_ATR_MULT_SL. ROLLBACK: {} (uma linha).
 # Evidencia HYPE 1h 180d: PF 1.18 (2.0x) -> 1.31 (2.5x) -> 1.50 (3.0x).
 # NAO mexe nos 4 ativos do Mare Alta D1, que seguem em 2.5x.
-# Ver docs/override_stop_por_simbolo.md.
+# Ver docs/historico/override_stop_por_simbolo.md.
 EXECUTION_ATR_MULT_SL_BY_SYMBOL = {
     "HYPE/USDT": 3.0,
 }
@@ -270,14 +270,14 @@ MARE_ALTA_SYMBOLS          = []     # vazio = qualquer posicao aberta registrada
 # 2026-10-15: trailing so com velas D1 FECHADAS (aprovado pelo usuario). Antes a
 # vela do dia em formacao entrava no calculo e o stop subia com picos intradia
 # (stops de 08/10 bateram com a MAXIMA do dia; BTC teria sobrevivido por $7).
-# Ver docs/trailing_vela_fechada_2026-10-15.md. Rollback: False.
+# Ver docs/historico/trailing_vela_fechada_2026-10-15.md. Rollback: False.
 MARE_ALTA_TRAILING_CLOSED_ONLY = True
 # 2026-10-15: SAIDA VALIDADA do Mare Alta (aprovada pelo usuario): TP1 +10% vende
 # 50% -> SL vai ao breakeven (preco de entrada) c/ o restante -> trailing 3x ATR
 # so DEPOIS do TP1 (antes, o stop inicial 2.5x ATR fica fixo). Sem TP no restante.
 # EXIGE o execute.php com FIX 10 no servidor (campos tp_frac / tp_partial).
 # Ligar SO depois do deploy do PHP. Desligado = TP unico 2.0R na base inteira.
-# Ver docs/saida_tp1_breakeven_2026-10-15.md. Rollback: False.
+# Ver docs/historico/saida_tp1_breakeven_2026-10-15.md. Rollback: False.
 MARE_ALTA_PARTIAL_TP_ENABLED = True   # ligado 15/10 apos deploy do PHP FIX 10 (sha256 6e3da8cb conferido no servidor)
 
 # ============ OCO GUARD - emulacao de OCO (bot/oco_guard.py) ============
@@ -287,7 +287,7 @@ MARE_ALTA_PARTIAL_TP_ENABLED = True   # ligado 15/10 apos deploy do PHP FIX 10 (
 # "oco_sync" do relay: consulta o status REAL na API e, se uma perna disparou
 # (finish) e a oposta segue open, cancela a sobrevivente e fecha a posicao
 # local (closed_tp/closed_sl). EM PRODUCAO desde 2026-08-11, validado por
-# smoke test (ver docs/gateio_limitacoes.md, secao 7).
+# smoke test (ver docs/historico/gateio_limitacoes.md, secao 7).
 # LIMITE: so reconcilia pares registrados em state/positions.jsonl (ordens do
 # bot). Ordens MANUAIS criadas na corretora NAO sao cobertas.
 # Degradacao segura: falha nunca derruba o scan; nunca cria ordem.

@@ -26,7 +26,7 @@ COMO RODAR
     python tests/test_roteamento_strings.py     # tambem roda standalone
 
 Se este teste falhar, NAO "conserte" o teste: alinhe as strings nos dois
-arquivos no MESMO commit e atualize docs/mapa_estrategias.md.
+arquivos no MESMO commit e atualize docs/estrategias.md.
 """
 import os
 import re
@@ -36,7 +36,7 @@ _MAIN = os.path.join(_ROOT, "bot", "main.py")
 _STRATEGIES = os.path.join(_ROOT, "bot", "strategies.py")
 
 # Contrato explicito: o que o roteamento PRECISA encontrar em strategies.py.
-# Fonte da verdade documentada em docs/mapa_estrategias.md (secao 5).
+# Fonte da verdade documentada em docs/estrategias.md (secao Roteamento).
 CONTRATO = {
     "HYPE/USDT": "Breakout / Tend\u00eancia",
     "PAXG/USDT": "Ac\u00famulo (RSI sobrevenda)",
@@ -60,7 +60,7 @@ def test_allowlist_do_main_bate_com_o_contrato():
         f"  no main.py: {sorted(achadas)}\n"
         f"  esperado  : {sorted(esperadas)}\n"
         "Se a mudanca foi intencional, atualize CONTRATO aqui, strategies.py "
-        "e docs/mapa_estrategias.md no MESMO commit."
+        "e docs/estrategias.md no MESMO commit."
     )
 
 

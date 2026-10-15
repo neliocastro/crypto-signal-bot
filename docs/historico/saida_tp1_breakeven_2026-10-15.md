@@ -1,7 +1,7 @@
 # Saida validada do Mare Alta (TP1 50% + breakeven) - 2026-10-15
 
 > Implementacao **aprovada pelo usuario em 15/10/2026** (item 1 de
-> `docs/trailing_vela_fechada_2026-10-15.md`). Entra **DESLIGADA**:
+> `docs/historico/trailing_vela_fechada_2026-10-15.md`). Entra **DESLIGADA**:
 > `MARE_ALTA_PARTIAL_TP_ENABLED = False` ate o `execute.php` (FIX 10) estar no servidor.
 >
 > **LIGADO em 2026-10-15.** Deploy do FIX 10 conferido pelo usuario no servidor: 262 linhas /
@@ -10,7 +10,7 @@
 
 ## Contexto
 
-O backtest fiel que aprovou BTC/SOL/TRX/BNB (`docs/decisao_stop_e_universo_2026-08-23.md`)
+O backtest fiel que aprovou BTC/SOL/TRX/BNB (`docs/historico/decisao_stop_e_universo_2026-08-23.md`)
 usa: stop 2.5x ATR -> **TP1 +10% vendendo 50%** -> **stop no breakeven** -> trailing 3x ATR
 no restante. A execucao real fazia outra coisa: TP unico em 2.0x o risco (~+23%) para 100%
 da base + trailing desde o primeiro dia. O script do backtest fiel nao esta no repositorio;

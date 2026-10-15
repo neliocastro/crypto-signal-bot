@@ -2,7 +2,7 @@
 
 ## Contexto
 
-Regra combinada em 12/08 (`config.py`, `docs/degrau_notional_auditoria.md`):
+Regra combinada em 12/08 (`config.py`, `docs/historico/degrau_notional_auditoria.md`):
 subir `EXECUTION_MAX_NOTIONAL_USDT` de $10 para $20 **so no 20o trade**, com
 **P&L > 0** e **PF >= 1 sem o ETH**. As auditorias de 23/08 e 16/09 reprovaram
 por falta de amostra. O 20o trade fechou e hoje ha **22 trades fechados**, entao

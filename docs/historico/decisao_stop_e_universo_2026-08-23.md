@@ -91,6 +91,6 @@ o proximo passo e voltar o HYPE para shadow.
 
 ---
 
-_Fontes: `docs/revisao_ativos_2026-08.md` (desempenho real),
-`docs/ajuste_stop_2026-08.md` (backtest HYPE 180d), backtests D1 de 3,8 anos
+_Fontes: `docs/historico/revisao_ativos_2026-08.md` (desempenho real),
+`docs/historico/ajuste_stop_2026-08.md` (backtest HYPE 180d), backtests D1 de 3,8 anos
 com dados publicos da Gate.io._

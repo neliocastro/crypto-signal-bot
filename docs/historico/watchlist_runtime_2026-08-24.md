@@ -103,7 +103,7 @@ reverteu".
 **Regra:** ao validar uma escrita em `state/`, conferir o `_updated_at_utc`
 ANTES de concluir. Timestamp anterior ao seu commit = leitura velha, nao
 sobrescrita. Ausencia de evidencia nao e evidencia de ausencia - a mesma
-licao ja registrada em `docs/gateio_limitacoes.md`.
+licao ja registrada em `docs/historico/gateio_limitacoes.md`.
 
 ## ETH e XRP fora do scan
 

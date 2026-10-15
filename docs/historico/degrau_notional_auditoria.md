@@ -4,7 +4,7 @@
 > **$10 -> $20** por ordem, que antes vivia apenas num comentario inline em
 > `bot/config.py`. **Nenhum parametro foi alterado neste commit.**
 >
-> Item 2 do `docs/backlog_prioridade_1_2026-09-16.md`.
+> Item 2 do `docs/historico/backlog_prioridade_1_2026-09-16.md`.
 
 ## Valor vigente
 
@@ -55,7 +55,7 @@ O numero nao e aleatorio - tem causa identificada e ja corrigida:
 - A serie e dominada pelo HYPE: **13 dos 17 registros** de
   `state/positions.jsonl` (76%) e **todos os 9 stops** eram dele.
 - Esses trades rodaram com **stop de 2.0xATR**, que estava **dentro do ruido
-  intraday** (ver `docs/ajuste_stop_2026-08.md`).
+  intraday** (ver `docs/historico/ajuste_stop_2026-08.md`).
 - Em 2026-08-23 o stop subiu para **2.5xATR** e entrou a **trava de
   concentracao** (max 1 posicao aberta e 2 ordens/dia por ativo).
 

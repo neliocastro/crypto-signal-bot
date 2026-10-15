@@ -1,7 +1,7 @@
 # 🥇 Acumulação Automática do PAXG (Ouro Digital)
 
 > **STATUS A CONFIRMAR (2026-10-13).** O PAXG saiu da watchlist em 04/09
-> (`docs/paxg_removido_2026-09-04.md`), mas aquilo desligou so o lado Python.
+> (`docs/historico/paxg_removido_2026-09-04.md`), mas aquilo desligou so o lado Python.
 > O cron do servidor descrito abaixo nao foi citado na remocao e o repositorio
 > nao mostra se ele ainda roda. Conferir no servidor antes de confiar neste doc.
 > Ver `docs/README.md`, secao 3.

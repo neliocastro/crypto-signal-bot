@@ -123,7 +123,7 @@ Ganho medio por TP: +$0.60 | Perda media por SL: -$0.10 (assimetria ~6:1 no trad
 5. **08/10 17:40 UTC:** SOL, BNB e BTC fecharam no stop **no mesmo minuto**. Causa (queda real ou reconciliacao do guard) **a confirmar** no `execution_log.jsonl` do relay antes de tirar conclusao.
 6. As posicoes manuais (BTC, PAXG, XRP, HYPE legado) **nao foram reprecificadas** nesta atualizacao. As secoes 2-4 continuam sendo o snapshot de 12/08.
 
-*Atualizado em 08/10/2026. Decisao de capital derivada: `docs/reauditoria_degrau_2026-10-08.md`.*
+*Atualizado em 08/10/2026. Decisao de capital derivada: `docs/historico/reauditoria_degrau_2026-10-08.md`.*
 
 ## 6. RECONCILIACAO 11/10/2026 - fills reais da Gate.io
 
@@ -145,5 +145,5 @@ Ganho medio por TP: +$0.60 | Perda media por SL: -$0.10 (assimetria ~6:1 no trad
 - Abertos no portfolio (11/10): BTC 0.0031756 (~$266, ~+$70 nao realizado), PAXG 0.0529 (~$222, ~-$13.6 nao realizado), BNB 0.00281 (poeira). USDT $664,55.
 - Todos sem ordens condicionais e fora do bot.
 
-*Estimativas de nao realizado usam o custo medio exibido pela Gate. Detalhe: `docs/reconciliacao_2026-10-11.md`.*
+*Estimativas de nao realizado usam o custo medio exibido pela Gate. Detalhe: `docs/historico/reconciliacao_2026-10-11.md`.*
 

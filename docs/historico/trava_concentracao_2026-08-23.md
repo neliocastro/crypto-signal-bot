@@ -1,7 +1,7 @@
 # Trava de concentracao por ativo (2026-08-23)
 
 > Implementada em `bot/executor.py` (commit `8a1d5bc`). Continua a sequencia de
-> auditoria de 23/08 (ver `docs/decisao_stop_e_universo_2026-08-23.md`).
+> auditoria de 23/08 (ver `docs/historico/decisao_stop_e_universo_2026-08-23.md`).
 
 ## O problema
 
@@ -92,4 +92,4 @@ A amostra e pequena (17 registros). A concentracao em HYPE tem causa conhecida e
 legitima - era o unico ativo do trilho breakout 1h, que dispara muito mais que o
 D1. A trava nao afirma que "HYPE e ruim"; afirma que **nenhum ativo isolado deve
 carregar a carteira**. Reavaliar junto com os 10 trades fechados previstos em
-`docs/decisao_stop_e_universo_2026-08-23.md`.
+`docs/historico/decisao_stop_e_universo_2026-08-23.md`.

@@ -130,7 +130,7 @@ ele está rodando código velho.
    ("a ordem sequer foi enviada"). Confirmar o nome real do campo antes de
    concluir por ausência de resultado.
 3. **Ausência de evidência ≠ evidência de ausência** — mesma lição já registrada
-   em `docs/gateio_limitacoes.md` (a tela da Gate.io só mostra ordens abertas).
+   em `docs/historico/gateio_limitacoes.md` (a tela da Gate.io só mostra ordens abertas).
 4. **Esse arquivo tem histórico de corrupção de bytes:** FIX 8 removeu um byte de
    controle `0x1D`; havia também `'ssem TP nem SL'`. `sspot` é da mesma família.
    Varrer typos após cada edição manual.

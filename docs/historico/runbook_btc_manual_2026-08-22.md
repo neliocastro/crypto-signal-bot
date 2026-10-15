@@ -6,7 +6,7 @@
 > protecao. A tabela e o check abaixo descrevem o estado de 22/08 e ficam como
 > historico; o check semanal hoje deve retornar **0**, nao 3.
 > Se quiser reproteger, criar novas ordens com `~/btc_tp.php` (decisao do usuario).
-> Detalhe em `docs/reconciliacao_2026-10-11.md`.
+> Detalhe em `docs/historico/reconciliacao_2026-10-11.md`.
 
 > Posicao **manual** do usuario na Gate.io. NAO foi criada pelo bot, NAO esta em
 > `state/positions.jsonl` e **NAO e coberta pelo OCO Guard** (que so reconcilia
@@ -67,7 +67,7 @@ acontecido. Sinais que ja contradiziam o alarme **antes** de qualquer comando:
 
 **Licao:** comandos de verificacao tambem precisam ser verificados. Mesma
 familia do falso positivo do `grep -nP "'ss[a-z]|=>'s[a-z]+'"`, que casava com
-`'side'=>'sell'` (ver `docs/incidente_2026-08-20-sspot-deploy.md`). Antes de
+`'side'=>'sell'` (ver `docs/historico/incidente_2026-08-20-sspot-deploy.md`). Antes de
 declarar incidente, cruze o resultado do comando com evidencia independente.
 
 ---
