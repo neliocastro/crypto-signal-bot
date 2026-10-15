@@ -32,6 +32,44 @@ try:
 except Exception:
     OCO_GUARD_ENABLED = True
 
+try:
+    from .config import SL_EXPIRED_ALERT_ENABLED
+except Exception:
+    SL_EXPIRED_ALERT_ENABLED = False
+
+# Status de price_order que significam "gatilho morto, nao executou".
+_DEAD = ("expired", "cancelled", "failed")
+
+
+def _alert_dead_legs(p: dict, item: dict, notify=None) -> bool:
+    """D-033: avisa 1x por posicao se o SL (ou o TP1 ainda pendente) morreu sem
+    executar. So avisa: nao cria nem cancela ordem. Retorna True se gravou flag."""
+    if not SL_EXPIRED_ALERT_ENABLED or not notify:
+        return False
+    changed = False
+    sym = p.get("symbol")
+    sl = item.get("sl") or {}
+    if sl.get("status") in _DEAD and not p.get("sl_dead_notified"):
+        p["sl_dead_notified"] = _now_iso()
+        changed = True
+        try:
+            notify("\U0001F6A8 %s SEM STOP: o SL %s esta '%s' na Gate (posicao aberta). "
+                   "Conferir e recriar a protecao." % (sym, sl.get("id"), sl.get("status")))
+        except Exception:
+            pass
+    tp = item.get("tp") or {}
+    if (p.get("tp_partial") and not p.get("tp1_done")
+            and tp.get("status") in _DEAD and not p.get("tp1_dead_notified")):
+        p["tp1_dead_notified"] = _now_iso()
+        changed = True
+        try:
+            notify("⚠️ %s: o TP1 %s esta '%s' na Gate sem ter executado. Sem TP1 a "
+                   "posicao nao vai ao breakeven (segue so com o stop fixo)."
+                   % (sym, tp.get("id"), tp.get("status")))
+        except Exception:
+            pass
+    return changed
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -89,6 +127,7 @@ def _move_to_breakeven(p: dict, notify=None) -> dict | None:
     p["sl_price"] = float(new_sl.get("price") or be)
     p["sl_order_id"] = str(new_sl.get("id") or "")
     p["updated_at"] = _now_iso()
+    p["sl_set_at"] = p["updated_at"]      # idade do gatilho SL (D-033)
     if notify:
         try:
             notify("\U0001F3AF TP1 %s: 50%% vendido em %s. Stop do restante (%s) "
@@ -152,6 +191,8 @@ def sync(notify=None) -> list:
                     continue
             closed_by = item.get("closed_by")
             if closed_by not in ("tp", "sl"):
+                if _alert_dead_legs(p, item, notify):
+                    changed = True
                 continue
             p["status"] = "closed_" + closed_by
             p["closed_at"] = _now_iso()

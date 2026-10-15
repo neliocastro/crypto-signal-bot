@@ -47,6 +47,14 @@ except Exception:  # degradacao segura: sem config -> desligado
     MARE_ALTA_SYMBOLS = ["HYPE/USDT"]
     EXECUTION_RELAY_URL = ""
 
+# Renovacao do SL antes dos 30 dias da Gate (D-033). Import separado: se faltar,
+# so a renovacao fica inerte (o trailing segue normal).
+try:
+    from .config import SL_RENEW_ENABLED, SL_RENEW_AFTER_DAYS
+except Exception:
+    SL_RENEW_ENABLED = False
+    SL_RENEW_AFTER_DAYS = 25
+
 _HMAC_SECRET = os.environ.get("EXECUTION_HMAC_SECRET", "")
 POSITIONS_FILE = "state/positions.jsonl"
 
@@ -159,6 +167,7 @@ def register_position(signal_id, symbol, base_qty, entry_price,
             "status": "open",
             "opened_at": _now_iso(),
             "updated_at": _now_iso(),
+            "sl_set_at": _now_iso(),          # idade do gatilho SL (D-033)
         }
         if tp_qty and rec["tp_order_id"]:
             rec["tp_partial"] = True          # saida validada: TP1 parcial
@@ -284,6 +293,7 @@ def update_trailing(fetch_d1_candles) -> list:
                 pos["sl_price"] = float((resp.get("new_sl") or {}).get("price", cand))
                 pos["sl_order_id"] = str(new_id)
                 pos["updated_at"] = _now_iso()
+                pos["sl_set_at"] = pos["updated_at"]
                 changed = True
                 results.append({"symbol": symbol, "signal_id": pos.get("signal_id"),
                                 "action": "updated", "new_sl": pos["sl_price"],
@@ -302,6 +312,95 @@ def update_trailing(fetch_d1_candles) -> list:
             results.append({"symbol": symbol, "action": "error",
                             "reason": "excecao isolada; stop antigo mantido"})
 
+    if changed:
+        _save_positions(positions)
+    return results
+
+
+# --------------------- Renovacao do SL (D-033, 2026-10-15) ------------------- #
+def _age_days(iso: str) -> float | None:
+    try:
+        dt = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - dt).total_seconds() / 86400.0
+    except Exception:
+        return None
+
+
+def renew_expiring_sl(notify=None) -> list:
+    """Recria no MESMO preco e qty o SL de posicoes abertas cujo gatilho tem
+    >= SL_RENEW_AFTER_DAYS dias (a Gate expira em 30). Vale antes e depois do
+    TP1 e para qualquer simbolo. Usa a acao update_trailing do relay: cria o
+    novo -> confirma -> deleta o antigo; se falhar, o antigo e MANTIDO, tenta
+    no proximo scan e avisa no Telegram 1x por dia. NUNCA levanta."""
+    results = []
+    if not SL_RENEW_ENABLED:
+        return results
+    try:
+        positions = _load_positions()
+    except Exception:
+        log.exception("renew_expiring_sl: falha ao ler posicoes")
+        return results
+    changed = False
+    for pos in positions:
+        if pos.get("status") != "open":
+            continue
+        symbol = pos.get("symbol", "")
+        try:
+            sl_id = str(pos.get("sl_order_id", "") or "")
+            sl_price = float(pos.get("sl_price") or 0.0)
+            base_qty = str(pos.get("base_qty", "") or "")
+            if not sl_id or sl_price <= 0 or not base_qty:
+                continue
+            # sem sl_set_at (registro antigo) -> opened_at: renova cedo, sem dano
+            age = _age_days(pos.get("sl_set_at") or pos.get("opened_at") or "")
+            if age is not None and age < SL_RENEW_AFTER_DAYS:
+                continue
+            payload = {
+                "action": "update_trailing",
+                "symbol": symbol,
+                "new_sl_price": sl_price,
+                "base_qty": base_qty,
+                "old_sl_order_id": sl_id,
+                "signal_id": str(pos.get("signal_id", "")),
+            }
+            resp = _sign_and_send(payload)
+            if resp and resp.get("status") == "trailing_updated":
+                new_sl = resp.get("new_sl") or {}
+                pos["sl_order_id"] = str(new_sl.get("id") or "")
+                pos["sl_price"] = float(new_sl.get("price") or sl_price)
+                pos["updated_at"] = _now_iso()
+                pos["sl_set_at"] = pos["updated_at"]
+                pos["sl_renewed_count"] = int(pos.get("sl_renewed_count") or 0) + 1
+                pos.pop("sl_renew_fail_notified", None)
+                changed = True
+                results.append({"symbol": symbol, "signal_id": pos.get("signal_id"),
+                                "action": "sl_renewed", "sl": pos["sl_price"],
+                                "old_sl_order_id": sl_id,
+                                "new_sl_order_id": pos["sl_order_id"]})
+                log.info("SL renovado %s: %s (id %s -> %s)",
+                         symbol, pos["sl_price"], sl_id, pos["sl_order_id"])
+            else:
+                today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                if notify and pos.get("sl_renew_fail_notified") != today:
+                    pos["sl_renew_fail_notified"] = today
+                    changed = True
+                    try:
+                        notify("⚠️ %s: o SL (%s) tem %s dias e NAO foi renovado "
+                               "(relay nao confirmou). A Gate expira o gatilho em 30 dias; "
+                               "retentando a cada scan." % (
+                                   symbol, sl_price,
+                                   "?" if age is None else "%.0f" % age))
+                    except Exception:
+                        pass
+                results.append({"symbol": symbol, "signal_id": pos.get("signal_id"),
+                                "action": "sl_renew_failed", "response": resp})
+                log.warning("SL NAO renovado %s (antigo mantido): %s", symbol, resp)
+        except Exception:
+            log.exception("renew_expiring_sl falhou p/ %s (SL mantido)", symbol)
+            results.append({"symbol": symbol, "action": "error",
+                            "reason": "excecao isolada; SL antigo mantido"})
     if changed:
         _save_positions(positions)
     return results

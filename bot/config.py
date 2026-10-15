@@ -279,6 +279,17 @@ MARE_ALTA_TRAILING_CLOSED_ONLY = True
 # Ligar SO depois do deploy do PHP. Desligado = TP unico 2.0R na base inteira.
 # Ver docs/historico/saida_tp1_breakeven_2026-10-15.md. Rollback: False.
 MARE_ALTA_PARTIAL_TP_ENABLED = True   # ligado 15/10 apos deploy do PHP FIX 10 (sha256 6e3da8cb conferido no servidor)
+# 2026-10-15 (D-033): os gatilhos da Gate expiram em 30 dias (expiration 2592000
+# no execute.php). Antes do TP1 o stop fica fixo e nada o recriava: a posicao
+# ficaria NUA no dia 30. A renovacao recria o SL no MESMO preco e qty via acao
+# "update_trailing" (cria novo -> confirma -> deleta antigo; falhou = antigo
+# mantido). Sem mudanca no PHP. Rollback: SL_RENEW_ENABLED = False.
+SL_RENEW_ENABLED     = True
+SL_RENEW_AFTER_DAYS  = 25     # idade do SL (sl_set_at, senao opened_at) p/ renovar
+# Alerta no Telegram (1x por posicao) se o SL de uma posicao aberta vier
+# expired/cancelled/failed, ou se o TP1 expirar antes de executar. So avisa:
+# nao cria nem cancela ordem. Rollback: False.
+SL_EXPIRED_ALERT_ENABLED = True
 
 # ============ OCO GUARD - emulacao de OCO (bot/oco_guard.py) ============
 # A Gate.io NAO tem OCO nativo no spot: TP e SL sao price_orders INDEPENDENTES,

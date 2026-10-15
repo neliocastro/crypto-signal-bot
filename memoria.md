@@ -63,6 +63,11 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-027 (2026-10-15)** **Saída do Maré Alta = a validada**: TP1 +10% vende 50% → SL do restante no breakeven
   (preço de entrada) → trailing 3×ATR só depois do TP1; antes, stop fixo. `MARE_ALTA_PARTIAL_TP_ENABLED = True`
   após o deploy conferido do PHP FIX 10 (sha256 `6e3da8cb…`). `historico/saida_tp1_breakeven_2026-10-15.md`
+- **D-033 (2026-10-15)** **SL renovado antes de expirar**: os gatilhos da Gate expiram em 30 dias e, antes do TP1, nada
+  recriava o stop (posição nua no dia 30). Com 25 dias ou mais (`SL_RENEW_AFTER_DAYS`, idade por `sl_set_at`, senão
+  `opened_at`), o bot recria o SL no **mesmo preço e qty** via `update_trailing`, sem mudar o PHP (`SL_RENEW_ENABLED`).
+  O `oco_guard` alerta 1x se o SL ou o TP1 pendente vierem `expired/cancelled/failed` (`SL_EXPIRED_ALERT_ENABLED`).
+  O TP1 **não** é renovado (exigiria ação nova no PHP).
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -137,9 +142,11 @@ Formato: problema → causa → regra que ficou.
   sha256 `df762466…`): US$ 10, SL −15%, sem TP, `signal_id` único por compra. As compras falhavam (P-16); o fix
   foi deployado em 2026-10-15 (commit `8dc5668a`, sha256 `0e3624f6…`, backup `paxg_rsi_check.php.bak-20261015`),
   mas ainda falta ver o primeiro `COMPRA OK` no log e o SL na Gate. Ainda em aberto: registrar essas compras em
-  `positions.jsonl` (não decidido) e alertar no Telegram quando o cron falhar. A whitelist do PHP **precisa** manter
+  `positions.jsonl` (2026-10-15: o usuário manteve o D-032 por enquanto; se mudar, o trailing precisa pular o PAXG,
+  pois `MARE_ALTA_SYMBOLS = []` trocaria o SL −15% por `close − 3×ATR`) e alertar no Telegram quando o cron falhar. A whitelist do PHP **precisa** manter
   PAXG enquanto o D-032 valer.
-- **Gatilhos expiram em 30 dias**: trade longo do Maré Alta perde o TP1 (o trailing recria só o SL ao subir).
+- **Gatilhos expiram em 30 dias**: o SL passou a ser renovado (D-033). Falta: renovar o TP1 (ação nova no PHP +
+  deploy) e confirmar na API da Gate o nome do status de gatilho expirado (o alerta cobre `expired/cancelled/failed`).
 - **Placar**: `closed_sl` não grava `exit_price`; com TP1 parcial, somar a perna do TP1 (`tp1_price × tp1_qty`).
 - **Próxima reauditoria do degrau**: marcar `cadencia_degradada` nos trades abertos entre 2026-09-14 21:13 e
   2026-10-09 01:02 UTC e reportar com e sem eles.

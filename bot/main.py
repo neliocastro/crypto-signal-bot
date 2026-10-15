@@ -496,6 +496,22 @@ def main() -> int:
     except Exception:
         log.error("Falha no trailing Mare Alta (ignorada):\n%s", traceback.format_exc())
 
+    # --- RENOVACAO DO SL (D-033, 2026-10-15): os gatilhos da Gate expiram em 30
+    # dias. SL com >= SL_RENEW_AFTER_DAYS e recriado no mesmo preco/qty (relay
+    # update_trailing). Independe do kill-switch do trailing. Kill-switch:
+    # config.SL_RENEW_ENABLED. Falhas nunca derrubam o scan.
+    try:
+        from . import mare_alta_trailing as _ma_renew
+        for _r in _ma_renew.renew_expiring_sl(notify=send):
+            if _r.get("action") == "sl_renewed":
+                try:
+                    send("\U0001F501 %s: SL renovado no mesmo preco %s (gatilho da Gate "
+                         "expira em 30 dias)" % (_r.get("symbol"), _r.get("sl")))
+                except Exception:
+                    pass
+    except Exception:
+        log.error("Falha na renovacao do SL (ignorada):\n%s", traceback.format_exc())
+
     # --- OCO EMULADO (2026-08-11): Gate.io spot NAO vincula TP<->SL. ---
     # A cada scan, o oco_guard reconcilia os pares TP/SL das posicoes abertas
     # via relay (acao oco_sync): se uma perna disparou, o PHP cancela a

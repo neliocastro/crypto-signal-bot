@@ -33,6 +33,9 @@ Breakout 1h   -> HYPE                 DESLIGADO desde 2026-10-13 (D-013)
   BTC 1,28 · SOL 4,51 · TRX 2,21 · BNB 2,15. O script desse backtest não está no repositório.
 - Kill-switches: `MARE_ALTA_ENABLED`, `MARE_ALTA_SHADOW_MODE` (False = ordens reais), `MARE_ALTA_TRAILING_ENABLED`,
   `MARE_ALTA_TRAILING_CLOSED_ONLY`, `MARE_ALTA_PARTIAL_TP_ENABLED`.
+- **Validade dos gatilhos (D-033):** a Gate expira TP e SL em 30 dias. Com 25 dias ou mais, o SL de qualquer posição
+  aberta é recriado no mesmo preço e qty (`SL_RENEW_ENABLED`, `SL_RENEW_AFTER_DAYS = 25`), antes e depois do TP1.
+  O TP1 não é renovado: se expirar, o Telegram avisa e a posição segue só com o stop fixo.
 
 ## Breakout / Tendência 1h (`bot/strategies.py`) — desligado
 
@@ -88,6 +91,8 @@ O Maré Alta roda **fora** dessa allowlist, em bloco próprio do `main.py`.
 | `EXECUTION_DAILY_LOSS_STOP` | 20,0 | para tudo se perder US$ 20 no dia |
 | Trava de concentração | 1 posição viva + 2 ordens/dia por ativo | D-022; defaults no `executor.py` |
 | `OCO_GUARD_ENABLED` | `True` | OCO emulado (D-005) |
+| `SL_RENEW_ENABLED` / `SL_RENEW_AFTER_DAYS` | `True` / 25 | renova o SL antes dos 30 dias da Gate (D-033) |
+| `SL_EXPIRED_ALERT_ENABLED` | `True` | alerta 1x se SL ou TP1 pendente morrer sem executar (D-033) |
 | `SIGNAL_COOLDOWN_HOURS` | 4 | cooldown por `símbolo|estratégia` |
 | `REQUIRE_PROTECTION` (PHP) | `true` | compra sem TP nem SL é recusada (D-006) |
 

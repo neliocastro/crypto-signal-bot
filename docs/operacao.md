@@ -20,6 +20,7 @@ Comandos locais antes de todo commit:
 python -m py_compile bot/*.py
 python tests/test_roteamento_strings.py
 python tests/test_saida_tp1.py
+python tests/test_renovacao_sl.py
 ```
 
 ## 2. Deploy do relay (`server/execute.php`)
