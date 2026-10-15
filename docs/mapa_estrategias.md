@@ -85,7 +85,7 @@ proprio (`MARE_ALTA_UNIVERSE`) e `fetch_ohlcv` D1 proprio.
 | `OCO_GUARD_ENABLED` | OCO emulado (so ordens do bot) |
 | `MARE_ALTA_TRAILING_ENABLED` | trailing D1 3.0x ATR, catraca so sobe |
 | `MARE_ALTA_TRAILING_CLOSED_ONLY` | `True`: trailing so com vela D1 fechada (desde 15/10) |
-| `MARE_ALTA_PARTIAL_TP_ENABLED` | `False` (implementado 15/10): TP1 +10% em 50% -> breakeven -> trailing. Ligar so apos deploy do PHP FIX 10 |
+| `MARE_ALTA_PARTIAL_TP_ENABLED` | `True` desde 15/10 (PHP FIX 10 no servidor): TP1 +10% em 50% -> breakeven -> trailing |
 
 ## 8. Historico do universo
 
@@ -97,7 +97,7 @@ proprio (`MARE_ALTA_UNIVERSE`) e `fetch_ohlcv` D1 proprio.
 | 16/09 | override de stop do HYPE (3.0x ATR) |
 | 13/10 | Breakout HYPE desligado (`BREAKOUT_ENABLED = False`); HYPE segue na watchlist sem operar |
 | 15/10 | Trailing do Mare Alta passa a usar so vela D1 fechada (`MARE_ALTA_TRAILING_CLOSED_ONLY`) |
-| 15/10 | Saida validada (TP1 50% + breakeven) implementada, desligada ate o deploy do PHP |
+| 15/10 | Saida validada (TP1 50% + breakeven) implementada e LIGADA apos deploy do PHP FIX 10 |
 
 ---
 

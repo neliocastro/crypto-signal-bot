@@ -41,10 +41,10 @@ MARE_ALTA_UNIVERSE = ["BTC/USDT", "SOL/USDT", "TRX/USDT", "BNB/USDT"]
 - `MARE_ALTA_ENABLED = True`, `MARE_ALTA_SHADOW_MODE = False` (producao real).
 - Entrada (D1, vela fechada): MACD cruza acima do sinal + EMA9>EMA21.
 - Saida **validada no backtest**: stop 2.5xATR -> TP1 +10% (50%) -> breakeven + trailing 3.0xATR.
-- Saida **executada hoje**: stop 2.5xATR + TP unico em 2.0x o risco (~+23%) para 100% da posicao +
-  trailing 3.0xATR. A saida validada ja esta **implementada mas DESLIGADA**
-  (`MARE_ALTA_PARTIAL_TP_ENABLED = False`): depende do deploy do `execute.php` FIX 10 no servidor.
-  Ver `docs/saida_tp1_breakeven_2026-10-15.md` (passo a passo de deploy e rollback).
+- Saida **executada desde 15/10** (`MARE_ALTA_PARTIAL_TP_ENABLED = True`, PHP FIX 10 no servidor):
+  igual a validada. TP1 +10% vende 50% -> SL do restante no breakeven -> trailing 3.0xATR so depois
+  do TP1 (antes, stop inicial fixo). Sem TP no restante. Posicoes abertas antes seguem o modo antigo
+  (TP unico 2.0R + trailing). Ver `docs/saida_tp1_breakeven_2026-10-15.md`.
 - Universo proprio + `fetch_ohlcv` proprio (D1): nao depende da WATCHLIST intraday.
 - Todos os 4 ativos do universo sao validados no walk-forward original.
 

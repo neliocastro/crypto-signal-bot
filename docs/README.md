@@ -53,7 +53,7 @@ Ao revisar um documento vivo, troque a data "Ultima revisao" aqui e no topo dele
 
 | Data | Documento | Resumo |
 |---|---|---|
-| 2026-10-15 | [`saida_tp1_breakeven_2026-10-15.md`](saida_tp1_breakeven_2026-10-15.md) | Saida validada do Mare Alta implementada (desligada); deploy do PHP FIX 10 |
+| 2026-10-15 | [`saida_tp1_breakeven_2026-10-15.md`](saida_tp1_breakeven_2026-10-15.md) | Saida validada do Mare Alta (TP1 50% + breakeven), ligada apos deploy do PHP FIX 10 |
 | 2026-10-15 | [`trailing_vela_fechada_2026-10-15.md`](trailing_vela_fechada_2026-10-15.md) | Auditoria 15/10 + trailing so com vela D1 fechada; saida real != saida validada (pendente) |
 | 2026-10-13 | [`decisao_2026-10-13_hype_desligado_e_paper.md`](decisao_2026-10-13_hype_desligado_e_paper.md) | HYPE desligado (`BREAKOUT_ENABLED = False`); 2 posicoes-papel obsoletas ignoradas |
 | 2026-10-11 | [`reconciliacao_2026-10-11.md`](reconciliacao_2026-10-11.md) | Lote legado de HYPE fechado; BTC manual; placar por fills reais |

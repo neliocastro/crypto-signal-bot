@@ -278,7 +278,7 @@ MARE_ALTA_TRAILING_CLOSED_ONLY = True
 # EXIGE o execute.php com FIX 10 no servidor (campos tp_frac / tp_partial).
 # Ligar SO depois do deploy do PHP. Desligado = TP unico 2.0R na base inteira.
 # Ver docs/saida_tp1_breakeven_2026-10-15.md. Rollback: False.
-MARE_ALTA_PARTIAL_TP_ENABLED = False
+MARE_ALTA_PARTIAL_TP_ENABLED = True   # ligado 15/10 apos deploy do PHP FIX 10 (sha256 6e3da8cb conferido no servidor)
 
 # ============ OCO GUARD - emulacao de OCO (bot/oco_guard.py) ============
 # A Gate.io NAO tem OCO nativo no spot: TP e SL sao price_orders INDEPENDENTES,

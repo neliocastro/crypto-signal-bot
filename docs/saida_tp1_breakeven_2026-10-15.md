@@ -3,6 +3,10 @@
 > Implementacao **aprovada pelo usuario em 15/10/2026** (item 1 de
 > `docs/trailing_vela_fechada_2026-10-15.md`). Entra **DESLIGADA**:
 > `MARE_ALTA_PARTIAL_TP_ENABLED = False` ate o `execute.php` (FIX 10) estar no servidor.
+>
+> **LIGADO em 2026-10-15.** Deploy do FIX 10 conferido pelo usuario no servidor: 262 linhas /
+> 20996 bytes / sha256 `6e3da8cb...`, dono `ineocom`, endpoint respondendo HTTP 401 sem assinatura.
+> Backup: `execute.php.bak-20261015`. Vale a partir da proxima compra do Mare Alta.
 
 ## Contexto
 
