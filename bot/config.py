@@ -244,6 +244,11 @@ EXECUTION_MIN_STOP_PCT = 0.8   # piso de afastamento do stop (% do preco). Bug T
 EXECUTION_MAX_OPEN          = 10      # no maximo 10 posicoes live ao mesmo tempo
 EXECUTION_MAX_TRADES_DAY    = 10      # no maximo 10 ordens/dia
 EXECUTION_DAILY_LOSS_STOP   = 20.0   # kill-switch: para tudo se perder $20 no dia
+# 2026-10-15 (D-035): ate aqui a trava acima era INERTE (nada alimentava
+# realized_loss_today). Agora a perda do dia e DERIVADA de state/positions.jsonl:
+# max(0, -soma do pnl_usdt_est das posicoes fechadas no dia UTC). So bloqueia
+# NOVAS compras. Rollback: False (volta ao contador inerte).
+EXECUTION_DAILY_LOSS_FROM_POSITIONS = True
 EXECUTION_STATE_FILE        = "state/execution_guard.json"  # contadores diarios
 
 # Arquivo da "intencao" (lado cerebrod). O HMAC secret vem de env

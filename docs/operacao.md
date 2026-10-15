@@ -23,6 +23,7 @@ python tests/test_roteamento_strings.py
 python tests/test_saida_tp1.py
 python tests/test_renovacao_sl.py
 python tests/test_placar.py
+python tests/test_trava_perda_diaria.py
 ```
 
 ## 2. Deploy do relay (`server/execute.php`)

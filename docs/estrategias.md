@@ -88,7 +88,7 @@ O Maré Alta roda **fora** dessa allowlist, em bloco próprio do `main.py`.
 | `EXECUTION_TP_RR` | 2,0 | TP = entrada + 2×risco (fora do Maré Alta com TP1 parcial) |
 | `EXECUTION_TPSL_ENABLED` | `True` | TP/SL nativos em toda compra |
 | `EXECUTION_MAX_OPEN` / `EXECUTION_MAX_TRADES_DAY` | 10 / 10 | limites globais (dia UTC) |
-| `EXECUTION_DAILY_LOSS_STOP` | 20,0 | deveria parar tudo com perda de US$ 20 no dia, mas **hoje está inerte**: nada alimenta `realized_loss_today` (pendência no `memoria.md`) |
+| `EXECUTION_DAILY_LOSS_STOP` | 20,0 | bloqueia **novas compras** quando a perda líquida do dia UTC chega a US$ 20; derivada do `pnl_usdt_est` do `positions.jsonl` (`EXECUTION_DAILY_LOSS_FROM_POSITIONS`, D-035). Inerte até 2026-10-15 |
 | Trava de concentração | 1 posição viva + 2 ordens/dia por ativo | D-022; defaults no `executor.py` |
 | `OCO_GUARD_ENABLED` | `True` | OCO emulado (D-005) |
 | `SL_RENEW_ENABLED` / `SL_RENEW_AFTER_DAYS` | `True` / 25 | renova o SL antes dos 30 dias da Gate (D-033) |

@@ -78,7 +78,14 @@ try:
         from .config import POSITIONS_FILE
     except Exception:
         POSITIONS_FILE = "state/positions.jsonl"
+    # --- PERDA DO DIA DERIVADA (D-035, 2026-10-15) ---
+    # Sem a chave no config.py: False = comportamento antigo (contador inerte).
+    try:
+        from .config import EXECUTION_DAILY_LOSS_FROM_POSITIONS
+    except Exception:
+        EXECUTION_DAILY_LOSS_FROM_POSITIONS = False
 except Exception:  # degradacao segura: sem config -> camada inerte
+    EXECUTION_DAILY_LOSS_FROM_POSITIONS = False
     EXECUTION_CONCENTRATION_GUARD = False
     EXECUTION_MAX_OPEN_PER_SYMBOL = 1
     EXECUTION_MAX_TRADES_DAY_PER_SYMBOL = 2
@@ -240,9 +247,46 @@ def _sent_today_for_symbol(symbol: str) -> int:
         return 0
 
 
+def _realized_loss_today() -> float:
+    """Perda REALIZADA do dia (UTC), derivada de state/positions.jsonl (D-035).
+
+    Soma o pnl_usdt_est (gravado pelo oco_guard no fechamento, D-034) das
+    posicoes com closed_at no dia UTC corrente. Perda = max(0, -resultado
+    liquido do dia). Linha sem pnl_usdt_est conta 0. Mesma licao do P-07:
+    derivar da fonte da verdade, nao de contador incremental.
+    Degradacao segura: qualquer erro -> 0.0 (nunca bloqueia por engano).
+    """
+    try:
+        hoje = _today_utc()
+        total = 0.0
+        with open(POSITIONS_FILE, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                if not str(rec.get("status", "")).startswith("closed"):
+                    continue
+                if str(rec.get("closed_at") or "")[:10] != hoje:
+                    continue
+                try:
+                    total += float(rec.get("pnl_usdt_est") or 0.0)
+                except Exception:
+                    continue
+        return max(0.0, -total)
+    except Exception:
+        return 0.0
+
+
 def check_guards(order: dict) -> tuple[bool, str]:
     """Retorna (pode_enviar, motivo). Travas RIGIDAS antes de qualquer envio."""
     st = _load_guard_state()
+    # D-035: perda do dia derivada do positions.jsonl; o campo do estado vira espelho.
+    if EXECUTION_DAILY_LOSS_FROM_POSITIONS:
+        st["realized_loss_today"] = _realized_loss_today()
     # 1) stop de perda diaria (kill-switch)
     if float(st["realized_loss_today"]) >= float(EXECUTION_DAILY_LOSS_STOP):
         return False, f"stop diario atingido (perda {st['realized_loss_today']:.2f} >= {EXECUTION_DAILY_LOSS_STOP})"
@@ -288,6 +332,9 @@ def _register_sent_order() -> None:
     # sido gravada em positions.jsonl no momento deste registro)
     st["open_positions"] = _open_count_total() + 1
     st["open_positions_source"] = "positions.jsonl (derivado)"
+    if EXECUTION_DAILY_LOSS_FROM_POSITIONS:   # D-035: espelho informativo
+        st["realized_loss_today"] = round(_realized_loss_today(), 6)
+        st["realized_loss_source"] = "positions.jsonl pnl_usdt_est (derivado)"
     _save_guard_state(st)
 
 
