@@ -159,6 +159,26 @@ def test_placar_estrategia_inferida():
     assert placar._strategy({"symbol": "ETH/USDT", "strategy": "X"}) == "X"
 
 
+def test_cadencia_degradada_pela_abertura():
+    assert placar.cadencia_degradada({"opened_at": "2026-09-14T21:13:00+00:00"})
+    assert placar.cadencia_degradada({"opened_at": "2026-10-09T01:01:59+00:00"})
+    assert not placar.cadencia_degradada({"opened_at": "2026-09-14T21:12:59+00:00"})
+    assert not placar.cadencia_degradada({"opened_at": "2026-10-09T01:02:00+00:00"})
+    assert not placar.cadencia_degradada({})
+
+
+def test_degrau_com_e_sem_degradada():
+    ganho = {"pnl": 1.0, "deg": False}
+    perda_deg = {"pnl": -3.0, "deg": True}
+    trades = [dict(ganho) for _ in range(20)] + [perda_deg]
+    linhas = {l[0]: l for l in placar.degrau(trades)}
+    com, sem = linhas["Com cadencia degradada"], linhas["Sem cadencia degradada"]
+    assert com[1] == 21 and abs(com[2] - 17.0) < 1e-9 and com[4], com
+    assert sem[1] == 20 and sem[4], sem
+    poucos = placar.degrau([dict(ganho) for _ in range(19)])
+    assert not poucos[0][4] and not poucos[1][4], poucos     # amostra < 20 reprova
+
+
 if __name__ == "__main__":
     falhas = 0
     for nome, fn in sorted(globals().items()):

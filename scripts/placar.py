@@ -11,12 +11,15 @@ Base de cada trade (coluna "base"):
   saida     calculado do exit_price gravado
   gatilho   linha antiga sem exit_price: usa o preco da perna (tp_price/sl_price)
 Estrategia com "*" = inferida pelo ativo (linhas antigas nao gravavam strategy).
+Coluna "deg" = cadencia_degradada: trade ABERTO entre 2026-09-14 21:13 e 2026-10-09 01:02 UTC
+(token expirado, scans atrasados; docs/historico/incidente_2026-10-08_stops_e_cadencia.md).
 
 USO
 ---
     python scripts/placar.py
     python scripts/placar.py --desde 2026-09-04     # trades ABERTOS a partir da data (regra D-024)
     python scripts/placar.py --arquivo outro.jsonl
+    python scripts/placar.py --degrau               # criterios do degrau US$ 20 (D-024), com e sem deg
 """
 import argparse
 import json
@@ -29,10 +32,20 @@ sys.path.insert(0, _ROOT)
 from bot.oco_guard import exit_pnl_est          # noqa: E402
 
 FEE_RATE = 0.001
+DEGRADADA_INI = "2026-09-14T21:13"     # janela de cadencia degradada (UTC, por opened_at)
+DEGRADADA_FIM = "2026-10-09T01:02"
+DEGRAU_DESDE = "2026-09-04"            # D-024: so trades abertos a partir daqui
+DEGRAU_MIN_TRADES = 20
 # Inferencia so p/ linhas antigas. ETH/XRP etc.: trilho incerto (D-003) -> nao_registrada.
 _INFER = {"HYPE/USDT": "Breakout / Tendência", "PAXG/USDT": "Acúmulo (RSI sobrevenda)",
           "BTC/USDT": "MARE_ALTA_D1", "SOL/USDT": "MARE_ALTA_D1",
           "TRX/USDT": "MARE_ALTA_D1", "BNB/USDT": "MARE_ALTA_D1"}
+
+
+def cadencia_degradada(p) -> bool:
+    """True se o trade foi aberto dentro da janela de cadencia degradada."""
+    o = str(p.get("opened_at") or "")[:16]
+    return bool(o) and DEGRADADA_INI <= o < DEGRADADA_FIM
 
 
 def _strategy(p):
@@ -81,7 +94,8 @@ def carregar(path, desde=None):
                            "opened": str(p.get("opened_at") or "")[:10],
                            "closed": str(p.get("closed_at") or "")[:10],
                            "status": p.get("status"), "entry": p.get("entry_price"),
-                           "exit": saida, "pnl": pnl, "pct": pct, "base": base})
+                           "exit": saida, "pnl": pnl, "pct": pct, "base": base,
+                           "deg": cadencia_degradada(p)})
         elif not str(p.get("status", "")).startswith("open"):
             outros.append(p)
     trades.sort(key=lambda t: t["closed"])
@@ -92,25 +106,50 @@ def _fmt_pf(pf):
     return "inf" if pf == float("inf") else "%.2f" % pf
 
 
+def degrau(trades) -> list:
+    """Linhas (recorte, n, pnl, pf, aprovado) dos criterios D-024, com e sem deg.
+    Recebe os trades ja filtrados por DEGRAU_DESDE."""
+    out = []
+    for nome, ts in (("Com cadencia degradada", trades),
+                     ("Sem cadencia degradada", [t for t in trades if not t["deg"]])):
+        r = resumo(ts)
+        ok = r["n"] >= DEGRAU_MIN_TRADES and r["pnl"] > 0 and r["pf"] >= 1
+        out.append((nome, r["n"], r["pnl"], r["pf"], ok))
+    return out
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[1])
     ap.add_argument("--arquivo", default=os.path.join(_ROOT, "state", "positions.jsonl"))
     ap.add_argument("--desde", help="AAAA-MM-DD: so trades abertos a partir desta data")
+    ap.add_argument("--degrau", action="store_true",
+                    help="criterios do degrau US$ 20 (D-024) desde %s, com e sem deg" % DEGRAU_DESDE)
     a = ap.parse_args(argv)
+    if a.degrau:
+        trades, _ = carregar(a.arquivo, DEGRAU_DESDE)
+        print("# Degrau US$ 20 (D-024): trades abertos desde %s\n" % DEGRAU_DESDE)
+        print("| Recorte | Trades (min %d) | P&L ($) > 0 | PF >= 1 | Aprovado |" % DEGRAU_MIN_TRADES)
+        print("|---|---|---|---|---|")
+        for nome, n, pnl, pf, ok in degrau(trades):
+            print("| %s | %d | %+.2f | %s | %s |" % (nome, n, pnl, _fmt_pf(pf), "SIM" if ok else "NAO"))
+        return 0
     trades, outros = carregar(a.arquivo, a.desde)
 
     print("# Placar do bot%s\n" % (" (abertos desde %s)" % a.desde if a.desde else ""))
-    print("| Fechou | Ativo | Estrategia | Entrada | Saida | Res. | P&L ($) | % | base |")
-    print("|---|---|---|---|---|---|---|---|---|")
+    print("| Fechou | Ativo | Estrategia | Entrada | Saida | Res. | P&L ($) | % | base | deg |")
+    print("|---|---|---|---|---|---|---|---|---|---|")
     for t in trades:
-        print("| %s | %s | %s | %s | %s | %s | %+.2f | %+.1f%% | %s |" % (
+        print("| %s | %s | %s | %s | %s | %s | %+.2f | %+.1f%% | %s | %s |" % (
             t["closed"], t["symbol"], t["strategy"], t["entry"], t["exit"],
-            "TP" if t["status"] == "closed_tp" else "SL", t["pnl"], t["pct"], t["base"]))
+            "TP" if t["status"] == "closed_tp" else "SL", t["pnl"], t["pct"], t["base"],
+            "sim" if t["deg"] else ""))
 
     print("\n| Recorte | Trades | Wins | P&L ($) | PF |")
     print("|---|---|---|---|---|")
     r = resumo(trades)
     print("| Todos | %d | %d | %+.2f | %s |" % (r["n"], r["wins"], r["pnl"], _fmt_pf(r["pf"])))
+    r = resumo([t for t in trades if not t["deg"]])
+    print("| Sem cadencia degradada | %d | %d | %+.2f | %s |" % (r["n"], r["wins"], r["pnl"], _fmt_pf(r["pf"])))
     for grupo in ("strategy", "symbol"):
         for k in sorted({t[grupo] for t in trades}):
             r = resumo([t for t in trades if t[grupo] == k])

@@ -158,8 +158,9 @@ Formato: problema → causa → regra que ficou.
   deploy) e confirmar na API da Gate o nome do status de gatilho expirado (o alerta cobre `expired/cancelled/failed`).
 - **Placar**: resolvido por estimativa (D-034). Falta o fill real da saída (o `oco_sync` do PHP consultar a ordem
   executada; exige deploy). A trava de perda diária foi ligada em D-035.
-- **Próxima reauditoria do degrau**: marcar `cadencia_degradada` nos trades abertos entre 2026-09-14 21:13 e
-  2026-10-09 01:02 UTC e reportar com e sem eles.
+- **Próxima reauditoria do degrau**: `python scripts/placar.py --degrau` já marca `cadencia_degradada` (abertos entre
+  2026-09-14 21:13 e 2026-10-09 01:02 UTC) e reporta com e sem eles. Em 2026-10-15: 6/20 trades (−US$ 2,41, PF 0);
+  sem os degradados, 3/20 (−US$ 1,15, PF 0). Reprovado nos dois recortes; reauditar ao chegar a 20.
 - **Whitelist do PHP** ainda aceita PAXG, LINK, ETH, XRP e AAVE (fora do universo).
 - **Watchdog** (`bot/watchdog.py`) só alerta quando um scan volta a rodar; não cobre parada total de disparos.
 - **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 21/09: decisão do usuário.
