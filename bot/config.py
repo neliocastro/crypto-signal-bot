@@ -303,3 +303,9 @@ SL_EXPIRED_ALERT_ENABLED = True
 # bot). Ordens MANUAIS criadas na corretora NAO sao cobertas.
 # Degradacao segura: falha nunca derruba o scan; nunca cria ordem.
 OCO_GUARD_ENABLED = True   # kill-switch do OCO emulado
+# 2026-10-15 (D-034): ao fechar uma posicao, o oco_guard grava exit_price (preco
+# do gatilho executado, ESTIMATIVA: o relay nao devolve o fill), exit_qty e o
+# P&L estimado (pnl_usdt_est / pnl_pct_est), somando a perna do TP1 parcial.
+# So escreve no positions.jsonl: nao cria nem cancela ordem. Rollback: False.
+EXIT_RECORD_ENABLED = True
+EXIT_FEE_RATE       = 0.001   # taxa estimada por ponta (0,1% na compra e na venda)

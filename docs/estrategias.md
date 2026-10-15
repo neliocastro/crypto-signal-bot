@@ -88,10 +88,11 @@ O Maré Alta roda **fora** dessa allowlist, em bloco próprio do `main.py`.
 | `EXECUTION_TP_RR` | 2,0 | TP = entrada + 2×risco (fora do Maré Alta com TP1 parcial) |
 | `EXECUTION_TPSL_ENABLED` | `True` | TP/SL nativos em toda compra |
 | `EXECUTION_MAX_OPEN` / `EXECUTION_MAX_TRADES_DAY` | 10 / 10 | limites globais (dia UTC) |
-| `EXECUTION_DAILY_LOSS_STOP` | 20,0 | para tudo se perder US$ 20 no dia |
+| `EXECUTION_DAILY_LOSS_STOP` | 20,0 | deveria parar tudo com perda de US$ 20 no dia, mas **hoje está inerte**: nada alimenta `realized_loss_today` (pendência no `memoria.md`) |
 | Trava de concentração | 1 posição viva + 2 ordens/dia por ativo | D-022; defaults no `executor.py` |
 | `OCO_GUARD_ENABLED` | `True` | OCO emulado (D-005) |
 | `SL_RENEW_ENABLED` / `SL_RENEW_AFTER_DAYS` | `True` / 25 | renova o SL antes dos 30 dias da Gate (D-033) |
+| `EXIT_RECORD_ENABLED` / `EXIT_FEE_RATE` | `True` / 0,001 | grava saída e P&L estimados no fechamento (D-034) |
 | `SL_EXPIRED_ALERT_ENABLED` | `True` | alerta 1x se SL ou TP1 pendente morrer sem executar (D-033) |
 | `SIGNAL_COOLDOWN_HOURS` | 4 | cooldown por `símbolo|estratégia` |
 | `REQUIRE_PROTECTION` (PHP) | `true` | compra sem TP nem SL é recusada (D-006) |

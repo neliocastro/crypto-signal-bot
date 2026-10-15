@@ -392,6 +392,8 @@ def main() -> int:
                                 tp_price=float(_tpg.get("price") or 0),
                                 tp_order_id=_tpg.get("id") or "",
                                 tp_qty=(_tpg.get("qty") if _tg.get("tp_frac_applied") else ""),
+                                strategy=(sig.get("strategy") if isinstance(sig, dict)
+                                          else getattr(sig, "strategy", "")) or "",
                             )
                             log.info("[TRAIL-REG] posicao registrada: %s", _symg)
                     except Exception:
@@ -431,6 +433,7 @@ def main() -> int:
                                 tp_price=float(_tpr.get("price") or 0),
                                 tp_order_id=_tpr.get("id") or "",
                                 tp_qty=(_tpr.get("qty") if _tpsl.get("tp_frac_applied") else ""),
+                                strategy=_ma_sig.get("strategy") or "",
                         )
                             # TP1 parcial pedido mas nao aplicado: PHP sem FIX 10 ou
                             # qty pequena demais. Avisa (o TP saiu na base inteira).

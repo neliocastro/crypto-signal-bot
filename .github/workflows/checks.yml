@@ -31,3 +31,4 @@ jobs:
           python tests/test_roteamento_strings.py
           python tests/test_saida_tp1.py
           python tests/test_renovacao_sl.py
+          python tests/test_placar.py

@@ -12,6 +12,7 @@
 | O relay está no ar? | `curl -s -w " HTTP %{http_code}\n" https://ineo.com.br/cryptosignals/execute.php` → `assinatura invalida` + **401** |
 | Houve compra? | `state/paper_trades.jsonl` (`relay_response` com `status: filled`) e `state/orders_executed.csv` |
 | Por que não comprou? | recalcular a regra com velas reais; conferir `mare_alta_state.json`, `last_signals.json` (cooldown) e bloqueios `blocked_by_guard` |
+| Placar do bot? | `python scripts/placar.py` (total, por estratégia e por ativo); `--desde 2026-09-04` filtra pela data de abertura (regra D-024). Valores estimados pelo preço do gatilho (D-034) |
 | Posições vivas? | `state/positions.jsonl`: status `open*` (qualquer um conta na trava de concentração) |
 | O código passa? | workflow `checks` verde (php -l + testes) |
 
@@ -21,6 +22,7 @@ python -m py_compile bot/*.py
 python tests/test_roteamento_strings.py
 python tests/test_saida_tp1.py
 python tests/test_renovacao_sl.py
+python tests/test_placar.py
 ```
 
 ## 2. Deploy do relay (`server/execute.php`)

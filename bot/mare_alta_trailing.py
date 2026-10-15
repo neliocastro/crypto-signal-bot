@@ -147,7 +147,7 @@ def _save_positions(positions: list) -> None:
 
 def register_position(signal_id, symbol, base_qty, entry_price,
                       sl_price, sl_order_id,
-                      tp_price=0.0, tp_order_id="", tp_qty="") -> None:
+                      tp_price=0.0, tp_order_id="", tp_qty="", strategy="") -> None:
     """Registra/atualiza uma posicao aberta apos o fill. Chave: signal_id.
     Idempotente: mesma signal_id sobrescreve a entrada anterior.
 
@@ -169,6 +169,8 @@ def register_position(signal_id, symbol, base_qty, entry_price,
             "updated_at": _now_iso(),
             "sl_set_at": _now_iso(),          # idade do gatilho SL (D-033)
         }
+        if strategy:
+            rec["strategy"] = str(strategy)   # trilho que comprou (placar, D-034)
         if tp_qty and rec["tp_order_id"]:
             rec["tp_partial"] = True          # saida validada: TP1 parcial
             rec["tp1_qty"] = str(tp_qty)

@@ -68,6 +68,10 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   `opened_at`), o bot recria o SL no **mesmo preço e qty** via `update_trailing`, sem mudar o PHP (`SL_RENEW_ENABLED`).
   O `oco_guard` alerta 1x se o SL ou o TP1 pendente vierem `expired/cancelled/failed` (`SL_EXPIRED_ALERT_ENABLED`).
   O TP1 **não** é renovado (exigiria ação nova no PHP).
+- **D-034 (2026-10-15)** **Placar gravado no fechamento**: o `oco_guard` grava `exit_price` (preço do gatilho executado,
+  `exit_basis: gatilho_est`), `exit_qty` e `pnl_usdt_est`/`pnl_pct_est` (taxa 0,1% por ponta), somando a perna do TP1
+  parcial (`EXIT_RECORD_ENABLED`). A compra grava `strategy`. `scripts/placar.py` monta o placar só lendo o
+  `positions.jsonl` (linhas antigas: preço da perna, estratégia inferida com `*`). O fill real fica para depois (PHP).
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -147,7 +151,9 @@ Formato: problema → causa → regra que ficou.
   PAXG enquanto o D-032 valer.
 - **Gatilhos expiram em 30 dias**: o SL passou a ser renovado (D-033). Falta: renovar o TP1 (ação nova no PHP +
   deploy) e confirmar na API da Gate o nome do status de gatilho expirado (o alerta cobre `expired/cancelled/failed`).
-- **Placar**: `closed_sl` não grava `exit_price`; com TP1 parcial, somar a perna do TP1 (`tp1_price × tp1_qty`).
+- **Placar**: resolvido por estimativa (D-034). Falta o fill real da saída (o `oco_sync` do PHP consultar a ordem
+  executada; exige deploy). **A trava `EXECUTION_DAILY_LOSS_STOP` está inerte**: nada alimenta `realized_loss_today`
+  (`executor.py:247`), apesar de o `estrategias.md` a descrever como ativa. Próximo item a decidir.
 - **Próxima reauditoria do degrau**: marcar `cadencia_degradada` nos trades abertos entre 2026-09-14 21:13 e
   2026-10-09 01:02 UTC e reportar com e sem eles.
 - **Whitelist do PHP** ainda aceita PAXG, LINK, ETH, XRP e AAVE (fora do universo).

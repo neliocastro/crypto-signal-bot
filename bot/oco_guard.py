@@ -37,6 +37,70 @@ try:
 except Exception:
     SL_EXPIRED_ALERT_ENABLED = False
 
+try:
+    from .config import EXIT_RECORD_ENABLED, EXIT_FEE_RATE
+except Exception:
+    EXIT_RECORD_ENABLED = False
+    EXIT_FEE_RATE = 0.001
+
+
+def _d(x) -> Decimal:
+    try:
+        return Decimal(str(x if x not in (None, "") else "0"))
+    except Exception:
+        return Decimal("0")
+
+
+def exit_pnl_est(p: dict, closed_by: str, fee_rate: float = 0.001) -> dict:
+    """D-034: saida e P&L ESTIMADOS de uma posicao que fechou por TP ou SL.
+    Preco de saida = preco do gatilho executado (o relay nao devolve o fill).
+    Com TP1 parcial executado (tp1_done, ou tp1_hit_at no mesmo intervalo do SL),
+    soma a perna do TP1: tp1_price x tp1_qty + saida x restante.
+    Taxa: fee_rate em cada ponta. Funcao pura (sem rede, sem estado)."""
+    entry = _d(p.get("entry_price"))
+    base = _d(p.get("base_qty"))
+    fee = _d(fee_rate)
+    exit_px = _d(p.get("tp_price") if closed_by == "tp" else p.get("sl_price"))
+    tp1_qty = _d(p.get("tp1_qty"))
+    legs_proceeds = Decimal("0")
+    if p.get("tp_partial") and tp1_qty > 0 and (p.get("tp1_done") or p.get("tp1_hit_at")):
+        if p.get("tp1_done"):
+            tp1_px = _d(p.get("tp1_price"))
+            rest = base                         # base_qty ja e o restante
+        else:                                   # TP1 e SL no mesmo intervalo
+            tp1_px = _d(p.get("tp_price"))
+            rest = base - tp1_qty
+            exit_px = _d(p.get("sl_price"))
+        legs_proceeds += tp1_px * tp1_qty
+        total = tp1_qty + rest
+    else:
+        rest = base
+        total = base
+    gross_out = legs_proceeds + exit_px * rest
+    cost = entry * total
+    pnl = gross_out * (1 - fee) - cost * (1 + fee)
+    pct = (pnl / cost * 100) if cost > 0 else Decimal("0")
+    return {"exit_price": float(exit_px), "exit_qty": format(rest.normalize(), "f"),
+            "pnl_usdt_est": round(float(pnl), 6), "pnl_pct_est": round(float(pct), 4)}
+
+
+def _record_exit(p: dict, item: dict, closed_by: str) -> None:
+    """Grava na posicao (no lugar) a saida estimada e os ids da perna executada."""
+    if not EXIT_RECORD_ENABLED:
+        return
+    try:
+        est = exit_pnl_est(p, closed_by, EXIT_FEE_RATE)
+        leg = item.get(closed_by) or {}
+        p.update(est)
+        p["exit_basis"] = "gatilho_est"
+        p["exit_fee_rate"] = EXIT_FEE_RATE
+        p["exit_fired_order_id"] = leg.get("fired_order_id")
+        p["exit_ftime"] = leg.get("ftime")
+    except Exception:
+        log.exception("registro da saida falhou (%s) - posicao fecha sem P&L",
+                      p.get("symbol"))
+
+
 # Status de price_order que significam "gatilho morto, nao executou".
 _DEAD = ("expired", "cancelled", "failed")
 
@@ -85,7 +149,7 @@ def _remaining_qty(p: dict) -> str:
     return format(rest.normalize(), "f")
 
 
-def _move_to_breakeven(p: dict, notify=None) -> dict | None:
+def _move_to_breakeven(p: dict, notify=None, item=None) -> dict | None:
     """TP1 disparou: troca o SL (base inteira) por um SL no BREAKEVEN so com o
     restante. Usa a acao update_trailing do relay: cria o novo -> confirma ->
     deleta o antigo (se a criacao falhar, o antigo e MANTIDO e tenta no proximo
@@ -121,6 +185,9 @@ def _move_to_breakeven(p: dict, notify=None) -> dict | None:
     p["tp1_done"] = True
     p["tp1_order_id"] = p.get("tp_order_id", "")
     p["tp1_price"] = p.get("tp_price", 0.0)
+    _tp_leg = (item or {}).get("tp") or {}       # D-034: ids da perna do TP1
+    p["tp1_fired_order_id"] = _tp_leg.get("fired_order_id")
+    p["tp1_ftime"] = _tp_leg.get("ftime")
     p["tp_order_id"] = ""                 # restante segue sem TP (so trailing)
     p["tp_price"] = 0.0
     p["base_qty"] = rest
@@ -185,7 +252,7 @@ def sync(notify=None) -> list:
                 p["tp1_hit_at"] = p.get("tp1_hit_at") or _now_iso()
                 changed = True
                 if item.get("closed_by") is None:
-                    r = _move_to_breakeven(p, notify)
+                    r = _move_to_breakeven(p, notify, item)
                     if r:
                         results.append(r)
                     continue
@@ -198,6 +265,7 @@ def sync(notify=None) -> list:
             p["closed_at"] = _now_iso()
             p["updated_at"] = _now_iso()
             p["oco_cancel"] = item.get("cancel")
+            _record_exit(p, item, closed_by)      # D-034: saida e P&L estimados
             changed = True
             results.append({"symbol": p.get("symbol"),
                             "signal_id": p.get("signal_id"),
