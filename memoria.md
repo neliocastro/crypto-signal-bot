@@ -125,13 +125,19 @@ Formato: problema → causa → regra que ficou.
   (`/home/ineocom/...`) e `chown ineocom:ineocom` em arquivo criado como root.
 - **P-15 (07/24)** Um commit sobrescreveu o diário `docs/strategy_decisions.md` (hoje `historico/strategy_decisions_2026-05a06.md`) com uma linha de lixo (413 linhas perdidas;
   restaurado em 10/13). Regra: revisar o diff de docs antes de commitar.
+- **P-16 (10/15)** O cron PAXG decidia comprar (RSI < 30), mas toda compra falhava com HTTP 500 → o crontab chama
+  `/usr/local/bin/php`, porém o script interno roda o comprador com `exec('php …')`, que no PATH do cron é o CGI.
+  O log tinha 1 compra OK e 308 linhas FALHA (cada falha gera 2 linhas), sem nenhum alerta. Fix: `$PHP_BIN` absoluto em `paxg_rsi_check.php`.
+  Regra: P-03 vale também para `exec()` dentro do PHP; cron que falha precisa avisar alto.
 
 ---
 
 ## Pendências
-- **Cron PAXG no servidor: decidido manter (D-032).** Pendente só confirmar no servidor, por `gerar_teste_paxg.php`,
-  os valores de US$ 10 e SL −15%, e avaliar se vale passar a registrar essas compras em `positions.jsonl` para entrar
-  no placar e na trava de concentração (não decidido).
+- **Cron PAXG no servidor: decidido manter (D-032).** Confirmado no servidor em 2026-10-15 (`gerar_teste_paxg.php`,
+  sha256 `df762466…`): US$ 10, SL −15%, sem TP, `signal_id` único por compra. As compras falhavam (P-16); o fix
+  precisa de **deploy manual** do `paxg_rsi_check.php` conferido por hash. Ainda em aberto: registrar essas compras em
+  `positions.jsonl` (não decidido) e alertar no Telegram quando o cron falhar. A whitelist do PHP **precisa** manter
+  PAXG enquanto o D-032 valer.
 - **Gatilhos expiram em 30 dias**: trade longo do Maré Alta perde o TP1 (o trailing recria só o SL ao subir).
 - **Placar**: `closed_sl` não grava `exit_price`; com TP1 parcial, somar a perna do TP1 (`tp1_price × tp1_qty`).
 - **Próxima reauditoria do degrau**: marcar `cadencia_degradada` nos trades abertos entre 2026-09-14 21:13 e

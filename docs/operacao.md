@@ -64,7 +64,9 @@ Versões do relay em produção: FIX 10 (TP parcial), deployado em 2026-10-15, s
 Ativo, de hora em hora, por decisão do usuário (D-032). Compra US$ 10 de PAXG com SL −15% quando o RSI 4h < 30,
 **fora do bot** (sem `positions.jsonl`, OCO guard ou trava de concentração). Parâmetros do `paxg_rsi_check.php`
 conferidos no repositório (RSI 14, limiar 30, cooldown 12 h); valor e SL estão em `gerar_teste_paxg.php`, que só existe
-no servidor.
+no servidor (conferido em 2026-10-15: US$ 10, SL −15%, sem TP; sha256 `df762466…`).
+O comprador é chamado por `exec()` com `$PHP_BIN = '/usr/local/bin/php'`. Com `'php'` do PATH, o cron usa o CGI e toda
+compra falha com HTTP 500 (P-16). Para checar falhas: `grep -c 'FALHA na compra' $B/paxg_cron.log`.
 ```bash
 B=/home/ineocom/public_html/cryptosignals
 crontab -l -u ineocom | grep -i paxg               # agendamento

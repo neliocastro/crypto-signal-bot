@@ -26,6 +26,7 @@ $RSI_LIMIAR   = 30.0;      // compra se RSI < 30
 $COOLDOWN_H   = 12;        // horas minimas entre compras
 $NOTIONAL     = 10.0;      // $10 por acumulo (informativo; valor real esta no gerar_teste_paxg.php)
 $BUY_SCRIPT   = $DIR . '/gerar_teste_paxg.php';
+$PHP_BIN      = '/usr/local/bin/php';         // CLI; 'php' do PATH do cron e o CGI (HTTP 500, P-03/P-16)
 $LAST_BUY_F   = $DIR . '/.paxg_last_buy';     // timestamp epoch da ultima compra
 $PAUSE_F      = $DIR . '/.paxg_pause';        // se existir, pausa tudo
 $LOG_F        = $DIR . '/paxg_cron.log';
@@ -128,7 +129,7 @@ if ($DRY) {
 
 $out = [];
 $code = 0;
-exec('php ' . escapeshellarg($BUY_SCRIPT) . ' 2>&1', $out, $code);
+exec(escapeshellarg($PHP_BIN) . ' ' . escapeshellarg($BUY_SCRIPT) . ' 2>&1', $out, $code);
 $resp = implode("\n", $out);
 $ok = (strpos($resp, '"status": "filled"') !== false) || (strpos($resp, '"status":"filled"') !== false);
 
