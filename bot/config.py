@@ -267,6 +267,11 @@ MARE_ALTA_TRAILING_ENABLED = True   # kill-switch do trailing D1
 MARE_ALTA_SL_ATR_MULT      = 3.0    # stop = close_D1 - 3.0 * ATR(D1)
 MARE_ALTA_ATR_PERIOD       = 14     # periodo do ATR diario
 MARE_ALTA_SYMBOLS          = []     # vazio = qualquer posicao aberta registrada
+# 2026-10-15: trailing so com velas D1 FECHADAS (aprovado pelo usuario). Antes a
+# vela do dia em formacao entrava no calculo e o stop subia com picos intradia
+# (stops de 08/10 bateram com a MAXIMA do dia; BTC teria sobrevivido por $7).
+# Ver docs/trailing_vela_fechada_2026-10-15.md. Rollback: False.
+MARE_ALTA_TRAILING_CLOSED_ONLY = True
 
 # ============ OCO GUARD - emulacao de OCO (bot/oco_guard.py) ============
 # A Gate.io NAO tem OCO nativo no spot: TP e SL sao price_orders INDEPENDENTES,

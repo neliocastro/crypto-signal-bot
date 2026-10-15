@@ -22,8 +22,8 @@ unica de verdade de watchlist, kill-switches e execucao).
 
 | Documento | O que cobre | Ultima revisao |
 |---|---|---|
-| [`estado_atual.md`](estado_atual.md) | Roteamento, kill-switches, camada de execucao, posicoes manuais, placar resumido | 2026-10-13 |
-| [`mapa_estrategias.md`](mapa_estrategias.md) | 1 ativo = 1 trilho; allowlist do `main.py` (lido pelo teste canario) | 2026-10-13 |
+| [`estado_atual.md`](estado_atual.md) | Roteamento, kill-switches, camada de execucao, posicoes manuais, placar resumido | 2026-10-15 |
+| [`mapa_estrategias.md`](mapa_estrategias.md) | 1 ativo = 1 trilho; allowlist do `main.py` (lido pelo teste canario) | 2026-10-15 |
 | [`resultado_financeiro.md`](resultado_financeiro.md) | Placar real do bot (baseline 12/08 + secoes datadas) | 2026-10-11 |
 | [`runbook_btc_manual.md`](runbook_btc_manual.md) | Posicao MANUAL de BTC do usuario (fora do bot) | 2026-10-11 |
 | [`gateio_limitacoes.md`](gateio_limitacoes.md) | O que a Gate.io spot nao faz (OCO, condicionais, precisao) | 2026-08-11 (permanente) |
@@ -53,6 +53,7 @@ Ao revisar um documento vivo, troque a data "Ultima revisao" aqui e no topo dele
 
 | Data | Documento | Resumo |
 |---|---|---|
+| 2026-10-15 | [`trailing_vela_fechada_2026-10-15.md`](trailing_vela_fechada_2026-10-15.md) | Auditoria 15/10 + trailing so com vela D1 fechada; saida real != saida validada (pendente) |
 | 2026-10-13 | [`decisao_2026-10-13_hype_desligado_e_paper.md`](decisao_2026-10-13_hype_desligado_e_paper.md) | HYPE desligado (`BREAKOUT_ENABLED = False`); 2 posicoes-papel obsoletas ignoradas |
 | 2026-10-11 | [`reconciliacao_2026-10-11.md`](reconciliacao_2026-10-11.md) | Lote legado de HYPE fechado; BTC manual; placar por fills reais |
 | 2026-10-08 | [`reauditoria_degrau_2026-10-08.md`](reauditoria_degrau_2026-10-08.md) | Degrau $10 -> $20 reprovado (congelado) |

@@ -1,7 +1,9 @@
 # Estado Atual do Bot — Consolidado (out/2026)
 
 > Documento de referencia do roteamento e da camada de execucao vigentes no
-> `main`. **Atualizado em 2026-10-13** (HYPE desligado, posicoes-papel obsoletas;
+> `main`. **Atualizado em 2026-10-15** (trailing so com vela D1 fechada; saida real
+> do Mare Alta descrita como o codigo faz - ver `docs/trailing_vela_fechada_2026-10-15.md`).
+> Revisao de 2026-10-13: HYPE desligado, posicoes-papel obsoletas;
 > ver `docs/decisao_2026-10-13_hype_desligado_e_paper.md`). Revisoes anteriores:
 > 2026-10-11 (reconciliacao), 2026-10-08 (override, 22 trades, degrau),
 > 2026-09-16 (override de stop por simbolo) e 2026-09-04 (remocao do PAXG).
@@ -38,7 +40,10 @@ MARE_ALTA_UNIVERSE = ["BTC/USDT", "SOL/USDT", "TRX/USDT", "BNB/USDT"]
 
 - `MARE_ALTA_ENABLED = True`, `MARE_ALTA_SHADOW_MODE = False` (producao real).
 - Entrada (D1, vela fechada): MACD cruza acima do sinal + EMA9>EMA21.
-- Saida: stop 2.5xATR -> TP1 +10% (50%) -> breakeven + trailing 3.0xATR.
+- Saida **validada no backtest**: stop 2.5xATR -> TP1 +10% (50%) -> breakeven + trailing 3.0xATR.
+- Saida **executada hoje** (difere; decisao pendente do usuario): stop 2.5xATR + TP unico em
+  2.0x o risco (~+23%) para 100% da posicao + trailing 3.0xATR. **Nao ha TP1 parcial nem breakeven**
+  na execucao (o `tp1` so aparece na mensagem do Telegram).
 - Universo proprio + `fetch_ohlcv` proprio (D1): nao depende da WATCHLIST intraday.
 - Todos os 4 ativos do universo sao validados no walk-forward original.
 
@@ -83,6 +88,8 @@ EXECUTION_ATR_MULT_SL_BY_SYMBOL = {"HYPE/USDT": 3.0}  # stop da ORDEM REAL
 - `MARE_ALTA_ATR_PERIOD = 14`
 - `MARE_ALTA_SYMBOLS = []` -> mira qualquer posicao aberta registrada no `state/positions.jsonl`.
 - Catraca: o stop so SOBE (cria novo -> confirma -> deleta antigo; se falhar, o antigo e mantido).
+- `MARE_ALTA_TRAILING_CLOSED_ONLY = True` (desde 2026-10-15): usa so velas D1 **fechadas**. Antes, a vela
+  em formacao fazia o stop subir com picos intradia. Rollback: `False`.
 
 ---
 

@@ -1,6 +1,6 @@
 # Mapa de Estrategias — 1 token = 1 trilho
 
-> Referencia rapida. **Revisado em 2026-10-13** (HYPE desligado). Reverificacao completa
+> Referencia rapida. **Revisado em 2026-10-15** (trailing com vela fechada). Reverificacao completa
 > no codigo do `main` em 2026-10-08 (HEAD `84388d2`:
 > `bot/config.py`, `bot/strategies.py`, `bot/mare_alta.py`, `bot/main.py`, `bot/executor.py`).
 > Substitui a versao de 2026-08-23, que ainda citava ETH, XRP, PAXG e o MACD-only.
@@ -84,6 +84,7 @@ proprio (`MARE_ALTA_UNIVERSE`) e `fetch_ohlcv` D1 proprio.
 | `REQUIRE_PROTECTION` (PHP) | compra sem TP/SL e recusada |
 | `OCO_GUARD_ENABLED` | OCO emulado (so ordens do bot) |
 | `MARE_ALTA_TRAILING_ENABLED` | trailing D1 3.0x ATR, catraca so sobe |
+| `MARE_ALTA_TRAILING_CLOSED_ONLY` | `True`: trailing so com vela D1 fechada (desde 15/10) |
 
 ## 8. Historico do universo
 
@@ -94,7 +95,8 @@ proprio (`MARE_ALTA_UNIVERSE`) e `fetch_ohlcv` D1 proprio.
 | 04/09 | PAXG removido; `ACCUMULATION_ENABLED=False` |
 | 16/09 | override de stop do HYPE (3.0x ATR) |
 | 13/10 | Breakout HYPE desligado (`BREAKOUT_ENABLED = False`); HYPE segue na watchlist sem operar |
+| 15/10 | Trailing do Mare Alta passa a usar so vela D1 fechada (`MARE_ALTA_TRAILING_CLOSED_ONLY`) |
 
 ---
 
-_Revisado em 2026-10-13. Ao alterar roteamento, atualizar este arquivo no mesmo commit (ver `docs/README.md`)._
+_Revisado em 2026-10-15. Ao alterar roteamento, atualizar este arquivo no mesmo commit (ver `docs/README.md`)._

@@ -450,6 +450,19 @@ def main() -> int:
             _df = fetch_ohlcv(_sym, timeframe="1d", limit=60)
             if _df is None or _df.empty:
                 return []
+            # So velas FECHADAS (2026-10-15): descarta a vela D1 em formacao
+            # (abertura + 1 dia ainda no futuro). Rollback: config
+            # MARE_ALTA_TRAILING_CLOSED_ONLY = False.
+            try:
+                from .config import MARE_ALTA_TRAILING_CLOSED_ONLY as _closed_only
+            except Exception:
+                _closed_only = True
+            if _closed_only:
+                import pandas as _pd
+                _now = _pd.Timestamp.now(tz="UTC")
+                _df = _df[_df.index + _pd.Timedelta(days=1) <= _now]
+                if _df.empty:
+                    return []
             return _df[["high", "low", "close"]].to_dict("records")
 
         _tr_results = _ma_trail2.update_trailing(_fetch_d1_candles)
