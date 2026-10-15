@@ -272,6 +272,13 @@ MARE_ALTA_SYMBOLS          = []     # vazio = qualquer posicao aberta registrada
 # (stops de 08/10 bateram com a MAXIMA do dia; BTC teria sobrevivido por $7).
 # Ver docs/trailing_vela_fechada_2026-10-15.md. Rollback: False.
 MARE_ALTA_TRAILING_CLOSED_ONLY = True
+# 2026-10-15: SAIDA VALIDADA do Mare Alta (aprovada pelo usuario): TP1 +10% vende
+# 50% -> SL vai ao breakeven (preco de entrada) c/ o restante -> trailing 3x ATR
+# so DEPOIS do TP1 (antes, o stop inicial 2.5x ATR fica fixo). Sem TP no restante.
+# EXIGE o execute.php com FIX 10 no servidor (campos tp_frac / tp_partial).
+# Ligar SO depois do deploy do PHP. Desligado = TP unico 2.0R na base inteira.
+# Ver docs/saida_tp1_breakeven_2026-10-15.md. Rollback: False.
+MARE_ALTA_PARTIAL_TP_ENABLED = False
 
 # ============ OCO GUARD - emulacao de OCO (bot/oco_guard.py) ============
 # A Gate.io NAO tem OCO nativo no spot: TP e SL sao price_orders INDEPENDENTES,

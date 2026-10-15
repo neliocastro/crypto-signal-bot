@@ -391,6 +391,7 @@ def main() -> int:
                                 sl_order_id=_slg.get("id") or "",
                                 tp_price=float(_tpg.get("price") or 0),
                                 tp_order_id=_tpg.get("id") or "",
+                                tp_qty=(_tpg.get("qty") if _tg.get("tp_frac_applied") else ""),
                             )
                             log.info("[TRAIL-REG] posicao registrada: %s", _symg)
                     except Exception:
@@ -429,7 +430,21 @@ def main() -> int:
                                 sl_order_id=_slr.get("id") or "",
                                 tp_price=float(_tpr.get("price") or 0),
                                 tp_order_id=_tpr.get("id") or "",
+                                tp_qty=(_tpr.get("qty") if _tpsl.get("tp_frac_applied") else ""),
                         )
+                            # TP1 parcial pedido mas nao aplicado: PHP sem FIX 10 ou
+                            # qty pequena demais. Avisa (o TP saiu na base inteira).
+                            if (((_ma_res or {}).get("order") or {}).get("tp_frac")
+                                    and not _tpsl.get("tp_frac_applied")):
+                                _w = ("\u26a0\ufe0f MARE ALTA %s: TP1 parcial NAO aplicado pelo relay "
+                                      "(%s). TP ficou na base inteira; trailing segue o modo antigo."
+                                      % (_ma_sig.get("symbol"),
+                                         _tpsl.get("tp_frac_note") or "execute.php sem FIX 10?"))
+                                log.warning(_w)
+                                try:
+                                    send(_w)
+                                except Exception:
+                                    pass
                     except Exception:
                         log.error("Falha ao registrar posicao p/ trailing (ignorada):\n%s",
                                   traceback.format_exc())

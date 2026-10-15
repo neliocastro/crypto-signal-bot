@@ -139,9 +139,12 @@ def _save_positions(positions: list) -> None:
 
 def register_position(signal_id, symbol, base_qty, entry_price,
                       sl_price, sl_order_id,
-                      tp_price=0.0, tp_order_id="") -> None:
+                      tp_price=0.0, tp_order_id="", tp_qty="") -> None:
     """Registra/atualiza uma posicao aberta apos o fill. Chave: signal_id.
-    Idempotente: mesma signal_id sobrescreve a entrada anterior."""
+    Idempotente: mesma signal_id sobrescreve a entrada anterior.
+
+    tp_qty (2026-10-15): qty do TP PARCIAL confirmada pelo PHP (FIX 10). Se vier,
+    a posicao segue a saida validada do Mare Alta: TP1 -> breakeven -> trailing."""
     try:
         positions = _load_positions()
         rec = {
@@ -157,6 +160,10 @@ def register_position(signal_id, symbol, base_qty, entry_price,
             "opened_at": _now_iso(),
             "updated_at": _now_iso(),
         }
+        if tp_qty and rec["tp_order_id"]:
+            rec["tp_partial"] = True          # saida validada: TP1 parcial
+            rec["tp1_qty"] = str(tp_qty)
+            rec["tp1_done"] = False
         positions = [p for p in positions if p.get("signal_id") != rec["signal_id"]]
         positions.append(rec)
         _save_positions(positions)
@@ -232,6 +239,12 @@ def update_trailing(fetch_d1_candles) -> list:
         symbol = pos.get("symbol", "")
         try:
             if MARE_ALTA_SYMBOLS and symbol not in MARE_ALTA_SYMBOLS:
+                continue
+            # Saida validada (2026-10-15): antes do TP1 o stop inicial fica FIXO;
+            # o trailing so comeca apos o TP1 (piso = breakeven, gravado pelo oco_guard).
+            if pos.get("tp_partial") and not pos.get("tp1_done"):
+                results.append({"symbol": symbol, "signal_id": pos.get("signal_id"),
+                                "action": "hold", "reason": "aguardando TP1 (stop fixo)"})
                 continue
 
             candles = fetch_d1_candles(symbol) or []

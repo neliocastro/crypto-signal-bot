@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from . import mare_alta_trailing as _mt
 
@@ -34,6 +35,69 @@ except Exception:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _remaining_qty(p: dict) -> str:
+    """Base que sobra apos o TP1 (base_qty - tp1_qty), com as casas da base."""
+    base = Decimal(str(p.get("base_qty") or "0"))
+    tp1 = Decimal(str(p.get("tp1_qty") or "0"))
+    rest = base - tp1
+    if rest <= 0:
+        return ""
+    return format(rest.normalize(), "f")
+
+
+def _move_to_breakeven(p: dict, notify=None) -> dict | None:
+    """TP1 disparou: troca o SL (base inteira) por um SL no BREAKEVEN so com o
+    restante. Usa a acao update_trailing do relay: cria o novo -> confirma ->
+    deleta o antigo (se a criacao falhar, o antigo e MANTIDO e tenta no proximo
+    scan). Altera `p` no lugar; o chamador salva."""
+    sym = p.get("symbol")
+    rest = _remaining_qty(p)
+    be = float(p.get("entry_price") or 0.0)
+    if not rest or be <= 0:
+        log.error("TP1 %s: restante/entrada invalidos (rest=%s, entry=%s) - SL mantido",
+                  sym, rest, be)
+        return None
+    payload = {
+        "action": "update_trailing",
+        "symbol": sym,
+        "new_sl_price": be,
+        "base_qty": rest,
+        "old_sl_order_id": str(p.get("sl_order_id", "") or ""),
+        "signal_id": str(p.get("signal_id", "")),
+    }
+    resp = _mt._sign_and_send(payload)
+    if not (resp and resp.get("status") == "trailing_updated"):
+        log.warning("TP1 %s: breakeven NAO confirmado (SL antigo mantido; retenta): %s",
+                    sym, resp)
+        if notify and not p.get("tp1_be_fail_notified"):
+            p["tp1_be_fail_notified"] = _now_iso()
+            try:
+                notify("⚠️ TP1 %s executado, mas o SL ainda NAO foi para o "
+                       "breakeven (relay nao confirmou). Retentando no proximo scan." % sym)
+            except Exception:
+                pass
+        return {"symbol": sym, "signal_id": p.get("signal_id"), "action": "tp1_be_failed"}
+    new_sl = resp.get("new_sl") or {}
+    p["tp1_done"] = True
+    p["tp1_order_id"] = p.get("tp_order_id", "")
+    p["tp1_price"] = p.get("tp_price", 0.0)
+    p["tp_order_id"] = ""                 # restante segue sem TP (so trailing)
+    p["tp_price"] = 0.0
+    p["base_qty"] = rest
+    p["sl_price"] = float(new_sl.get("price") or be)
+    p["sl_order_id"] = str(new_sl.get("id") or "")
+    p["updated_at"] = _now_iso()
+    if notify:
+        try:
+            notify("\U0001F3AF TP1 %s: 50%% vendido em %s. Stop do restante (%s) "
+                   "no breakeven %s; agora segue em trailing 3x ATR."
+                   % (sym, p["tp1_price"], rest, p["sl_price"]))
+        except Exception:
+            pass
+    return {"symbol": sym, "signal_id": p.get("signal_id"), "action": "tp1_breakeven",
+            "new_sl": p["sl_price"], "base_qty": rest}
 
 
 def sync(notify=None) -> list:
@@ -58,6 +122,8 @@ def sync(notify=None) -> list:
             "signal_id": str(p.get("signal_id", "")),
             "tp_order_id": str(p.get("tp_order_id", "") or ""),
             "sl_order_id": str(p.get("sl_order_id", "") or ""),
+            # PHP FIX 10: TP1 parcial disparado NAO cancela o SL (devolve tp1_hit)
+            "tp_partial": bool(p.get("tp_partial") and not p.get("tp1_done")),
         } for p in open_pos[:20]]  # espelha o teto de 20 pares do PHP
 
         payload = {
@@ -76,6 +142,14 @@ def sync(notify=None) -> list:
             item = by_sid.get(str(p.get("signal_id")))
             if not item or p.get("status") != "open":
                 continue
+            if item.get("tp1_hit") and p.get("tp_partial") and not p.get("tp1_done"):
+                p["tp1_hit_at"] = p.get("tp1_hit_at") or _now_iso()
+                changed = True
+                if item.get("closed_by") is None:
+                    r = _move_to_breakeven(p, notify)
+                    if r:
+                        results.append(r)
+                    continue
             closed_by = item.get("closed_by")
             if closed_by not in ("tp", "sl"):
                 continue

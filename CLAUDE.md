@@ -33,10 +33,13 @@ neste arquivo para o estado atual.** Leia sempre:
 ```bash
 pip install -r requirements.txt
 python tests/test_roteamento_strings.py      # canário de roteamento (sem pytest); exit 0 = ok
+python tests/test_saida_tp1.py               # saída TP1/breakeven do Maré Alta (relay simulado)
 python -m py_compile bot/*.py                # antes de TODO commit
 python -c "import bot.main"                  # teste de import
 ```
 Backtests em `scripts/` (sob demanda; ver também `.github/workflows/backtest.yml`).
+O workflow `checks.yml` roda `php -l` no relay e os testes a cada push em `server/`, `bot/` ou `tests/`:
+confira verde **antes** de subir o `execute.php` ao servidor.
 
 ## Regras de engenharia
 1. **Mudanças aditivas.** Não renomeie símbolos existentes (evita `ImportError`); mantenha aliases

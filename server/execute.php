@@ -15,6 +15,10 @@
  *   morria no relay - sem nunca aparecer como falha no Telegram do scan.
  *   Tambem alinha $MAX_NOTIONAL_USDT (5.0 -> 10.0) ao EXECUTION_MAX_NOTIONAL_USDT
  *   do bot/config.py: o Python liberava ate $10 e o PHP recusaria acima de $5.
+ * FIX 10 (2026-10-15): saida validada do Mare Alta. Campo opcional 'tp_frac' na compra
+ *   (TP vende so essa fracao; resposta traz tpsl.tp_frac_applied e tpsl.tp.qty) e campo
+ *   'tp_partial' por par no oco_sync (TP1 disparado NAO cancela o SL; devolve tp1_hit).
+ *   Sem esses campos o comportamento e identico ao FIX 9.
  */
 $DRY_RUN            = false;
 $TPSL_ENABLED       = true;
@@ -144,8 +148,15 @@ if ($action === 'oco_sync') {
         $tp = $fetch_st($p['tp_order_id'] ?? '');
         $sl = $fetch_st($p['sl_order_id'] ?? '');
         $item = ['signal_id'=>$psid, 'tp'=>$tp, 'sl'=>$sl, 'closed_by'=>null, 'cancel'=>null];
+        // FIX 10 (2026-10-15): par com TP PARCIAL (Mare Alta TP1). Quando o TP1 dispara,
+        // o SL NAO e cancelado: ainda protege o restante. Devolve tp1_hit e o Python troca
+        // o SL (update_trailing: cria novo no breakeven c/ a qty restante -> deleta o antigo).
+        if (!empty($p['tp_partial']) && $tp['status'] === 'finish') {
+            $item['tp1_hit'] = true;
+            if ($sl['status'] === 'finish') $item['closed_by'] = 'sl';   // restante tambem saiu
+        }
         // regra: 'finish' = disparou. A perna oposta ainda 'open' esta orfa -> cancela.
-        if ($tp['status'] === 'finish' && $sl['status'] === 'open') {
+        elseif ($tp['status'] === 'finish' && $sl['status'] === 'open') {
             list($hd, $gd, $ed) = gate_delete($ppath . '/' . rawurlencode($sl['id']), $GATE_KEY, $GATE_SECRET);
             $item['closed_by'] = 'tp';
             $item['cancel'] = ['side'=>'sl', 'id'=>$sl['id'], 'http'=>$hd, 'err'=>($ed ?: ($gd['label'] ?? null))];
@@ -211,15 +222,26 @@ if ($DRY_RUN) {
                 elseif ($minb > 0 && $base_qty_f < $minb) { $tpsl['note'] = "base_qty ($base_qty_f) < min_base ($minb); TP/SL NAO criados"; }
                 else {
                     $ppath = '/api/v4/spot/price_orders';
+                    // FIX 10 (2026-10-15): TP PARCIAL opcional (Mare Alta TP1: vende tp_frac da base).
+                    // So aplica se as DUAS partes respeitam min_base; senao cai no TP da base inteira.
+                    // O SL continua na base inteira; o Python move o SL p/ breakeven c/ o restante apos o TP1.
+                    $tp_qty_s = $base_qty_s; $tpsl['tp_frac_applied'] = false;
+                    $tp_frac = isset($order['tp_frac']) ? (float)$order['tp_frac'] : 0.0;
+                    if ($tp_frac > 0 && $tp_frac < 1) {
+                        $q_s = fmt_floor($base_qty_f * $tp_frac, $apz); $q_f = (float)$q_s; $rest_f = $base_qty_f - $q_f;
+                        if ($q_f > 0 && $q_f >= $minb && $rest_f > 0 && $rest_f >= $minb) { $tp_qty_s = $q_s; $tpsl['tp_frac_applied'] = true; }
+                        else { $tpsl['tp_frac_note'] = "tp parcial inviavel (q=$q_s, resto=$rest_f, min_base=$minb); TP na base inteira"; }
+                    }
                     if ($tp_price > 0) {
                         $tp_s = fmt_floor($tp_price, $ppz);
-                        if (decimal_places($tp_s) > $ppz) { $tpsl['tp'] = ['skipped'=>true,'reason'=>"precisao TP ($tp_s) excede ppz ($ppz)"]; }
+                        if (decimal_places($tp_s) > $ppz) { $tpsl['tp'] = ['skipped'=>true,'reason'=>"precisao TP ($tp_s) excede ppz ($ppz)"]; $tpsl['tp_frac_applied'] = false; }
                         else {
-                            $tpBody = ['trigger'=>['price'=>$tp_s,'rule'=>'>=','expiration'=>2592000],'put'=>['type'=>'market','side'=>'sell','amount'=>$base_qty_s,'account'=>'normal','time_in_force'=>'ioc'],'market'=>$pair];
+                            $tpBody = ['trigger'=>['price'=>$tp_s,'rule'=>'>=','expiration'=>2592000],'put'=>['type'=>'market','side'=>'sell','amount'=>$tp_qty_s,'account'=>'normal','time_in_force'=>'ioc'],'market'=>$pair];
                             list($h2,$g2,$e2) = gate_post($ppath, $tpBody, $GATE_KEY, $GATE_SECRET);
-                            $tpsl['tp'] = ['http'=>$h2,'id'=>($g2['id']??null),'err'=>($e2?:($g2['label']??null)),'price'=>$tp_s];
+                            $tpsl['tp'] = ['http'=>$h2,'id'=>($g2['id']??null),'err'=>($e2?:($g2['label']??null)),'price'=>$tp_s,'qty'=>$tp_qty_s];
+                            if (empty($g2['id'])) $tpsl['tp_frac_applied'] = false;
                         }
-                    }
+                    } else { $tpsl['tp_frac_applied'] = false; }
                     if ($sl_price > 0) {
                         $sl_s = fmt_floor($sl_price, $ppz);
                         if (decimal_places($sl_s) > $ppz) { $tpsl['sl'] = ['skipped'=>true,'reason'=>"precisao SL ($sl_s) excede ppz ($ppz)"]; }

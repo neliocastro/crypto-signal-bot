@@ -357,7 +357,14 @@ def build_order(signal: dict, balance_usdt: float) -> dict:
         if sl_price <= 0:                            # guarda: nunca SL negativo
             sl_price = None
 
-    return {
+    # SAIDA VALIDADA do Mare Alta (2026-10-15): TP1 +10% em 50% da base (o PHP
+    # FIX 10 cria o TP so com essa fracao). SL inalterado. Kill-switch em config.
+    tp_frac = None
+    if tp_price and _partial_tp_for(signal):
+        tp_price = round(float(price) * (1.0 + _MA_TP1_PCT), 8)
+        tp_frac = _MA_TP1_FRAC
+
+    order = {
         "signal_id": _signal_id(signal),
         "symbol": signal.get("symbol"),
         "side": "buy",                       # camada e LONG/BUY only (Fase 1)
@@ -373,6 +380,28 @@ def build_order(signal: dict, balance_usdt: float) -> dict:
         "dry_run": bool(EXECUTION_DRY_RUN),
         "ts": _now_iso(),
     }
+    if tp_frac:
+        order["tp_frac"] = tp_frac           # PHP FIX 10: TP vende so esta fracao
+    return order
+
+
+def _partial_tp_for(signal) -> bool:
+    """True so p/ sinais do Mare Alta com MARE_ALTA_PARTIAL_TP_ENABLED ligado."""
+    try:
+        from .config import MARE_ALTA_PARTIAL_TP_ENABLED as _on
+    except Exception:
+        return False
+    try:
+        strat = signal.get("strategy") if isinstance(signal, dict) else getattr(signal, "strategy", None)
+    except Exception:
+        return False
+    return bool(_on) and strat == "MARE_ALTA_D1"
+
+
+try:
+    from .mare_alta import MARE_ALTA_TP1_PCT as _MA_TP1_PCT, MARE_ALTA_TP1_FRAC as _MA_TP1_FRAC
+except Exception:
+    _MA_TP1_PCT, _MA_TP1_FRAC = 0.10, 0.5
 
 
 def _sign(payload_bytes: bytes) -> str:
