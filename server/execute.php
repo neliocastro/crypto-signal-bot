@@ -24,7 +24,7 @@ $DRY_RUN            = false;
 $TPSL_ENABLED       = true;
 $REQUIRE_PROTECTION = true;
 $MAX_NOTIONAL_USDT  = 10.0;  // alinhado ao Python (EXECUTION_MAX_NOTIONAL_USDT = 10.0, DEGRAU 2)
-$SYMBOL_WHITELIST   = ['PAXG/USDT','HYPE/USDT','LINK/USDT','BTC/USDT','ETH/USDT','SOL/USDT','XRP/USDT','TRX/USDT','BNB/USDT','AAVE/USDT'];
+$SYMBOL_WHITELIST   = ['PAXG/USDT','HYPE/USDT','BTC/USDT','SOL/USDT','TRX/USDT','BNB/USDT']; // D-036 (2026-10-15): universo atual + PAXG (cron D-032)
 $LOG_FILE           = __DIR__ . '/execution_log.jsonl';
 $SEEN_FILE          = __DIR__ . '/seen_signals.json';
 $SAFE_PRICE_PREC = ['BTC_USDT'=>1,'ETH_USDT'=>2,'SOL_USDT'=>2,'XRP_USDT'=>4,'TRX_USDT'=>4,'BNB_USDT'=>1,'LINK_USDT'=>3,'HYPE_USDT'=>2,'AAVE_USDT'=>2]; // conferido via /spot/currency_pairs 2026-07-26

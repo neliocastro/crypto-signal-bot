@@ -77,6 +77,10 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   pnl_usdt_est)` das posições fechadas no dia UTC (`EXECUTION_DAILY_LOSS_FROM_POSITIONS`). Só bloqueia novas compras.
   Limite mantido em US$ 20 (inalcançável no degrau de US$ 10; reavaliar ao subir o degrau, D-024). P&L é estimativa
   pelo gatilho (D-034): a trava pode disparar um pouco depois do limite exato.
+- **D-036 (2026-10-15)** **Whitelist do PHP = universo atual + PAXG**: `$SYMBOL_WHITELIST` passa a aceitar só BTC, SOL,
+  TRX, BNB, HYPE e PAXG (este pelo cron do servidor, D-032); saem ETH, XRP, LINK e AAVE (D-010, R-005).
+  `tests/test_whitelist_php.py` falha se a whitelist divergir de `WATCHLIST ∪ MARE_ALTA_UNIVERSE ∪ {PAXG}`.
+  Vale no servidor só após o deploy conferido por hash (`docs/operacao.md`, seção 2).
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -161,7 +165,9 @@ Formato: problema → causa → regra que ficou.
 - **Próxima reauditoria do degrau**: `python scripts/placar.py --degrau` já marca `cadencia_degradada` (abertos entre
   2026-09-14 21:13 e 2026-10-09 01:02 UTC) e reporta com e sem eles. Em 2026-10-15: 6/20 trades (−US$ 2,41, PF 0);
   sem os degradados, 3/20 (−US$ 1,15, PF 0). Reprovado nos dois recortes; reauditar ao chegar a 20.
-- **Whitelist do PHP** ainda aceita PAXG, LINK, ETH, XRP e AAVE (fora do universo).
+- **Whitelist do PHP**: corrigida no Git (D-036); falta o **deploy manual** do `execute.php` conferido por hash.
+- **Tabelas de precisão de fallback divergem** entre PHP (`$SAFE_PRICE_PREC`: TRX 4, HYPE 2) e Python
+  (`_SAFE_PRICE_PREC`: TRX 5, HYPE 3). Só valem se `/spot/currency_pairs` falhar; conferir na Gate e alinhar.
 - **Watchdog** (`bot/watchdog.py`) só alerta quando um scan volta a rodar; não cobre parada total de disparos.
 - **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 21/09: decisão do usuário.
 

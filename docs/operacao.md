@@ -24,6 +24,7 @@ python tests/test_saida_tp1.py
 python tests/test_renovacao_sl.py
 python tests/test_placar.py
 python tests/test_trava_perda_diaria.py
+python tests/test_whitelist_php.py
 ```
 
 ## 2. Deploy do relay (`server/execute.php`)
@@ -49,7 +50,7 @@ Paridade servidor × Git e varredura de corrupção (o arquivo tem histórico de
 ```bash
 F=/home/ineocom/public_html/cryptosignals/execute.php
 php -l $F; wc -c -l $F; sha256sum $F
-grep -nP "'ss[a-z]" $F                          # typos da família 'sspot' (vazio = ok)
+grep -nP "'ss[a-z]" $F | grep -vE ':\s*(\*|//)'   # typos da família 'sspot' fora de comentário (vazio = ok)
 grep -nP "[\x00-\x08\x0B\x0C\x0E-\x1F]" $F      # bytes de controle (exit 1 = limpo)
 ```
 Hash local: `shasum -a 256 server/execute.php`.

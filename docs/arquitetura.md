@@ -61,7 +61,8 @@ Ações, todas exigindo assinatura HMAC-SHA256 do corpo (`X-Signature`):
 | `update_trailing` | cria o novo SL → confirma → deleta o antigo (falhou = antigo mantido) |
 | `oco_sync` | lê o status real de cada perna; cancela a sobrevivente; com `tp_partial` devolve `tp1_hit` sem cancelar o SL |
 
-Travas próprias do PHP: `$MAX_NOTIONAL_USDT = 10.0`, `$REQUIRE_PROTECTION = true`, `$SYMBOL_WHITELIST`,
+Travas próprias do PHP: `$MAX_NOTIONAL_USDT = 10.0`, `$REQUIRE_PROTECTION = true`, `$SYMBOL_WHITELIST` (BTC, SOL, TRX,
+BNB, HYPE + PAXG do cron D-032; D-036, sincronia vigiada por `tests/test_whitelist_php.py`),
 idempotência por `signal_id` (`seen_signals.json`), precisão por par via `/spot/currency_pairs` com tabela de fallback.
 **Qualquer mudança neste arquivo exige deploy manual** (`operacao.md`).
 

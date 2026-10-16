@@ -42,7 +42,7 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
   uma feature nova nunca derruba o scan.
 - Antes de commitar: `python -m py_compile bot/*.py`, `python tests/test_roteamento_strings.py`,
   `python tests/test_saida_tp1.py`, `python tests/test_renovacao_sl.py`, `python tests/test_placar.py`,
-  `python tests/test_trava_perda_diaria.py`. O workflow `checks` roda `php -l` no relay e os testes no GitHub.
+  `python tests/test_trava_perda_diaria.py`, `python tests/test_whitelist_php.py`. O workflow `checks` roda `php -l` no relay e os testes no GitHub.
 - `server/execute.php` exige **deploy manual** conferido por bytes e hash (`docs/operacao.md`). Flag que dependa do
   PHP só se liga depois do deploy.
 - Mensagens de commit em português; não commite `__pycache__`.

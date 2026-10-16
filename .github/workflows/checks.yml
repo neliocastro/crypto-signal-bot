@@ -33,3 +33,4 @@ jobs:
           python tests/test_renovacao_sl.py
           python tests/test_placar.py
           python tests/test_trava_perda_diaria.py
+          python tests/test_whitelist_php.py
