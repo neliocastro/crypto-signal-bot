@@ -81,6 +81,11 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   TRX, BNB, HYPE e PAXG (este pelo cron do servidor, D-032); saem ETH, XRP, LINK e AAVE (D-010, R-005).
   `tests/test_whitelist_php.py` falha se a whitelist divergir de `WATCHLIST ∪ MARE_ALTA_UNIVERSE ∪ {PAXG}`.
   Deployada em 2026-10-15 (commit `8298f20d`, sha256 `4ec3b375…`, HTTP 401 conferido; backup `execute.php.bak-20261015b`).
+- **D-037 (2026-10-15)** **Watchdog externo no servidor** (`server/watchdog_scan.php`, crontab do `ineocom`, de hora em
+  hora): lê `state/runtime_config.json` do `main` e alerta no Telegram se `last_scan_utc` passar de 60 min (DND: +30),
+  repetindo a cada 3 h e avisando a volta; também alerta `FALHA na compra` nova no `paxg_cron.log`. Fora do GitHub
+  Actions e do `SELF_DISPATCH_PAT`. Só lê e avisa. Exige `TELEGRAM_TOKEN`/`TELEGRAM_CHAT_ID` no `.env` de segredos do
+  servidor. Pausa: `.watchdog_pause`.
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -147,6 +152,9 @@ Formato: problema → causa → regra que ficou.
   `/usr/local/bin/php`, porém o script interno roda o comprador com `exec('php …')`, que no PATH do cron é o CGI.
   O log tinha 1 compra OK e 308 linhas FALHA (cada falha gera 2 linhas), sem nenhum alerta. Fix: `$PHP_BIN` absoluto em `paxg_rsi_check.php`.
   Regra: P-03 vale também para `exec()` dentro do PHP; cron que falha precisa avisar alto.
+- **P-17 (10/15)** O cron do GitHub é muito irregular: o `commander.yml` (`*/2`) rodou 6 vezes em 15/10, com intervalos
+  de 3 a 5,5 h. Regra: **comandos do Telegram (`/pausar` etc.) podem levar horas**; para parar rápido, desabilitar o
+  `main.yml` no GitHub. Nada que precise de prazo pode depender do cron do GitHub.
 
 ---
 
@@ -156,7 +164,7 @@ Formato: problema → causa → regra que ficou.
   foi deployado em 2026-10-15 (commit `8dc5668a`, sha256 `0e3624f6…`, backup `paxg_rsi_check.php.bak-20261015`),
   mas ainda falta ver o primeiro `COMPRA OK` no log e o SL na Gate. Ainda em aberto: registrar essas compras em
   `positions.jsonl` (2026-10-15: o usuário manteve o D-032 por enquanto; se mudar, o trailing precisa pular o PAXG,
-  pois `MARE_ALTA_SYMBOLS = []` trocaria o SL −15% por `close − 3×ATR`) e alertar no Telegram quando o cron falhar. A whitelist do PHP **precisa** manter
+  pois `MARE_ALTA_SYMBOLS = []` trocaria o SL −15% por `close − 3×ATR`) (o alerta de falha do cron é coberto pelo D-037). A whitelist do PHP **precisa** manter
   PAXG enquanto o D-032 valer.
 - **Gatilhos expiram em 30 dias**: o SL passou a ser renovado (D-033). Falta: renovar o TP1 (ação nova no PHP +
   deploy) e confirmar na API da Gate o nome do status de gatilho expirado (o alerta cobre `expired/cancelled/failed`).
@@ -167,7 +175,8 @@ Formato: problema → causa → regra que ficou.
   sem os degradados, 3/20 (−US$ 1,15, PF 0). Reprovado nos dois recortes; reauditar ao chegar a 20.
 - **Tabelas de precisão de fallback divergem** entre PHP (`$SAFE_PRICE_PREC`: TRX 4, HYPE 2) e Python
   (`_SAFE_PRICE_PREC`: TRX 5, HYPE 3). Só valem se `/spot/currency_pairs` falhar; conferir na Gate e alinhar.
-- **Watchdog** (`bot/watchdog.py`) só alerta quando um scan volta a rodar; não cobre parada total de disparos.
+- **Watchdog externo (D-037)**: código no Git; falta o deploy, os 2 segredos do Telegram no `.env` do servidor e a linha
+  no crontab (`docs/operacao.md`, seção 8).
 - **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 21/09: decisão do usuário.
 
 ## Próximos passos

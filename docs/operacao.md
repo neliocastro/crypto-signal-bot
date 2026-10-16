@@ -25,6 +25,7 @@ python tests/test_renovacao_sl.py
 python tests/test_placar.py
 python tests/test_trava_perda_diaria.py
 python tests/test_whitelist_php.py
+php tests/test_watchdog_scan.php        # no GitHub (o checks roda); local só com PHP instalado
 ```
 
 ## 2. Deploy do relay (`server/execute.php`)
@@ -119,8 +120,29 @@ e conte ordens com `grep -o '"id"' | wc -l` (o `grep -c` conta linhas e dá fals
 
 ## 7. Armadilhas recorrentes
 - Run verde ≠ passo funcionou: confira códigos HTTP.
+- `/pausar` no Telegram pode levar horas (o commander depende do cron do GitHub, P-17). Para parar já: desabilitar o
+  `main.yml` em Actions.
 - O log do relay usa `"event":"execute"` (não `"order"`): confirme o nome real do campo antes de concluir por ausência.
 - Para medir alcance de incidente, use `state/orders_executed.csv` (versionado), não o `execution_log.jsonl` (rotacionado).
 - O cooldown de 4h vive no repositório (`last_signals.json`), não no servidor.
 - Logado como `root`: `~` é `/root`; arquivo criado como root precisa de `chown ineocom:ineocom`.
 - `tail -n 0` (não `tail -0`) no jailshell.
+
+## 8. Watchdog externo (`watchdog_scan.php`, D-037)
+De hora em hora no crontab do `ineocom`. Alerta no Telegram se o scan parar por mais de 60 min (repete a cada 3 h, avisa
+a volta) e se surgir `FALHA na compra` nova no `paxg_cron.log`. Só lê e avisa; não toca em ordens.
+
+Instalação (uma vez):
+1. No `/home/ineocom/cryptosignals/secrets/.env`, adicionar `TELEGRAM_TOKEN=` e `TELEGRAM_CHAT_ID=` com os mesmos valores
+   dos secrets do GitHub. **Editar com o editor, nunca com `echo` no shell** (o histórico guardaria o token).
+2. Deploy conferido por hash, como na seção 2 (arquivo `server/watchdog_scan.php`), com `chown ineocom:ineocom`.
+3. Testar: `/usr/local/bin/php $B/watchdog_scan.php --test-telegram` (deve chegar a mensagem) e `--dry`.
+4. Crontab do `ineocom` (`crontab -e -u ineocom`), sempre com o CLI:
+   `30 * * * * /usr/local/bin/php /home/ineocom/public_html/cryptosignals/watchdog_scan.php >> /home/ineocom/public_html/cryptosignals/watchdog_cron.log 2>&1`
+
+```bash
+B=/home/ineocom/public_html/cryptosignals
+tail -n 20 $B/watchdog_cron.log                     # decisões ("scan: ok", "telegram ok=SIM")
+touch $B/.watchdog_pause && chown ineocom:ineocom $B/.watchdog_pause   # PAUSAR
+rm -f $B/.watchdog_pause                            # REATIVAR
+```

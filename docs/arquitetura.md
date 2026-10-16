@@ -83,7 +83,7 @@ Runs fora do intervalo terminam com "Scan PULADO". Concorrência: `scan-${ref}`,
 |---|---|---|
 | `main.yml` | cron `*/15` + `workflow_dispatch` | scan, commit de `state/`, re-disparo (falha se ≠ HTTP 204) |
 | `checks.yml` | push em `server/`, `bot/`, `tests/` | `php -l` no relay + `py_compile` + testes |
-| `commander.yml` | cron `*/2` | lê comandos do Telegram (`/status`, `/pausar`, `/retomar`, `/intervalo`, `/forcar`, `/dnd`…) |
+| `commander.yml` | cron `*/2` (na prática a cada 3–5 h, P-17) | lê comandos do Telegram (`/status`, `/pausar`, `/retomar`, `/intervalo`, `/forcar`, `/dnd`…) |
 | `daily_summary.yml` | cron 12:00 UTC (09:00 BRT) | resumo diário |
 | `backtest.yml` | manual | roda um script de `scripts/`; o `backtest_macd` grava `docs/backtest_report.md` (artefato gerado, não versionar à mão) |
 
@@ -113,6 +113,7 @@ Runs fora do intervalo terminam com "Scan PULADO". Concorrência: `scan-${ref}`,
 | Cron PAXG | `/home/ineocom/public_html/cryptosignals/paxg_rsi_check.php` + `paxg_cron.log`, pausa `.paxg_pause` |
 | Segredos | `/home/ineocom/cryptosignals/secrets/.env` (fora da web root): `GATE_API_KEY`, `GATE_API_SECRET`, `EXECUTION_HMAC_SECRET` |
 | Endpoint | `https://ineo.com.br/cryptosignals/execute.php` (HTTP 401 sem assinatura = correto) |
+| Watchdog externo | `/home/ineocom/public_html/cryptosignals/watchdog_scan.php` + `watchdog_cron.log`, estado `.watchdog_state.json`, pausa `.watchdog_pause` (D-037) |
 | Script manual BTC | `~/btc_tp.php` (home do `ineocom`) |
 | PHP para cron | `/usr/local/bin/php` (CLI); `/usr/bin/php` é CGI e falha |
 
