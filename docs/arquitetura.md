@@ -70,12 +70,13 @@ idempotência por `signal_id` (`seen_signals.json`), precisão por par via `/spo
 
 | Disparador | Frequência | Depende de `SELF_DISPATCH_PAT`? |
 |---|---|---|
-| Cron do servidor ineocom → `workflow_dispatch` | ~5 min | sim |
+| Cron do servidor → `trigger_scan.php` → `workflow_dispatch` (D-039) | ~5 min | sim (lido do `.env` do servidor) |
 | Self-chain: último passo do `main.yml` espera 240 s e re-dispara | ~5 min | sim |
 | Cron do GitHub `*/15` | best-effort (na prática poucas vezes por dia) | não |
 
 O intervalo mínimo entre scans vem de `state/runtime_config.json` (`scan_interval_min`, hoje 5; comando `/intervalo`).
-Runs fora do intervalo terminam com "Scan PULADO". Concorrência: `scan-${ref}`, enfileira sem cancelar.
+As duas pernas de ~5 min são independentes: se uma quebrar, a outra mantém a cadência (P-18). Runs fora do intervalo
+terminam com "Scan PULADO". Concorrência: `scan-${ref}`, enfileira sem cancelar.
 
 ## Workflows (`.github/workflows/`)
 
@@ -111,7 +112,9 @@ Runs fora do intervalo terminam com "Scan PULADO". Concorrência: `scan-${ref}`,
 | Log do relay | `/home/ineocom/public_html/cryptosignals/execution_log.jsonl` (UTC, campo `"event":"execute"`) |
 | Idempotência | `/home/ineocom/public_html/cryptosignals/seen_signals.json` |
 | Cron PAXG | `/home/ineocom/public_html/cryptosignals/paxg_rsi_check.php` + `paxg_cron.log`, pausa `.paxg_pause` |
-| Segredos | `/home/ineocom/cryptosignals/secrets/.env` (fora da web root): `GATE_API_KEY`, `GATE_API_SECRET`, `EXECUTION_HMAC_SECRET` |
+| Segredos | `/home/ineocom/cryptosignals/secrets/.env` (fora da web root): `GATE_API_KEY`, `GATE_API_SECRET`, `EXECUTION_HMAC_SECRET`, `TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID`, `SELF_DISPATCH_PAT` |
+| Pasta pública | `public_html/cryptosignals/.htaccess`: pela web só o `execute.php` responde; o resto dá 403 (D-040) |
+| Trigger do scan | `/home/ineocom/cryptosignals/bin/trigger_scan.php` + `trigger_scan.log`, estado `.trigger_state.json`, pausa `.trigger_pause` (D-039) |
 | Endpoint | `https://ineo.com.br/cryptosignals/execute.php` (HTTP 401 sem assinatura = correto) |
 | Watchdog externo | `/home/ineocom/public_html/cryptosignals/watchdog_scan.php` + `watchdog_cron.log`, estado `.watchdog_state.json`, pausa `.watchdog_pause` (D-037) |
 | Script manual BTC | `~/btc_tp.php` (home do `ineocom`) |

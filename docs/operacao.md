@@ -26,6 +26,7 @@ python tests/test_placar.py
 python tests/test_trava_perda_diaria.py
 python tests/test_whitelist_php.py
 php tests/test_watchdog_scan.php        # no GitHub (o checks roda); local só com PHP instalado
+php tests/test_trigger_scan.php
 ```
 
 ## 2. Deploy do relay (`server/execute.php`)
@@ -61,10 +62,12 @@ sha256 `4ec3b375…`, 21008 bytes, backup `execute.php.bak-20261015b` (= FIX 10)
 sha256 `6e3da8cb…`, backup `execute.php.bak-20261015`.
 
 ## 3. Token `SELF_DISPATCH_PAT`
-- Fica em **dois lugares**: secret do GitHub **e** crontab do `ineocom`. Troque sempre nos dois.
+- Fica em **dois lugares**: secret do GitHub **e** `.env` de segredos do servidor (`SELF_DISPATCH_PAT=`, lido pelo
+  `trigger_scan.php`, D-039). Troque sempre nos dois.
 - Sintoma de token inválido: passo **Re-arm next scan** vermelho com HTTP 401 (403 = falta Actions RW; 404 = repo
   não selecionado no token).
-- Troca no crontab: backup `~/crontab.bak-*` (chmod 600) e histórico do shell desligado.
+- Troca no servidor: backup do `.env` (chmod 600) e edição com `nano`, nunca com `echo` (o histórico guardaria o token).
+  Depois: `/usr/local/bin/php /home/ineocom/cryptosignals/bin/trigger_scan.php --dry` mostra se o token está presente.
 - **Nunca** cole token, secret ou HMAC em chat, log, print ou commit. Se vazar: revogar na hora e trocar.
 
 ## 4. Cron PAXG no servidor (`paxg_rsi_check.php`)
@@ -146,3 +149,24 @@ tail -n 20 $B/watchdog_cron.log                     # decisões ("scan: ok", "te
 touch $B/.watchdog_pause && chown ineocom:ineocom $B/.watchdog_pause   # PAUSAR
 rm -f $B/.watchdog_pause                            # REATIVAR
 ```
+
+## 9. Trigger do scan pelo servidor (`trigger_scan.php`, D-039)
+A cada 5 min no crontab do `ineocom`. Dispara o `main.yml` e só conta HTTP 204 como sucesso. Após 3 falhas seguidas,
+alerta no Telegram (repete a cada 3 h; avisa a volta). É a perna da cadência que não depende do próprio `main.yml`.
+
+```bash
+B=/home/ineocom/cryptosignals/bin
+tail -n 5 $B/trigger_scan.log                       # "dispatch HTTP 204" a cada 5 min
+/usr/local/bin/php $B/trigger_scan.php --dry        # token presente? Telegram configurado? (não dispara)
+touch $B/.trigger_pause && chown ineocom:ineocom $B/.trigger_pause   # PAUSAR (faça junto ao desligar o main.yml)
+rm -f $B/.trigger_pause                             # REATIVAR
+```
+Linha do crontab: `*/5 * * * * /usr/local/bin/php /home/ineocom/cryptosignals/bin/trigger_scan.php >> /home/ineocom/cryptosignals/bin/trigger_scan.log 2>&1`
+
+## 10. Pasta pública do servidor (`.htaccess`, D-040)
+Pela web, só o `execute.php` responde. Conferir depois de qualquer mudança na pasta:
+```bash
+U=https://ineo.com.br/cryptosignals; curl -s -w " HTTP %{http_code}\n" $U/execute.php; for f in watchdog_scan.php paxg_cron.log execution_log.jsonl error_log; do echo "$f -> $(curl -s -o /dev/null -w '%{http_code}' $U/$f)"; done
+```
+Esperado: `execute.php` 401; os demais 403. **Nunca** testar abrindo um `gerar_teste_*.php`: ele compra de verdade.
+Rollback: `rm -f /home/ineocom/public_html/cryptosignals/.htaccess`.

@@ -17,4 +17,5 @@ A decisão vigente está no `memoria.md`. Evidência em `docs/historico/`.
 | Saída do Maré Alta: TP único 2,0R na base inteira + trailing desde o início | até 2026-10-15 | D-027 | divergia da saída validada |
 | Trailing com a vela D1 em formação | 2026-07-04 | D-026 (2026-10-15) | stop subia com picos intradia |
 | Diários de decisões (`strategy_decisions.md`, hoje em `historico/`) e um `.md` solto por decisão | 2026-05 a 2026-10 | D-030 | redundância e regras espalhadas |
+| D-007 (trecho): token do servidor dentro do script `trigger_scan.sh` chamado pelo crontab | 2026-10-09 | D-039 (2026-10-20) | script não versionado, sem checar HTTP, caminho errado no crontab (P-18) |
 | D-030: estrutura `CLAUDE.md` + `memoria.md` (com pendências) + 4 docs + `historico/`, sem `.gitignore`, sem fluxo de trabalho escrito | 2026-10-15 | D-038 (2026-10-19) | pendências voláteis dentro da memória, buracos apontados na comparação com o framework de contexto |

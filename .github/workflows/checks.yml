@@ -22,8 +22,10 @@ jobs:
         run: |
           php -v | head -1
           for f in server/*.php; do php -l "$f" || exit 1; done
-      - name: Testes PHP (watchdog externo)
-        run: php tests/test_watchdog_scan.php
+      - name: Testes PHP (scripts do servidor)
+        run: |
+          php tests/test_watchdog_scan.php
+          php tests/test_trigger_scan.php
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'

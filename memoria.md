@@ -31,7 +31,8 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-006 (2026-06-19)** **Compra sem TP/SL é recusada** (`REQUIRE_PROTECTION` no PHP) e o stop tem piso de
   0,8% do preço (`EXECUTION_MIN_STOP_PCT`; bug do TRX, ATR baixo).
 - **D-007 (2026-10-09)** `SELF_DISPATCH_PAT`: token fine-grained, só este repo, Actions RW, **sem vencimento**
-  (escolha do usuário). Vive em dois lugares (secret do GitHub + crontab do servidor). O `main.yml` falha
+  (escolha do usuário). Vive em dois lugares: secret do GitHub e servidor (o local no servidor foi SUBSTITUÍDO pelo D-039: `.env` de
+  segredos, não mais o crontab/script). O `main.yml` falha
   (exit 1) se o re-disparo não devolver HTTP 204. `historico/incidente_2026-10-08_stops_e_cadencia.md`
 
 ### Estratégias e universo
@@ -88,7 +89,14 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   hora): lê `state/runtime_config.json` do `main` e alerta no Telegram se `last_scan_utc` passar de 60 min (DND: +30),
   repetindo a cada 3 h e avisando a volta; também alerta `FALHA na compra` nova no `paxg_cron.log`. Fora do GitHub
   Actions e do `SELF_DISPATCH_PAT`. Só lê e avisa. Exige `TELEGRAM_TOKEN`/`TELEGRAM_CHAT_ID` no `.env` de segredos do
-  servidor. Pausa: `.watchdog_pause`.
+  servidor. Pausa: `.watchdog_pause`. Instalado em 2026-10-16 e conferido pelo cron em 2026-10-19/20.
+- **D-039 (2026-10-20)** **Disparo do scan pelo servidor = `trigger_scan.php` versionado** (`server/`, instalado em
+  `/home/ineocom/cryptosignals/bin/`, fora da pasta pública; crontab a cada 5 min). Lê o `SELF_DISPATCH_PAT` do `.env`
+  de segredos, só conta HTTP 204 como sucesso e alerta no Telegram após 3 falhas seguidas (repete a cada 3 h; avisa a
+  volta). Substitui o `trigger_scan.sh` (token no script, sem checar HTTP, caminho errado: P-18). Pausa: `.trigger_pause`.
+- **D-040 (2026-10-20)** **Pela web, a pasta `public_html/cryptosignals/` só expõe o `execute.php`**: `.htaccess` com
+  `Require all denied` + exceção para o relay (P-19). Scripts de compra (`gerar_teste_*.php`), logs e estado ficam
+  bloqueados (HTTP 403); os crons rodam pelo terminal e não são afetados. Conferido: relay 401, demais 403.
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -161,3 +169,12 @@ Formato: problema → causa → regra que ficou.
 - **P-17 (10/15)** O cron do GitHub é muito irregular: o `commander.yml` (`*/2`) rodou 6 vezes em 15/10, com intervalos
   de 3 a 5,5 h. Regra: **comandos do Telegram (`/pausar` etc.) podem levar horas**; para parar rápido, desabilitar o
   `main.yml` no GitHub. Nada que precise de prazo pode depender do cron do GitHub.
+- **P-18 (10/09→10/20)** O cron do servidor chamava `/home/ineocom/Cryptosignas/trigger_scan.sh` (pasta com typo,
+  inexistente) e falhou em silêncio, provavelmente desde a troca do token em 2026-10-09; a cadência dependia só da corrente do `main.yml`, que parou 80 min
+  com um HTTP 500 do GitHub em 2026-10-19 23:30 UTC. O script real também não checava HTTP e tinha token de junho.
+  Regra: todo script de servidor fica versionado no repo, confere o código HTTP e avisa quando falha; ao mexer no
+  crontab, conferir que o caminho existe (`ls -la <caminho>`) antes de salvar.
+- **P-19 (10/20)** A pasta pública do servidor expunha pela web scripts que compram de verdade (`gerar_teste_paxg.php`,
+  sem trava de terminal: `foreach ($argv …)` só gera aviso e segue) e os logs de ordens. Sem evidência de acesso
+  (logs de acesso não conferidos de forma conclusiva). Regra: na web root só o que precisa ser acessível; script de
+  servidor tem `PHP_SAPI === 'cli'` e fica fora de `public_html` sempre que possível → D-040.
