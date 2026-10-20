@@ -11,12 +11,15 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 
 | Documento | Quando ler |
 |---|---|
-| `memoria.md` | sempre (carregado acima): decisões D-/R-, lições, pendências |
+| `memoria.md` | sempre (carregado acima): decisões D-/R- (o porquê) e lições P- |
+| `docs/pendencias.md` | início de toda sessão: o que falta fazer e o que acompanhar (estado volátil) |
+| `docs/decisoes/` | ADR de decisão nova com trade-off (`TEMPLATE.md`); o resumo e o índice ficam no `memoria.md` |
 | `docs/arquitetura.md` | stack, módulos, relay, cadência, workflows, `state/`, servidor, limites da Gate.io |
-| `docs/estrategias.md` | o que cada ativo opera, regras de entrada/saída, kill-switches, parâmetros de execução |
-| `docs/operacao.md` | auditoria, deploy do relay, token, cron PAXG, reconciliação, posições manuais |
-| `docs/resultado_financeiro.md` | placar real (datado) |
+| `docs/estrategias.md` | o que cada ativo opera, cenários QUANDO/ENTÃO com o teste de cada um, kill-switches, parâmetros |
+| `docs/operacao.md` | runbooks: auditoria, deploy do relay, token, cron PAXG, reconciliação, watchdog |
+| `docs/resultado_financeiro.md` | placar real (datado); `python scripts/placar.py` gera o atual |
 | `docs/historico/` | evidência original das decisões; não editar, só consultar |
+| `.agent-work/<tarefa>.md` | journal local (fora do Git) de tarefa em andamento; ler ao retomar |
 
 **Autoridade:** valores = código (`bot/config.py` é a fonte única). Porquês = decisões aprovadas e datadas no
 `memoria.md`, que prevalecem sobre os outros docs. Os docs descrevem. Se código, memória e docs divergirem,
@@ -35,6 +38,26 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 6. Antes de uma mudança grande, apresente um plano resumido.
 7. Depois de uma decisão importante aprovada, atualize o `memoria.md` (e o doc técnico afetado) no mesmo commit.
 
+## Fluxo de trabalho
+1. Ler `docs/pendencias.md` e, se houver, o journal da tarefa em `.agent-work/`.
+2. Mudança relevante: plano resumido → aprovação do usuário → implementação.
+3. Rodar os checks abaixo e **mostrar o diff antes de commitar**; commitar só com aprovação.
+4. Commit **só dos arquivos listados** (`git -c core.fileMode=false add <arquivos>`: o SSD é exFAT e marca tudo como
+   modificado), mensagem em português, direto no `main`; `pull --rebase` antes do push (o bot commita `state/` sem
+   parar); depois do push, conferir o workflow `checks`.
+5. Mudança no servidor: roteiro com o SHA do commit **já preenchido**, conferência de bytes e hash, backup antes,
+   `chown ineocom:ineocom`, e só então registrar o deploy em `operacao.md`/`memoria.md`.
+6. Tarefa que atravessa sessões ou espera o usuário agir no servidor: abrir `.agent-work/<tarefa>.md` com objetivo,
+   feito, próximo passo e bloqueios; ao concluir, levar o que precisa durar para o doc certo e apagar o journal.
+7. Fim da sessão: atualizar `docs/pendencias.md`.
+
+## Emergência: parar o bot já
+- **Scan e ordens novas:** GitHub → Actions → `main.yml` → *Disable workflow*. O `/pausar` do Telegram pode levar
+  horas (P-17). Stops e TPs já criados seguem ativos na Gate.
+- **Cron PAXG:** `touch /home/ineocom/public_html/cryptosignals/.paxg_pause`.
+- **Watchdog:** `touch /home/ineocom/public_html/cryptosignals/.watchdog_pause`.
+- **Relay:** restaurar o backup do `execute.php` (`docs/operacao.md`, seção 2).
+
 ## Regras de engenharia
 - Mudanças **aditivas**; não renomeie símbolos existentes; mantenha aliases (`SYMBOLS = WATCHLIST`,
   `evaluate = evaluate_signal`).
@@ -46,7 +69,7 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
   `php tests/test_watchdog_scan.php` (se houver PHP local). O workflow `checks` roda `php -l` no relay e os testes no GitHub.
 - `server/execute.php` exige **deploy manual** conferido por bytes e hash (`docs/operacao.md`). Flag que dependa do
   PHP só se liga depois do deploy.
-- Mensagens de commit em português; não commite `__pycache__`.
+- Mensagens de commit em português; o `.gitignore` cobre `__pycache__`, `._*` e segredos: não force a inclusão.
 
 ## Proibido sem aprovação explícita
 - Alterar `EXECUTION_*`, stops, TP/SL, sizing ou `server/execute.php`.

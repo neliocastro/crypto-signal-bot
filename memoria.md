@@ -1,12 +1,15 @@
 # Memória do projeto — crypto-signal-bot
 
 Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem conversas e sem estado volátil
-(P&L, posições e contagens ficam em `state/` e `docs/resultado_financeiro.md`).
+(P&L, posições e contagens ficam em `state/` e `docs/resultado_financeiro.md`; pendências e próximos passos, em
+`docs/pendencias.md`).
 
 **Convenções**
 - IDs fixos: `D-` decisão aprovada, `R-` rejeitada, `P-` problema/lição. Nunca reutilize um ID.
 - Decisão não se apaga: quando mudar, marque `SUBSTITUÍDA por D-0xx` e mova-a para `docs/memoria-arquivo.md`.
 - Evidência detalhada (números, fills, IDs de ordem) fica em `docs/historico/`, citada no fim de cada item.
+- Decisão nova **com trade-off real** ganha um arquivo `docs/decisoes/D-0xx-titulo.md` (contexto, alternativas,
+  decisão, consequências; modelo em `docs/decisoes/TEMPLATE.md`). Aqui fica o resumo de 1 a 3 linhas com o link.
 - Limite: ~250 linhas. Passou disso, arquive o que estiver substituído ou concluído.
 - Datas em AAAA-MM-DD. Horários: UTC, salvo indicação.
 
@@ -37,7 +40,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-011 (2026-08-24)** MACD-only, Integrada, Tendência MACD e Confluência **removidas do código**.
   `historico/limpeza_estrategias_2026-08-24.md`
 - **D-012 (2026-09-04)** **PAXG fora da watchlist**, `ACCUMULATION_ENABLED = False` (lado Python). O cron do servidor
-  `paxg_rsi_check.php` continua ativo: ver pendências. `historico/paxg_removido_2026-09-04.md`
+  `paxg_rsi_check.php` continua ativo (D-032). `historico/paxg_removido_2026-09-04.md`
 - **D-013 (2026-10-13)** **Breakout HYPE desligado** (`BREAKOUT_ENABLED = False`; PF ao vivo ~0,78 em 12 trades).
   O HYPE segue escaneado, sem sinal nem ordem. Religar: `True`, só após reavaliação.
   `historico/decisao_2026-10-13_hype_desligado_e_paper.md`
@@ -90,8 +93,11 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   **obsoletas e ignoradas** (não são ordens reais).
 
 ### Processo e documentação
-- **D-030 (2026-10-15)** Estrutura de documentação: `CLAUDE.md` (regras) + `memoria.md` (este arquivo) +
-  `docs/{arquitetura, estrategias, operacao, resultado_financeiro}.md` + `docs/historico/` (evidência, sem edição).
+- **D-038 (2026-10-19)** Estrutura de documentação (substitui o D-030): `CLAUDE.md` (índice, regras, fluxo,
+  emergência) + `memoria.md` (decisões e lições) + `docs/pendencias.md` (estado volátil) + `docs/decisoes/` (ADR só
+  para decisão nova com trade-off) + `docs/{arquitetura, estrategias, operacao, resultado_financeiro}.md` +
+  `docs/historico/` (evidência, sem edição) + `.agent-work/` (journal local de tarefa) + memória do agente (preferências
+  do usuário, fora do repo) + `.gitignore`. `docs/decisoes/D-038-estrutura-documentacao.md`
 - **D-032 (2026-10-15)** **O cron de acumulação do PAXG no servidor permanece ATIVO**, por decisão explícita do
   usuário: deve continuar comprando PAXG quando o RSI 4h ficar abaixo de 30 (`server/paxg_rsi_check.php`, crontab do
   `ineocom`, de hora em hora). É uma exceção ao D-012: essa compra fica fora do bot (sem `positions.jsonl`, sem OCO
@@ -122,7 +128,7 @@ Formato: problema → causa → regra que ficou.
 
 - **P-01 (07/10)** TP/SL "fantasma" → em MARKET BUY o `amount` da Gate vem em **quote**; gatilhos vendiam ~4,99 ETH.
   Regra: base = `filled_total / fill_price`; HTTP 201 na criação **não** prova proteção (FIX 7).
-- **P-02 (06/30)** Gatilhos sumiam após 24h → `expiration` 86400. Hoje 30 dias (2592000); ainda expiram (pendência).
+- **P-02 (06/30)** Gatilhos sumiam após 24h → `expiration` 86400. Hoje 30 dias (2592000); o SL é renovado (D-033).
 - **P-03 (06/30)** Cron PHP falhava com HTTP 500 → `/usr/bin/php` é CGI. Regra: em crontab use `/usr/local/bin/php`.
 - **P-04 (07/27)** "O SL sumiu" era falso → a tela do app mostra só ordens **abertas**. Regra: consultar
   `GET /spot/price_orders/{id}` e `/spot/my_trades` antes de afirmar que algo sumiu.
@@ -155,31 +161,3 @@ Formato: problema → causa → regra que ficou.
 - **P-17 (10/15)** O cron do GitHub é muito irregular: o `commander.yml` (`*/2`) rodou 6 vezes em 15/10, com intervalos
   de 3 a 5,5 h. Regra: **comandos do Telegram (`/pausar` etc.) podem levar horas**; para parar rápido, desabilitar o
   `main.yml` no GitHub. Nada que precise de prazo pode depender do cron do GitHub.
-
----
-
-## Pendências
-- **Cron PAXG no servidor: decidido manter (D-032).** Confirmado no servidor em 2026-10-15 (`gerar_teste_paxg.php`,
-  sha256 `df762466…`): US$ 10, SL −15%, sem TP, `signal_id` único por compra. As compras falhavam (P-16); o fix
-  foi deployado em 2026-10-15 (commit `8dc5668a`, sha256 `0e3624f6…`, backup `paxg_rsi_check.php.bak-20261015`),
-  mas ainda falta ver o primeiro `COMPRA OK` no log e o SL na Gate. Ainda em aberto: registrar essas compras em
-  `positions.jsonl` (2026-10-15: o usuário manteve o D-032 por enquanto; se mudar, o trailing precisa pular o PAXG,
-  pois `MARE_ALTA_SYMBOLS = []` trocaria o SL −15% por `close − 3×ATR`) (o alerta de falha do cron é coberto pelo D-037). A whitelist do PHP **precisa** manter
-  PAXG enquanto o D-032 valer.
-- **Gatilhos expiram em 30 dias**: o SL passou a ser renovado (D-033). Falta: renovar o TP1 (ação nova no PHP +
-  deploy) e confirmar na API da Gate o nome do status de gatilho expirado (o alerta cobre `expired/cancelled/failed`).
-- **Placar**: resolvido por estimativa (D-034). Falta o fill real da saída (o `oco_sync` do PHP consultar a ordem
-  executada; exige deploy). A trava de perda diária foi ligada em D-035.
-- **Próxima reauditoria do degrau**: `python scripts/placar.py --degrau` já marca `cadencia_degradada` (abertos entre
-  2026-09-14 21:13 e 2026-10-09 01:02 UTC) e reporta com e sem eles. Em 2026-10-15: 6/20 trades (−US$ 2,41, PF 0);
-  sem os degradados, 3/20 (−US$ 1,15, PF 0). Reprovado nos dois recortes; reauditar ao chegar a 20.
-- **Tabelas de precisão de fallback divergem** entre PHP (`$SAFE_PRICE_PREC`: TRX 4, HYPE 2) e Python
-  (`_SAFE_PRICE_PREC`: TRX 5, HYPE 3). Só valem se `/spot/currency_pairs` falhar; conferir na Gate e alinhar.
-- **Watchdog externo (D-037)**: código no Git; falta o deploy, os 2 segredos do Telegram no `.env` do servidor e a linha
-  no crontab (`docs/operacao.md`, seção 8).
-- **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 21/09: decisão do usuário.
-
-## Próximos passos
-1. Decidir o cron PAXG.
-2. Acompanhar a primeira compra com TP1 parcial (mensagens "TP1 parcial NAO aplicado" ou "🎯 TP1" no Telegram).
-3. Revisar estratégia só com amostra limpa (pós-2026-10-09): Maré Alta 0/6 desde 04/09, parte em cadência degradada.

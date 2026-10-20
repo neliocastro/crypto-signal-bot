@@ -74,6 +74,31 @@ O Maré Alta roda **fora** dessa allowlist, em bloco próprio do `main.py`.
 
 🟢 PRONTO no Telegram vem do diagnóstico de todos os ativos e **não** significa que houve ordem.
 
+## Cenários (spec do comportamento, D-038)
+
+O comportamento esperado, em cenários verificáveis. Cada um cita o teste que o prova
+(`arquivo::função`). **Sem teste** = só descrito: é candidato a teste antes de mexer no código.
+Mudou o comportamento? Atualize o cenário e o teste no mesmo commit.
+
+| # | QUANDO | ENTÃO | Teste |
+|---|---|---|---|
+| C-01 | vela D1 fecha com MACD(12,26,9) cruzando acima do sinal e EMA9 > EMA21 | Maré Alta emite 1 sinal por vela e ativo | **sem teste** |
+| C-02 | o executor monta a compra do Maré Alta com `MARE_ALTA_PARTIAL_TP_ENABLED` | SL = ref − 2,5×ATR; TP1 = ref × 1,10 com `tp_frac` 0,5 | `test_saida_tp1::test_build_order_flag_ligada_mare_alta` |
+| C-03 | a flag está desligada, ou o trilho não é o Maré Alta | TP único 2,0R na base inteira, sem `tp_frac` | `test_saida_tp1::test_build_order_flag_desligada_ou_outro_trilho` |
+| C-04 | a posição está aberta e o TP1 ainda não executou | o trailing não mexe no stop | `test_saida_tp1::test_ciclo_tp1_breakeven_trailing_fechamento` |
+| C-05 | o TP1 executa | o SL vai para o preço de entrada só com o restante; depois o trailing 3×ATR sobe em catraca | `test_saida_tp1::test_ciclo_tp1_breakeven_trailing_fechamento` |
+| C-06 | o relay não confirma o SL no breakeven | o SL antigo fica, o bot tenta de novo e avisa 1 vez | `test_saida_tp1::test_breakeven_falha_mantem_sl_e_avisa_uma_vez` |
+| C-07 | TP1 e SL executam no mesmo intervalo | a posição fecha | `test_saida_tp1::test_tp1_e_sl_no_mesmo_intervalo_fecha_posicao` |
+| C-08 | o relay não aplicou o TP parcial | a posição segue o modo antigo (trailing desde o início) | `test_saida_tp1::test_posicao_sem_tp_parcial_segue_modo_antigo` |
+| C-09 | o SL de uma posição aberta tem 25 dias ou mais | é recriado no mesmo preço e qty; com menos de 25, nada | `test_renovacao_sl::test_renova_com_25_dias_mesmo_preco_e_qty`, `::test_nao_renova_antes_de_25_dias` |
+| C-10 | a renovação do SL falha | o SL antigo fica e o bot avisa 1 vez por dia | `test_renovacao_sl::test_falha_mantem_sl_antigo_e_avisa_uma_vez_por_dia` |
+| C-11 | o SL ou o TP1 pendente aparece `expired/cancelled/failed` | alerta 1 vez, sem fechar a posição nem mexer em ordem | `test_renovacao_sl::test_oco_alerta_sl_e_tp1_mortos_uma_vez` |
+| C-12 | o OCO fecha uma posição | grava `exit_price`, `exit_qty` e `pnl_usdt_est` (somando a perna do TP1) | `test_placar::test_oco_grava_saida_no_fechamento`, `::test_pnl_tp1_e_depois_sl_no_breakeven` |
+| C-13 | a perda líquida do dia UTC chega a US$ 20 | novas compras são recusadas; ganho no dia compensa | `test_trava_perda_diaria::test_bloqueia_quando_perda_do_dia_atinge_o_limite`, `::test_ganho_do_dia_compensa_perda` |
+| C-14 | já há 1 posição viva ou 2 ordens no dia no mesmo ativo | a compra é recusada (D-022) | **sem teste** |
+| C-15 | um sinal intraday não está na `INTRADAY_EXEC_ALLOWLIST` | não vira ordem; o Maré Alta não depende da allowlist | `test_roteamento_strings::test_allowlist_do_main_bate_com_o_contrato`, `::test_mare_alta_nao_depende_da_allowlist` |
+| C-16 | o relay recebe compra de ativo fora do universo + PAXG | recusa (`symbol fora da whitelist`) | conteúdo da whitelist: `test_whitelist_php::test_whitelist_igual_ao_universo`; a recusa no PHP: **sem teste** |
+
 ## Parâmetros de execução (`bot/config.py`)
 
 | Parâmetro | Valor | Nota |
