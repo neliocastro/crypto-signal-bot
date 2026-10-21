@@ -75,7 +75,9 @@ idempotência por `signal_id` (`seen_signals.json`), precisão por par via `/spo
 | Cron do GitHub `*/15` | best-effort (na prática poucas vezes por dia) | não |
 
 O intervalo mínimo entre scans vem de `state/runtime_config.json` (`scan_interval_min`, hoje 5; comando `/intervalo`).
-As duas pernas de ~5 min são independentes: se uma quebrar, a outra mantém a cadência (P-18). Runs fora do intervalo
+As duas pernas de ~5 min são independentes: se uma quebrar, a outra mantém a cadência (P-18). Com as duas vivas,
+cerca de metade das execuções aparece como `cancelled` no GitHub: a concorrência guarda só 1 execução pendente e a mais
+nova substitui a anterior. Isso é normal; falha de verdade aparece como `failure`. Runs fora do intervalo
 terminam com "Scan PULADO". Concorrência: `scan-${ref}`, enfileira sem cancelar.
 
 ## Workflows (`.github/workflows/`)

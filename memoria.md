@@ -94,6 +94,8 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   `/home/ineocom/cryptosignals/bin/`, fora da pasta pública; crontab a cada 5 min). Lê o `SELF_DISPATCH_PAT` do `.env`
   de segredos, só conta HTTP 204 como sucesso e alerta no Telegram após 3 falhas seguidas (repete a cada 3 h; avisa a
   volta). Substitui o `trigger_scan.sh` (token no script, sem checar HTTP, caminho errado: P-18). Pausa: `.trigger_pause`.
+  Instalado em 2026-10-20 (sha256 `05846d95…`): HTTP 204 a cada 5 min conferido no log; no GitHub, 200 scans sem falha
+  e intervalo máximo de 5,2 min. Enquanto a corrente vive, os disparos do servidor aparecem como `cancelled` (normal).
 - **D-040 (2026-10-20)** **Pela web, a pasta `public_html/cryptosignals/` só expõe o `execute.php`**: `.htaccess` com
   `Require all denied` + exceção para o relay (P-19). Scripts de compra (`gerar_teste_*.php`), logs e estado ficam
   bloqueados (HTTP 403); os crons rodam pelo terminal e não são afetados. Conferido: relay 401, demais 403.

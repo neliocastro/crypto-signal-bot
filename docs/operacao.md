@@ -156,7 +156,7 @@ alerta no Telegram (repete a cada 3 h; avisa a volta). É a perna da cadência q
 
 ```bash
 B=/home/ineocom/cryptosignals/bin
-tail -n 5 $B/trigger_scan.log                       # "dispatch HTTP 204" a cada 5 min
+tail -n 5 $B/trigger_scan.log                       # "dispatch HTTP 204" a cada 5 min (no GitHub, metade vira `cancelled`: normal)
 /usr/local/bin/php $B/trigger_scan.php --dry        # token presente? Telegram configurado? (não dispara)
 touch $B/.trigger_pause && chown ineocom:ineocom $B/.trigger_pause   # PAUSAR (faça junto ao desligar o main.yml)
 rm -f $B/.trigger_pause                             # REATIVAR

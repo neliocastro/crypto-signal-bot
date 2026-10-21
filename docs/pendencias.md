@@ -3,17 +3,16 @@
 > Estado volátil do projeto (D-038): o que falta fazer e o que acompanhar. Muda a cada sessão; as **decisões** ficam no
 > `memoria.md`. Ao resolver um item, apague-o daqui e registre o resultado onde ele pertence (decisão → `memoria.md`,
 > procedimento → `operacao.md`). Datas em AAAA-MM-DD; horários em UTC.
-> Revisado em 2026-10-20.
+> Revisado em 2026-10-21.
 
 ## Pendências
-- **Trigger do scan pelo servidor (D-039)**: código no Git; falta o `SELF_DISPATCH_PAT` no `.env` (token de 09/10 ou um
-  novo, trocando também o secret do GitHub), o deploy por hash em `/home/ineocom/cryptosignals/bin/`, trocar a linha
-  do crontab (hoje aponta para `/home/ineocom/Cryptosignas/`, inexistente) e conferir HTTP 204 no log (`operacao.md`,
-  seção 9). Depois: guardar o `trigger_scan.sh` antigo como backup e removê-lo.
+- **Tokens antigos (D-039)**: se um token novo foi gerado em 2026-10-20, revogar o de 2026-10-09 no GitHub
+  (Fine-grained tokens). No servidor, apagar `/home/ineocom/cryptosignals/trigger_scan.sh.bak-20261020` (token de junho,
+  já vencido) e os backups `.env.bak-20261015`/`.env.bak-20261020` quando não forem mais necessários.
 - **Re-disparo do `main.yml` tenta uma vez só**: um HTTP 500 passageiro do GitHub quebrou a corrente em 2026-10-19
   23:30 UTC (P-18). Avaliar nova tentativa no passo "Re-arm" (mudança no `main.yml`, com plano).
 - **Watchdog externo (D-037)** alerta só depois de 60 a 90 min de parada (viu 58,1 min às 00:30 de 2026-10-20 e não
-  alertou). Avaliar limite menor (ex.: 30 min) depois que o trigger do servidor estiver de pé.
+  alertou). Avaliar limite menor (ex.: 30 min): o trigger do servidor já está de pé (2026-10-20).
 - **Pasta pública (D-040)**: contida com `.htaccess`. Falta decidir se `gerar_teste_trx.php` (sem uso conhecido) sai
   do servidor e se os logs de acesso do domínio existem em outro caminho (o `grep` deu 0 linhas, não conclusivo).
 - **Cron PAXG (D-032)**: fix do P-16 deployado em 2026-10-15 (commit `8dc5668a`, sha256 `0e3624f6…`). Falta ver o
