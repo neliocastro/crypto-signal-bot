@@ -6,15 +6,9 @@
 > Revisado em 2026-10-21.
 
 ## Pendências
-- **Backups antigos na pasta pública** (baixa prioridade): 9 arquivos `*.bak*` em `public_html/cryptosignals/`
-  (`execute.php.bak-*` desde 2026-06, inclusive a versão com o bug `sspot`; `paxg_rsi_check.php.bak-20261015`;
-  `seen_signals.json.bak-091514`; `watchdog_scan.php.bak-20261021`). Bloqueados pelo `.htaccess` e não executáveis
-  como `.bak`; mover para `/home/ineocom/cryptosignals/arquivo/` ou apagar, mantendo só o último backup do relay.
 - **Backup do `.env`**: apagar `/home/ineocom/cryptosignals/secrets/.env.bak-20261020` depois da primeira compra
   real bem-sucedida (é ela que exercita as chaves da Gate e o HMAC do `.env` atual). Tokens antigos já revogados e
   backups com token vencido já apagados em 2026-10-21.
-- **Logs de acesso do domínio**: o `grep` em `/usr/local/apache/domlogs/` e `~/access-logs/` deu 0 linhas
-  (não conclusivo; os caminhos podem não existir). Saber se alguém acessou os `gerar_teste_*` antes do `.htaccess`.
 - **Cron PAXG (D-032)**: fix do P-16 deployado em 2026-10-15 (commit `8dc5668a`, sha256 `0e3624f6…`). Falta ver o
   primeiro `COMPRA OK` no `paxg_cron.log` e o SL −15% na Gate. Em aberto (o usuário manteve o D-032 por enquanto):
   registrar essas compras em `positions.jsonl`; se for feito, o trailing precisa pular o PAXG, pois

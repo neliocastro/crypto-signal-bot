@@ -102,6 +102,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   bloqueados (HTTP 403); os crons rodam pelo terminal e não são afetados. Conferido: relay 401, demais 403.
   Fonte versionada: `server/cryptosignals.htaccess`. O `gerar_teste_trx.php` (compra manual de TRX de 2026-06, sem uso)
   sai da pasta pública para `/home/ineocom/cryptosignals/arquivo/` (decisão do usuário; feito e conferido em 2026-10-21).
+  Os backups antigos da pasta também foram para lá; ficam só os 3 de rollback recentes (relay, cron PAXG, watchdog).
 - **D-042 (2026-10-21)** **Agente acessa o servidor só por SSH restrito e só leitura**: chave gerada no Mac do usuário,
   autorizada no `ineocom` com `restrict,command=` apontando para `server/agent_gate.php` (menu fixo: `help`, `status`,
   `hashes`, `crontab`, `env-keys`, `http`; saída com máscara de segredos; log de cada chamada). Nunca como `root`.
@@ -206,5 +207,7 @@ Formato: problema → causa → regra que ficou.
   sem trava de terminal: `foreach ($argv …)` só gera aviso e segue) e os logs de ordens. Sem evidência de acesso
   (logs de acesso não conferidos de forma conclusiva). Revisão em 2026-10-21: o `error_log` mostra o script morrendo
   na linha 103 (`STDERR` indefinido) quando roda fora do terminal, antes de enviar a ordem; pela web a compra
-  provavelmente falharia (não testado). Os logs estavam expostos de fato. Regra: na web root só o que precisa ser acessível; script de
+  provavelmente falharia (não testado). Os logs estavam expostos de fato. Logs de acesso (2026-10-21): o Apache
+  guarda só outubro/2026 (`/var/log/apache2/domlogs/` + `/home/ineocom/logs/*-Oct-2026.gz`); nesse período, nenhum
+  acesso externo a `gerar_teste_*` nem aos logs do bot, só os testes feitos do próprio servidor. Jun a set: sem log. Regra: na web root só o que precisa ser acessível; script de
   servidor tem `PHP_SAPI === 'cli'` e fica fora de `public_html` sempre que possível → D-040.

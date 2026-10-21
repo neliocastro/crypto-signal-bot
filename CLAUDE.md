@@ -58,6 +58,9 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
   porteiro cobre, o agente faz sozinho em vez de pedir ao usuário.
 - Comando de servidor: um bloco por passo, com valores **já preenchidos** (SHA, sha256, bytes, caminhos absolutos),
   o resultado esperado e o rollback. Nunca deixar placeholder (`<SHA>`, `<token>`) num comando executável.
+- Todo comando para o servidor vem dentro da trava de hostname, para não rodar no Mac por engano (o `!` do Claude
+  Code executa no Mac):
+  `if hostname | grep -q '^dedi-15131000'; then <comandos>; else echo "PARE: comando do SERVIDOR."; fi`
 - Conferir a saída de cada passo contra o esperado antes de passar o próximo.
 - Crontab: gerar o arquivo novo, mostrar o `diff` e instalar com `crontab -u ineocom <arquivo>`, com backup. Se for
   preciso usar o vi, dar a instrução tecla a tecla, incluindo como sair sem salvar.
