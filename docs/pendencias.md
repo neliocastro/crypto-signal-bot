@@ -6,10 +6,11 @@
 > Revisado em 2026-10-21.
 
 ## Pendências
-- **Acesso do agente (D-042)**: código no Git; falta deploy do `agent_gate.php` por hash, autorizar a chave com
-  `restrict,command=`, entrada no `~/.ssh/config` do Mac e o teste de contenção (`operacao.md`, seção 11). Revisar a
-  chave `id_rsa.1781635343` (autorizada no cPanel, origem não registrada) e excluir a `id_rsa_cryptosignal` gerada no
-  cPanel (não autorizada; a privada fica no servidor).
+- **Chaves SSH no cPanel**: revisar a `id_rsa.1781635343` (autorizada, origem não registrada) e excluir a
+  `id_rsa_cryptosignal` (gerada no cPanel, não autorizada; a privada fica no servidor). O acesso do agente (D-042)
+  usa outra chave, gerada no Mac.
+- **Porteiro (D-042), melhorias possíveis**: uma ação que junte `status` + `hashes` + `http` numa conexão só (P-20) e
+  incluir o `agent_gate.log` no `status`.
 - **Tokens antigos (D-039)**: se um token novo foi gerado em 2026-10-20, revogar o de 2026-10-09 no GitHub
   (Fine-grained tokens). No servidor, apagar `/home/ineocom/cryptosignals/trigger_scan.sh.bak-20261020` (token de junho,
   já vencido) e os backups `.env.bak-20261015`/`.env.bak-20261020` quando não forem mais necessários.

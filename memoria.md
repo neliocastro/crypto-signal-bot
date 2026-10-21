@@ -104,6 +104,8 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   autorizada no `ineocom` com `restrict,command=` apontando para `server/agent_gate.php` (menu fixo: `help`, `status`,
   `hashes`, `crontab`, `env-keys`, `http`; saída com máscara de segredos; log de cada chamada). Nunca como `root`.
   Deploy, crontab e `.env` continuam com o usuário. `docs/decisoes/D-042-acesso-do-agente-ao-servidor.md`
+  Instalado em 2026-10-21 (sha256 `58516b29…`; host key do servidor `SHA256:YcHODEy6…daf8` conferida dos dois lados).
+  Contenção testada: pedidos fora do menu, `-tt`, `scp` e túnel recusados.
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -185,7 +187,12 @@ Formato: problema → causa → regra que ficou.
   com um HTTP 500 do GitHub em 2026-10-19 23:30 UTC. O script real também não checava HTTP e tinha token de junho.
   Regra: todo script de servidor fica versionado no repo, confere o código HTTP e avisa quando falha; ao mexer no
   crontab, conferir que o caminho existe (`ls -la <caminho>`) antes de salvar.
+- **P-20 (10/21)** Teste de contenção do D-042 abriu ~9 conexões SSH em segundos e o servidor bloqueou a porta 22
+  para o IP do Mac por ~1 min (proteção de excesso de conexões; web, cPanel e relay seguiram no ar). Regra: espaçar as
+  chamadas ao `cryptosignals-gate` (no máximo algumas por minuto) e preferir menos conexões.
 - **P-19 (10/20)** A pasta pública do servidor expunha pela web scripts que compram de verdade (`gerar_teste_paxg.php`,
   sem trava de terminal: `foreach ($argv …)` só gera aviso e segue) e os logs de ordens. Sem evidência de acesso
-  (logs de acesso não conferidos de forma conclusiva). Regra: na web root só o que precisa ser acessível; script de
+  (logs de acesso não conferidos de forma conclusiva). Revisão em 2026-10-21: o `error_log` mostra o script morrendo
+  na linha 103 (`STDERR` indefinido) quando roda fora do terminal, antes de enviar a ordem; pela web a compra
+  provavelmente falharia (não testado). Os logs estavam expostos de fato. Regra: na web root só o que precisa ser acessível; script de
   servidor tem `PHP_SAPI === 'cli'` e fica fora de `public_html` sempre que possível → D-040.

@@ -189,3 +189,7 @@ O agente só lê, e só por `ssh cryptosignals-gate <ação>`. A chave do agente
 - Teste de contenção: `ssh cryptosignals-gate status` responde; `ssh cryptosignals-gate 'cat /etc/passwd'` é recusado.
 - Auditoria: `tail /home/ineocom/cryptosignals/bin/agent_gate.log` (data, IP, pedido, ok/RECUSADO).
 - **Revogar:** apagar a linha `agente-cryptosignals-leitura` do `authorized_keys`. Efeito imediato.
+- **Limite de conexões (P-20):** ~9 conexões em poucos segundos bloqueiam a porta 22 para o IP de origem por ~1 min.
+  Espaçar as chamadas. Web, cPanel e relay não são afetados pelo bloqueio.
+- Instalado em 2026-10-21: `agent_gate.php` sha256 `58516b29…` (6880 bytes); backup do `authorized_keys` em
+  `/home/ineocom/.ssh/authorized_keys.bak-20261021`.
