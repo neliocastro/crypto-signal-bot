@@ -51,6 +51,20 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
    feito, próximo passo e bloqueios; ao concluir, levar o que precisa durar para o doc certo e apagar o journal.
 7. Fim da sessão: atualizar `docs/pendencias.md`.
 
+## Como trabalhar com o usuário
+- Quem muda o servidor é o usuário (como `root`), colando a saída no chat. O agente **só lê**, e só por
+  `ssh cryptosignals-gate <ação>` (D-042: `help`, `status`, `hashes`, `crontab`, `env-keys`, `http`). Conferência que o
+  porteiro cobre, o agente faz sozinho em vez de pedir ao usuário.
+- Comando de servidor: um bloco por passo, com valores **já preenchidos** (SHA, sha256, bytes, caminhos absolutos),
+  o resultado esperado e o rollback. Nunca deixar placeholder (`<SHA>`, `<token>`) num comando executável.
+- Conferir a saída de cada passo contra o esperado antes de passar o próximo.
+- Crontab: gerar o arquivo novo, mostrar o `diff` e instalar com `crontab -u ineocom <arquivo>`, com backup. Se for
+  preciso usar o vi, dar a instrução tecla a tecla, incluindo como sair sem salvar.
+- Segredo: o usuário edita com `nano`; para conferir, mostrar só nomes de chaves ou tamanho, nunca o valor.
+- Aprovação vale para uma etapa só (plano, implementação, commit, deploy).
+- Avaliações e propostas: críticas e sugestões numeradas por prioridade, cada uma com recomendação explícita
+  (adotar / adotar em parte / não adotar) e o motivo.
+
 ## Emergência: parar o bot já
 - **Scan e ordens novas:** GitHub → Actions → `main.yml` → *Disable workflow*. O `/pausar` do Telegram pode levar
   horas (P-17). Stops e TPs já criados seguem ativos na Gate.
@@ -59,6 +73,7 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
   enquanto o `main.yml` estiver desligado).
 - **Watchdog:** `touch /home/ineocom/public_html/cryptosignals/.watchdog_pause`.
 - **Relay:** restaurar o backup do `execute.php` (`docs/operacao.md`, seção 2).
+- **Acesso do agente:** apagar a linha `agente-cryptosignals-leitura` do `/home/ineocom/.ssh/authorized_keys`.
 
 ## Regras de engenharia
 - Mudanças **aditivas**; não renomeie símbolos existentes; mantenha aliases (`SYMBOLS = WATCHLIST`,
@@ -68,7 +83,7 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 - Antes de commitar: `python -m py_compile bot/*.py`, `python tests/test_roteamento_strings.py`,
   `python tests/test_saida_tp1.py`, `python tests/test_renovacao_sl.py`, `python tests/test_placar.py`,
   `python tests/test_trava_perda_diaria.py`, `python tests/test_whitelist_php.py`,
-  `php tests/test_watchdog_scan.php`, `php tests/test_trigger_scan.php` (se houver PHP local). O workflow `checks` roda `php -l` no relay e os testes no GitHub.
+  `php tests/test_watchdog_scan.php`, `php tests/test_trigger_scan.php`, `php tests/test_agent_gate.php` (se houver PHP local). O workflow `checks` roda `php -l` no relay e os testes no GitHub.
 - `server/execute.php` exige **deploy manual** conferido por bytes e hash (`docs/operacao.md`). Flag que dependa do
   PHP só se liga depois do deploy.
 - Mensagens de commit em português; o `.gitignore` cobre `__pycache__`, `._*` e segredos: não force a inclusão.
@@ -80,8 +95,10 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 - Reativar estratégia desligada ou mudar a watchlist fora de `bot/config.py`.
 - Dar ao bot poder de cancelar ordens que ele não criou (D-025).
 - Colar token, secret ou HMAC em chat, log, print ou commit.
+- Acessar o servidor de outro jeito que não o `ssh cryptosignals-gate`, ou pedir acesso como `root` ou sem restrição (D-042).
 
 ## Para lembrar sempre
 - Run verde ≠ passo funcionou. Fix commitado ≠ fix deployado. Tela do app ≠ status real da ordem (use a API).
 - Qualquer registro com status `open*` em `state/positions.jsonl` conta como posição viva.
 - No servidor, use caminhos absolutos (`/home/ineocom/...`); logado como root, `~` é `/root`.
+- **O repositório é público:** nada pessoal ou sensível em arquivo versionado (D-041).

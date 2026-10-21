@@ -27,6 +27,7 @@ python tests/test_trava_perda_diaria.py
 python tests/test_whitelist_php.py
 php tests/test_watchdog_scan.php        # no GitHub (o checks roda); local só com PHP instalado
 php tests/test_trigger_scan.php
+php tests/test_agent_gate.php
 ```
 
 ## 2. Deploy do relay (`server/execute.php`)
@@ -174,3 +175,17 @@ U=https://ineo.com.br/cryptosignals; curl -s -w " HTTP %{http_code}\n" $U/execut
 ```
 Esperado: `execute.php` 401; os demais 403. **Nunca** testar abrindo um `gerar_teste_*.php`: ele compra de verdade.
 Rollback: `rm -f /home/ineocom/public_html/cryptosignals/.htaccess`.
+
+## 11. Acesso do agente ao servidor (`agent_gate.php`, D-042)
+O agente só lê, e só por `ssh cryptosignals-gate <ação>`. A chave do agente fica no Mac do usuário
+(`~/.ssh/cryptosignals_agent`) e, no servidor, é autorizada com comando forçado: qualquer conexão com ela executa o
+`agent_gate.php`, que aceita só `help`, `status`, `hashes`, `crontab`, `env-keys` e `http`.
+
+- Entrada no `~/.ssh/config` do Mac:
+  `Host cryptosignals-gate` / `HostName ineo.com.br` / `User ineocom` / `IdentityFile ~/.ssh/cryptosignals_agent` /
+  `IdentitiesOnly yes` / `UseKeychain yes` / `AddKeysToAgent yes`.
+- Linha no `/home/ineocom/.ssh/authorized_keys` (chave pública em uma linha só):
+  `restrict,command="/usr/local/bin/php /home/ineocom/cryptosignals/bin/agent_gate.php" ssh-ed25519 AAAA… agente-cryptosignals-leitura`
+- Teste de contenção: `ssh cryptosignals-gate status` responde; `ssh cryptosignals-gate 'cat /etc/passwd'` é recusado.
+- Auditoria: `tail /home/ineocom/cryptosignals/bin/agent_gate.log` (data, IP, pedido, ok/RECUSADO).
+- **Revogar:** apagar a linha `agente-cryptosignals-leitura` do `authorized_keys`. Efeito imediato.

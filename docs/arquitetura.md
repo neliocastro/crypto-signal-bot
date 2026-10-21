@@ -119,6 +119,7 @@ terminam com "Scan PULADO". Concorrência: `scan-${ref}`, enfileira sem cancelar
 | Trigger do scan | `/home/ineocom/cryptosignals/bin/trigger_scan.php` + `trigger_scan.log`, estado `.trigger_state.json`, pausa `.trigger_pause` (D-039) |
 | Endpoint | `https://ineo.com.br/cryptosignals/execute.php` (HTTP 401 sem assinatura = correto) |
 | Watchdog externo | `/home/ineocom/public_html/cryptosignals/watchdog_scan.php` + `watchdog_cron.log`, estado `.watchdog_state.json`, pausa `.watchdog_pause` (D-037) |
+| Acesso do agente | `/home/ineocom/cryptosignals/bin/agent_gate.php` + `agent_gate.log`; chave `agente-cryptosignals-leitura` com `restrict,command=` (D-042) |
 | Script manual BTC | `~/btc_tp.php` (home do `ineocom`) |
 | PHP para cron | `/usr/local/bin/php` (CLI); `/usr/bin/php` é CGI e falha |
 

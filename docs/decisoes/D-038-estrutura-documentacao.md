@@ -1,6 +1,6 @@
 # D-038 — Estrutura de documentação e contexto do agente
 
-> Status: aprovada em 2026-10-19 | substitui: D-030 (2026-10-15) | substituída por: —
+> Status: aprovada em 2026-10-19 | substitui: D-030 (2026-10-15) | substituída por: — (item 7 ajustado pelo D-041)
 
 ## Contexto
 O D-030 organizou o projeto em `CLAUDE.md` + `memoria.md` + 4 docs + `docs/historico/`. Em 2026-10-19 o usuário trouxe
@@ -45,6 +45,9 @@ Não adotados: tríade de agentes, backlog externo, pastas `incidents/`, `runboo
 - Journal local se perde se a máquina ou o SSD falhar: por isso não guarda nada que precise durar (isso vai para
   `memoria.md`, `pendencias.md` ou `operacao.md` ao fim da tarefa).
 - Reavaliar a tríade se outro agente (Codex, Gemini) passar a trabalhar no repositório.
+- **2026-10-21 (D-041):** o item 7 foi ajustado. Preferências de trabalho do usuário passam a ficar no `CLAUDE.md`
+  (bloco "Como trabalhar com o usuário"), em texto neutro, para migrar com o repositório. Como o repositório é
+  público, nada pessoal entra em arquivo versionado; a memória local do agente fica para o resto.
 
 ## Referências
 `docs/memoria-arquivo.md` (D-030), `CLAUDE.md`, `docs/pendencias.md`, `docs/estrategias.md` (cenários).

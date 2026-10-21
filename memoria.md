@@ -100,6 +100,10 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   `Require all denied` + exceção para o relay (P-19). Scripts de compra (`gerar_teste_*.php`), logs e estado ficam
   bloqueados (HTTP 403); os crons rodam pelo terminal e não são afetados. Conferido: relay 401, demais 403.
   Fonte versionada: `server/cryptosignals.htaccess`.
+- **D-042 (2026-10-21)** **Agente acessa o servidor só por SSH restrito e só leitura**: chave gerada no Mac do usuário,
+  autorizada no `ineocom` com `restrict,command=` apontando para `server/agent_gate.php` (menu fixo: `help`, `status`,
+  `hashes`, `crontab`, `env-keys`, `http`; saída com máscara de segredos; log de cada chamada). Nunca como `root`.
+  Deploy, crontab e `.env` continuam com o usuário. `docs/decisoes/D-042-acesso-do-agente-ao-servidor.md`
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -108,7 +112,11 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   emergência) + `memoria.md` (decisões e lições) + `docs/pendencias.md` (estado volátil) + `docs/decisoes/` (ADR só
   para decisão nova com trade-off) + `docs/{arquitetura, estrategias, operacao, resultado_financeiro}.md` +
   `docs/historico/` (evidência, sem edição) + `.agent-work/` (journal local de tarefa) + memória do agente (preferências
-  do usuário, fora do repo) + `.gitignore`. `docs/decisoes/D-038-estrutura-documentacao.md`
+  do usuário, fora do repo; trecho AJUSTADO pelo D-041) + `.gitignore`. `docs/decisoes/D-038-estrutura-documentacao.md`
+- **D-041 (2026-10-21)** **Preferências de trabalho do usuário no `CLAUDE.md`** (bloco "Como trabalhar com o usuário"),
+  em texto neutro, para irem junto com o repositório em qualquer máquina. O repositório é **público** (conferido em
+  2026-10-21): nada pessoal ou sensível em arquivo versionado. A memória local do agente fica só para o que não for
+  regra de trabalho. Ajusta o item 7 do D-038.
 - **D-032 (2026-10-15)** **O cron de acumulação do PAXG no servidor permanece ATIVO**, por decisão explícita do
   usuário: deve continuar comprando PAXG quando o RSI 4h ficar abaixo de 30 (`server/paxg_rsi_check.php`, crontab do
   `ineocom`, de hora em hora). É uma exceção ao D-012: essa compra fica fora do bot (sem `positions.jsonl`, sem OCO

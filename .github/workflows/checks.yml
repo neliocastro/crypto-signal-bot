@@ -26,6 +26,7 @@ jobs:
         run: |
           php tests/test_watchdog_scan.php
           php tests/test_trigger_scan.php
+          php tests/test_agent_gate.php
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
