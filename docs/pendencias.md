@@ -6,9 +6,10 @@
 > Revisado em 2026-10-21.
 
 ## Pendências
-- **Porteiro com `resumo` (D-045)**: código no Git; falta o deploy do `agent_gate.php` por hash.
-- **Arquivar o `gerar_teste_trx.php`** (D-040): mover de `public_html/cryptosignals/` para
-  `/home/ineocom/cryptosignals/arquivo/` (permissão 600). Conferir pela lista de arquivos do `status`.
+- **Backups antigos na pasta pública** (baixa prioridade): 9 arquivos `*.bak*` em `public_html/cryptosignals/`
+  (`execute.php.bak-*` desde 2026-06, inclusive a versão com o bug `sspot`; `paxg_rsi_check.php.bak-20261015`;
+  `seen_signals.json.bak-091514`; `watchdog_scan.php.bak-20261021`). Bloqueados pelo `.htaccess` e não executáveis
+  como `.bak`; mover para `/home/ineocom/cryptosignals/arquivo/` ou apagar, mantendo só o último backup do relay.
 - **Backup do `.env`**: apagar `/home/ineocom/cryptosignals/secrets/.env.bak-20261020` depois da primeira compra
   real bem-sucedida (é ela que exercita as chaves da Gate e o HMAC do `.env` atual). Tokens antigos já revogados e
   backups com token vencido já apagados em 2026-10-21.

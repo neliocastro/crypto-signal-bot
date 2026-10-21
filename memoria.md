@@ -101,7 +101,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   `Require all denied` + exceção para o relay (P-19). Scripts de compra (`gerar_teste_*.php`), logs e estado ficam
   bloqueados (HTTP 403); os crons rodam pelo terminal e não são afetados. Conferido: relay 401, demais 403.
   Fonte versionada: `server/cryptosignals.htaccess`. O `gerar_teste_trx.php` (compra manual de TRX de 2026-06, sem uso)
-  sai da pasta pública para `/home/ineocom/cryptosignals/arquivo/` (decisão do usuário em 2026-10-21).
+  sai da pasta pública para `/home/ineocom/cryptosignals/arquivo/` (decisão do usuário; feito e conferido em 2026-10-21).
 - **D-042 (2026-10-21)** **Agente acessa o servidor só por SSH restrito e só leitura**: chave gerada no Mac do usuário,
   autorizada no `ineocom` com `restrict,command=` apontando para `server/agent_gate.php` (menu fixo: `help`, `status`,
   `hashes`, `crontab`, `env-keys`, `http`; saída com máscara de segredos; log de cada chamada). Nunca como `root`.
@@ -117,7 +117,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   `30 * * * *`. Instalado em 2026-10-21 (sha256 `a9d73ea8…`); 1ª execução a cada 15 min às 02:15 UTC, `limite=30min`.
 - **D-045 (2026-10-21)** **Porteiro com `resumo`** (ajuste do D-042): `status` + `hashes` + `http` numa conexão só (P-20),
   e o `status` passa a mostrar o `agent_gate.log` e a lista de arquivos da pasta pública (vigiar arquivo estranho, P-19).
-  Continua só leitura.
+  Continua só leitura. Instalado em 2026-10-21 (sha256 `6c0fc576…`), conferido pelo próprio `resumo`.
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
