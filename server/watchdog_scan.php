@@ -2,7 +2,7 @@
 /**
  * watchdog_scan.php - WATCHDOG EXTERNO do scan + falhas do cron PAXG (D-037, 2026-10-15).
  * --------------------------------------------------------------------------
- * Roda de hora em hora no crontab do ineocom, FORA do GitHub Actions. Cobre o buraco
+ * Roda a cada 15 min no crontab do ineocom (D-044), FORA do GitHub Actions. Cobre o buraco
  * do bot/watchdog.py, que so roda dentro de um scan (parada total = silencio total).
  *
  *   1) SCAN PARADO: le state/runtime_config.json do main (raw.githubusercontent.com).
@@ -32,7 +32,7 @@ $WD = [
     'dir'          => __DIR__,
     'env_file'     => '/home/ineocom/cryptosignals/secrets/.env',
     'state_url'    => 'https://raw.githubusercontent.com/neliocastro/crypto-signal-bot/main/state/runtime_config.json',
-    'max_gap_min'  => 60,
+    'max_gap_min'  => 30,          // D-044 (2026-10-21): era 60. Rollback: 60
     'dnd_extra'    => 30,
     'realert_h'    => 3,
     'fetch_fail_n' => 3,

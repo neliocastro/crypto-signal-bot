@@ -11,10 +11,8 @@
 - **Backup do `.env`**: apagar `/home/ineocom/cryptosignals/secrets/.env.bak-20261020` depois da primeira compra
   real bem-sucedida (é ela que exercita as chaves da Gate e o HMAC do `.env` atual). Tokens antigos já revogados e
   backups com token vencido já apagados em 2026-10-21.
-- **Re-disparo do `main.yml` tenta uma vez só**: um HTTP 500 passageiro do GitHub quebrou a corrente em 2026-10-19
-  23:30 UTC (P-18). Avaliar nova tentativa no passo "Re-arm" (mudança no `main.yml`, com plano).
-- **Watchdog externo (D-037)** alerta só depois de 60 a 90 min de parada (viu 58,1 min às 00:30 de 2026-10-20 e não
-  alertou). Avaliar limite menor (ex.: 30 min): o trigger do servidor já está de pé (2026-10-20).
+- **Watchdog mais rápido (D-044)**: código no Git; falta o deploy do `watchdog_scan.php` por hash e trocar a linha do
+  crontab de `30 * * * *` para `*/15 * * * *` (método do `diff`). Conferir pelo `cryptosignals-gate` (`hashes`, `crontab`).
 - **Pasta pública (D-040)**: contida com `.htaccess`. Falta decidir se `gerar_teste_trx.php` (sem uso conhecido) sai
   do servidor e se os logs de acesso do domínio existem em outro caminho (o `grep` deu 0 linhas, não conclusivo).
 - **Cron PAXG (D-032)**: fix do P-16 deployado em 2026-10-15 (commit `8dc5668a`, sha256 `0e3624f6…`). Falta ver o

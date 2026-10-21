@@ -86,7 +86,8 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   `tests/test_whitelist_php.py` falha se a whitelist divergir de `WATCHLIST ∪ MARE_ALTA_UNIVERSE ∪ {PAXG}`.
   Deployada em 2026-10-15 (commit `8298f20d`, sha256 `4ec3b375…`, HTTP 401 conferido; backup `execute.php.bak-20261015b`).
 - **D-037 (2026-10-15)** **Watchdog externo no servidor** (`server/watchdog_scan.php`, crontab do `ineocom`, de hora em
-  hora): lê `state/runtime_config.json` do `main` e alerta no Telegram se `last_scan_utc` passar de 60 min (DND: +30),
+  hora): lê `state/runtime_config.json` do `main` e alerta no Telegram se `last_scan_utc` passar de 60 min (DND: +30;
+  limite e frequência AJUSTADOS pelo D-044),
   repetindo a cada 3 h e avisando a volta; também alerta `FALHA na compra` nova no `paxg_cron.log`. Fora do GitHub
   Actions e do `SELF_DISPATCH_PAT`. Só lê e avisa. Exige `TELEGRAM_TOKEN`/`TELEGRAM_CHAT_ID` no `.env` de segredos do
   servidor. Pausa: `.watchdog_pause`. Instalado em 2026-10-16 e conferido pelo cron em 2026-10-19/20.
@@ -106,6 +107,13 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   Deploy, crontab e `.env` continuam com o usuário. `docs/decisoes/D-042-acesso-do-agente-ao-servidor.md`
   Instalado em 2026-10-21 (sha256 `58516b29…`; host key do servidor `SHA256:YcHODEy6…daf8` conferida dos dois lados).
   Contenção testada: pedidos fora do menu, `-tt`, `scp` e túnel recusados.
+- **D-043 (2026-10-21)** **Re-disparo do `main.yml` com novas tentativas**: até 3 (`REARM_ATTEMPTS`), esperando 30 s e
+  60 s, só para erro passageiro (5xx, 429, sem resposta); 401/403/404/422 falham na hora. Um HTTP 500 único tinha
+  parado a corrente em 2026-10-19 (P-18). O `checks` passa a validar o YAML e o `bash -n` de todos os workflows
+  (`scripts/check_workflows.py`, P-05). Rollback: `REARM_ATTEMPTS: "1"`.
+- **D-044 (2026-10-21)** **Watchdog externo mais rápido** (ajusta o D-037): limite 30 min (era 60) e crontab a cada
+  15 min (era de hora em hora). Parada avisada em 30 a 45 min (antes, até ~2 h). Rollback: `max_gap_min` 60 e
+  `30 * * * *`.
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 

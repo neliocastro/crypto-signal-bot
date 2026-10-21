@@ -66,7 +66,8 @@ sha256 `6e3da8cb…`, backup `execute.php.bak-20261015`.
 - Fica em **dois lugares**: secret do GitHub **e** `.env` de segredos do servidor (`SELF_DISPATCH_PAT=`, lido pelo
   `trigger_scan.php`, D-039). Troque sempre nos dois.
 - Sintoma de token inválido: passo **Re-arm next scan** vermelho com HTTP 401 (403 = falta Actions RW; 404 = repo
-  não selecionado no token).
+  não selecionado no token). Erro passageiro (5xx, 429, sem resposta) é tentado de novo até 3 vezes (D-043): um
+  aviso amarelo "nova tentativa" com HTTP 204 no fim é normal.
 - Troca no servidor: backup do `.env` (chmod 600) e edição com `nano`, nunca com `echo` (o histórico guardaria o token).
   Depois: `/usr/local/bin/php /home/ineocom/cryptosignals/bin/trigger_scan.php --dry` mostra se o token está presente.
 - **Nunca** cole token, secret ou HMAC em chat, log, print ou commit. Se vazar: revogar na hora e trocar.
@@ -133,7 +134,7 @@ e conte ordens com `grep -o '"id"' | wc -l` (o `grep -c` conta linhas e dá fals
 - `tail -n 0` (não `tail -0`) no jailshell.
 
 ## 8. Watchdog externo (`watchdog_scan.php`, D-037)
-De hora em hora no crontab do `ineocom`. Alerta no Telegram se o scan parar por mais de 60 min (repete a cada 3 h, avisa
+A cada 15 min no crontab do `ineocom` (D-044). Alerta no Telegram se o scan parar por mais de 30 min (repete a cada 3 h, avisa
 a volta) e se surgir `FALHA na compra` nova no `paxg_cron.log`. Só lê e avisa; não toca em ordens.
 
 Instalação (uma vez):
@@ -142,7 +143,7 @@ Instalação (uma vez):
 2. Deploy conferido por hash, como na seção 2 (arquivo `server/watchdog_scan.php`), com `chown ineocom:ineocom`.
 3. Testar: `/usr/local/bin/php $B/watchdog_scan.php --test-telegram` (deve chegar a mensagem) e `--dry`.
 4. Crontab do `ineocom` (`crontab -e -u ineocom`), sempre com o CLI:
-   `30 * * * * /usr/local/bin/php /home/ineocom/public_html/cryptosignals/watchdog_scan.php >> /home/ineocom/public_html/cryptosignals/watchdog_cron.log 2>&1`
+   `*/15 * * * * /usr/local/bin/php /home/ineocom/public_html/cryptosignals/watchdog_scan.php >> /home/ineocom/public_html/cryptosignals/watchdog_cron.log 2>&1`
 
 ```bash
 B=/home/ineocom/public_html/cryptosignals

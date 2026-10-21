@@ -75,6 +75,10 @@ jobs:
         if: ${{ always() }}
         env:
           GH_TOKEN: ${{ secrets.SELF_DISPATCH_PAT }}
+          # D-043 (2026-10-21): tentativas do re-disparo. So repete erro passageiro (5xx, 429, sem resposta);
+          # 401/403/404/422 falham na hora. Um HTTP 500 unico parou a corrente em 2026-10-19 (P-18).
+          # Rollback: "1".
+          REARM_ATTEMPTS: "3"
         run: |
           if [ -z "$GH_TOKEN" ]; then
             echo "SELF_DISPATCH_PAT ausente - auto-reagendamento desligado (fallback: cron */15)."
@@ -82,14 +86,28 @@ jobs:
           fi
           echo "Aguardando 240s antes de re-armar o proximo scan..."
           sleep 240
-          code=$(curl -s -o /tmp/dispatch_resp.txt -w "%{http_code}" -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/${{ github.repository }}/actions/workflows/main.yml/dispatches \
-            -d '{"ref":"main","inputs":{"self_chain":"true"}}' || echo "000")
-          if [ "$code" = "204" ]; then
-            echo "Proximo scan re-armado (self-chain). HTTP 204."
-          else
-            echo "::error title=Self-dispatch falhou::HTTP $code ao re-armar o proximo scan. 401 = SELF_DISPATCH_PAT expirado/revogado; 403 = falta permissao Actions RW; 404 = repo nao selecionado no token. Cron */15 segue como fallback. Resposta: $(head -c 300 /tmp/dispatch_resp.txt 2>/dev/null)"
-            exit 1
-          fi
+          ATTEMPTS="${REARM_ATTEMPTS:-1}"
+          code="000"
+          for n in $(seq 1 "$ATTEMPTS"); do
+            code=$(curl -s -o /tmp/dispatch_resp.txt -w "%{http_code}" -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              https://api.github.com/repos/${{ github.repository }}/actions/workflows/main.yml/dispatches \
+              -d '{"ref":"main","inputs":{"self_chain":"true"}}' || true)
+            code="${code:-000}"
+            if [ "$code" = "204" ]; then
+              echo "Proximo scan re-armado (self-chain). HTTP 204 (tentativa $n de $ATTEMPTS)."
+              exit 0
+            fi
+            case "$code" in
+              5??|429|000) ;;
+              *) break ;;
+            esac
+            if [ "$n" -lt "$ATTEMPTS" ]; then
+              espera=$((30 * n))
+              echo "::warning title=Self-dispatch::HTTP $code na tentativa $n de $ATTEMPTS; nova tentativa em ${espera}s."
+              sleep "$espera"
+            fi
+          done
+          echo "::error title=Self-dispatch falhou::HTTP $code ao re-armar o proximo scan. 401 = SELF_DISPATCH_PAT expirado/revogado; 403 = falta permissao Actions RW; 404 = repo nao selecionado no token; 5xx = GitHub instavel (o trigger do servidor segue disparando). Resposta: $(head -c 300 /tmp/dispatch_resp.txt 2>/dev/null)"
+          exit 1

@@ -71,7 +71,7 @@ idempotência por `signal_id` (`seen_signals.json`), precisão por par via `/spo
 | Disparador | Frequência | Depende de `SELF_DISPATCH_PAT`? |
 |---|---|---|
 | Cron do servidor → `trigger_scan.php` → `workflow_dispatch` (D-039) | ~5 min | sim (lido do `.env` do servidor) |
-| Self-chain: último passo do `main.yml` espera 240 s e re-dispara | ~5 min | sim |
+| Self-chain: último passo do `main.yml` espera 240 s e re-dispara (até 3 tentativas em erro passageiro, D-043) | ~5 min | sim |
 | Cron do GitHub `*/15` | best-effort (na prática poucas vezes por dia) | não |
 
 O intervalo mínimo entre scans vem de `state/runtime_config.json` (`scan_interval_min`, hoje 5; comando `/intervalo`).
@@ -118,7 +118,7 @@ terminam com "Scan PULADO". Concorrência: `scan-${ref}`, enfileira sem cancelar
 | Pasta pública | `public_html/cryptosignals/.htaccess`: pela web só o `execute.php` responde; o resto dá 403 (D-040) |
 | Trigger do scan | `/home/ineocom/cryptosignals/bin/trigger_scan.php` + `trigger_scan.log`, estado `.trigger_state.json`, pausa `.trigger_pause` (D-039) |
 | Endpoint | `https://ineo.com.br/cryptosignals/execute.php` (HTTP 401 sem assinatura = correto) |
-| Watchdog externo | `/home/ineocom/public_html/cryptosignals/watchdog_scan.php` + `watchdog_cron.log`, estado `.watchdog_state.json`, pausa `.watchdog_pause` (D-037) |
+| Watchdog externo | `/home/ineocom/public_html/cryptosignals/watchdog_scan.php` + `watchdog_cron.log`, a cada 15 min, limite 30 min; estado `.watchdog_state.json`, pausa `.watchdog_pause` (D-037, D-044) |
 | Acesso do agente | `/home/ineocom/cryptosignals/bin/agent_gate.php` + `agent_gate.log`; chave `agente-cryptosignals-leitura` com `restrict,command=` (D-042) |
 | Script manual BTC | `~/btc_tp.php` (home do `ineocom`) |
 | PHP para cron | `/usr/local/bin/php` (CLI); `/usr/bin/php` é CGI e falha |
