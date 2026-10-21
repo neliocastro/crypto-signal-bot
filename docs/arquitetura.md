@@ -86,7 +86,7 @@ terminam com "Scan PULADO". Concorrência: `scan-${ref}`, enfileira sem cancelar
 |---|---|---|
 | `main.yml` | cron `*/15` + `workflow_dispatch` | scan, commit de `state/`, re-disparo (falha se ≠ HTTP 204) |
 | `checks.yml` | push em `server/`, `bot/`, `tests/` | `php -l` no relay + `py_compile` + testes |
-| `commander.yml` | cron `*/2` (na prática a cada 3–5 h, P-17) | lê comandos do Telegram (`/status`, `/pausar`, `/retomar`, `/intervalo`, `/forcar`, `/dnd`…) |
+| `commander.yml` | **só manual** desde 2026-10-21 (D-046); os comandos são lidos no início de cada scan do `main.yml` (~5 min) | lê comandos do Telegram (`/status`, `/pausar`, `/retomar`, `/intervalo`, `/forcar`, `/dnd`…) |
 | `daily_summary.yml` | cron 12:00 UTC (09:00 BRT) | resumo diário |
 | `backtest.yml` | manual | roda um script de `scripts/`; o `backtest_macd` grava `docs/backtest_report.md` (artefato gerado, não versionar à mão) |
 

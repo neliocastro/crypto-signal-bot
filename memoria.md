@@ -119,6 +119,11 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-045 (2026-10-21)** **Porteiro com `resumo`** (ajuste do D-042): `status` + `hashes` + `http` numa conexão só (P-20),
   e o `status` passa a mostrar o `agent_gate.log` e a lista de arquivos da pasta pública (vigiar arquivo estranho, P-19).
   Continua só leitura. Instalado em 2026-10-21 (sha256 `6c0fc576…`), conferido pelo próprio `resumo`.
+- **D-046 (2026-10-21)** **Telegram só com eventos + comandos no scan** (Fases 0 e 1 do plano de mensagens): desliga o
+  resumo a cada scan (`SCAN_SUMMARY_ENABLED`; eram ~288 msgs/dia com diagnóstico de MACD de estratégias removidas) e o
+  paper trading (`PAPER_EVAL_ENABLED`, D-028); o resumo diário e o `/status` mostram estratégias ligadas/desligadas,
+  posições e a trava real (D-035); `/add` e `/rm` respondem que a watchlist vem do `config.py` (D-004). Os comandos
+  passam a ser lidos no início de cada scan (`TELEGRAM_COMMANDS_IN_SCAN`, ~5 min) e o `commander.yml` fica só manual.
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -194,7 +199,7 @@ Formato: problema → causa → regra que ficou.
   Regra: P-03 vale também para `exec()` dentro do PHP; cron que falha precisa avisar alto.
 - **P-17 (10/15)** O cron do GitHub é muito irregular: o `commander.yml` (`*/2`) rodou 6 vezes em 15/10, com intervalos
   de 3 a 5,5 h. Regra: **comandos do Telegram (`/pausar` etc.) podem levar horas**; para parar rápido, desabilitar o
-  `main.yml` no GitHub. Nada que precise de prazo pode depender do cron do GitHub.
+  `main.yml` no GitHub. Nada que precise de prazo pode depender do cron do GitHub. (Comandos: resolvido pelo D-046.)
 - **P-18 (10/09→10/20)** O cron do servidor chamava `/home/ineocom/Cryptosignas/trigger_scan.sh` (pasta com typo,
   inexistente) e falhou em silêncio, provavelmente desde a troca do token em 2026-10-09; a cadência dependia só da corrente do `main.yml`, que parou 80 min
   com um HTTP 500 do GitHub em 2026-10-19 23:30 UTC. O script real também não checava HTTP e tinha token de junho.

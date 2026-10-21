@@ -150,6 +150,21 @@ def scan_symbol(symbol: str) -> dict[str, Any]:
     return diag
 
 def main() -> int:
+    # D-046 (2026-10-21): comandos do Telegram lidos a cada scan, ANTES do gating abaixo,
+    # para /pausar, /retomar e /forcar valerem mesmo em scan pulado. Antes: so pelo
+    # commander.yml, que o cron do GitHub rodava a cada 3-5 h (P-17). Kill-switch:
+    # config.TELEGRAM_COMMANDS_IN_SCAN. Falha aqui nunca derruba o scan.
+    try:
+        from .config import TELEGRAM_COMMANDS_IN_SCAN as _cmd_on
+    except Exception:
+        _cmd_on = False
+    if _cmd_on:
+        try:
+            from . import commander as _commander
+            _commander.main()
+        except Exception:
+            log.error("Comandos do Telegram falharam (ignorado):\n%s", traceback.format_exc())
+
     # Fase C4: gating por runtime_config (paused / scan_interval / DND)
     try:
         from . import runtime_config as rc
@@ -552,21 +567,28 @@ def main() -> int:
             log.error("Falha no relatorio semanal (ignarada):\n%s",
                       traceback.format_exc())
 
-    # 4) Envia resumo do scan (sempre)
+    # 4) Resumo do scan: DESLIGADO por padrao desde 2026-10-21 (D-046; eram ~288 msgs/dia).
     try:
-        fg_score = fg["score"] if isinstance(fg, dict) else 0
-        summary = format_scan_summary(
-            diagnostics=diagnostics,
-            signals_count=len(qualified_signals),
-            fg=fg_score,
-            timeframe=TIMEFRAME,
-            exchange=EXCHANGE,
-        )
-        send(summary)
-        log.info("📨 Resumo enviado (%d ativos, %d sinais).",
-                 len(diagnostics), len(qualified_signals))
+        from .config import SCAN_SUMMARY_ENABLED as _sum_on
     except Exception:
-        log.error("Falha ao enviar resumo:\n%s", traceback.format_exc())
+        _sum_on = True
+    if not _sum_on:
+        log.info("Resumo do scan nao enviado (SCAN_SUMMARY_ENABLED=False, D-046).")
+    else:
+        try:
+            fg_score = fg["score"] if isinstance(fg, dict) else 0
+            summary = format_scan_summary(
+                diagnostics=diagnostics,
+                signals_count=len(qualified_signals),
+                fg=fg_score,
+                timeframe=TIMEFRAME,
+                exchange=EXCHANGE,
+            )
+            send(summary)
+            log.info("📨 Resumo enviado (%d ativos, %d sinais).",
+                     len(diagnostics), len(qualified_signals))
+        except Exception:
+            log.error("Falha ao enviar resumo:\n%s", traceback.format_exc())
 
     # 5) Escreve estado do dashboard (Fase C2 - D.1)
     if DASHBOARD_ENABLED and _DASHBOARD_AVAILABLE:

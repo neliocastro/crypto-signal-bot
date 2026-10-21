@@ -1,8 +1,11 @@
 """
 Resumo diario do Crypto Signal Bot -> Telegram.
 
-Le state/orders_executed.csv + state/runtime_config.json + state/paper_positions.json,
+Le state/orders_executed.csv + state/runtime_config.json + state/positions.jsonl,
 monta um resumo das ultimas 24h e envia via bot.telegram_sender.send().
+2026-10-21 (D-046): saiu o P&L de papel (paper_positions, obsoleto pelo D-028) e o
+"stop diario -$10" errado; entram estrategias ligadas/desligadas, posicoes abertas,
+fechamentos de 24h com P&L estimado (D-034) e a trava real (D-035, US$ 20).
 
 Uso:
     python -m bot.reports.daily_summary
@@ -52,7 +55,7 @@ def build_summary(now_utc: datetime | None = None) -> str:
 
     rows = _read_csv(_STATE / "orders_executed.csv")
     runtime = _read_json(_STATE / "runtime_config.json", {})
-    paper = _read_json(_STATE / "paper_positions.json", {})
+    positions_path = str(_STATE / "positions.jsonl")
 
     recent = []
     for r in rows:
@@ -73,12 +76,19 @@ def build_summary(now_utc: datetime | None = None) -> str:
     interval = runtime.get("scan_interval_min", "?")
     paused = runtime.get("paused", False)
 
-    pnl_24h = 0.0
-    for p in paper.get("closed", []):
-        ts = _parse_ts(p.get("closed_at", ""))
-        if ts and ts >= cutoff:
-            pnl_24h += float(p.get("pnl_usdt", 0.0) or 0.0)
-    stop_hit = pnl_24h <= -10.0
+    # Estrategias, posicoes e fechamentos reais (D-046). Tudo best-effort.
+    try:
+        from bot import status_view as sv
+        estrategias = sv.linhas_estrategias()
+        abertas = sv.posicoes_abertas(positions_path)
+        fechadas = sv.fechadas_desde(cutoff.isoformat(), positions_path)
+    except Exception:
+        estrategias, abertas, fechadas = ["(estrategias indisponiveis)"], [], []
+    pnl_24h = sum(p for _, _, p in fechadas if p is not None)
+    try:
+        from bot.config import EXECUTION_DAILY_LOSS_STOP as _lim
+    except Exception:
+        _lim = None
 
     real_filled = sum(1 for r in recent if r.get("status") == "filled" and r.get("mode") == "REAL")
     blocked = sum(1 for r in recent if r.get("status") in ("blocked_by_guard", "rejected_by_exchange", "skipped"))
@@ -89,8 +99,19 @@ def build_summary(now_utc: datetime | None = None) -> str:
     L.append(f"{fg_emoji} *Fear & Greed:* {fg_score} {('- ' + fg_label) if fg_label else ''}".strip())
     L.append(f"\U0001F504 Ultimo scan: {last_scan_s} BRT | sinais no scan: {signals_count}")
     L.append(f"\U0001F3AF Watchlist: {len(watch)} pares | scan a cada {interval}min")
-    L.append(f"\u23F8 Bot pausado: {'sim' if paused else 'nao'}")
-    L.append(f"\U0001F6A8 Stop diario -$10: {'ATINGIDO' if stop_hit else 'nao atingido'} (PnL 24h paper: ${pnl_24h:+.2f})\n")
+    L.append(f"\u23F8 Bot pausado: {'sim' if paused else 'nao'}\n")
+    L.append("\U0001F9ED *Estrategias*")
+    L.extend(estrategias)
+    L.append("")
+    L.append(f"\U0001F4C2 *Posicoes abertas do bot:* {len(abertas)}")
+    L.extend(abertas)
+    if fechadas:
+        L.append(f"\U0001F4CA *Fechadas em 24h:* {len(fechadas)} | P&L estimado: ${pnl_24h:+.2f}")
+        for sym, st, pnl in fechadas:
+            L.append(f"   - {sym} {st} {'n/d' if pnl is None else f'${pnl:+.2f}'}")
+    if _lim is not None:
+        L.append(f"\U0001F6A8 Trava de perda diaria: US$ {float(_lim):.0f} (D-035; perda real 24h: ${min(pnl_24h, 0):+.2f})")
+    L.append("")
     L.append("\u2501" * 18)
 
     if not recent:

@@ -260,7 +260,8 @@ PAPER_TRADES_FILE = "state/paper_trades.jsonl"
 # a estrategia de cada sinal. Relatorio automatico no Telegram a cada N dias.
 #   PAPER_EVAL_ENABLED         -> kill switch da avaliacao.
 #   PAPER_REPORT_INTERVAL_DAYS -> cadencia do relatorio (dias).
-PAPER_EVAL_ENABLED         = True
+PAPER_EVAL_ENABLED         = False  # D-046 (2026-10-21): desligado; simulava estrategias removidas (D-011) e as
+                                    # posicoes-papel sao obsoletas (D-028). Rollback: True
 PAPER_REPORT_INTERVAL_DAYS = 7
 PAPER_POSITIONS_FILE       = "state/paper_positions.json"
 
@@ -314,3 +315,14 @@ OCO_GUARD_ENABLED = True   # kill-switch do OCO emulado
 # So escreve no positions.jsonl: nao cria nem cancela ordem. Rollback: False.
 EXIT_RECORD_ENABLED = True
 EXIT_FEE_RATE       = 0.001   # taxa estimada por ponta (0,1% na compra e na venda)
+
+# ============ TELEGRAM: MENOS MENSAGENS + COMANDOS NO SCAN (D-046, 2026-10-21) ============
+# Antes: um resumo a CADA scan (~288 mensagens/dia), com um diagnostico de MACD de
+# estrategias removidas (D-011). Agora o Telegram recebe so eventos (sinal, ordem, TP/SL,
+# TP1, trailing, falhas e alertas) + o resumo diario + /status sob demanda.
+SCAN_SUMMARY_ENABLED = False      # resumo a cada scan. Rollback: True
+# Os comandos do Telegram (/pausar, /status...) passam a ser lidos no inicio de CADA scan
+# (~5 min), antes da checagem de pausa/intervalo. Antes dependiam do commander.yml, que o
+# cron do GitHub rodava a cada 3-5 h (P-17). Rollback: False (e religar o schedule do
+# commander.yml).
+TELEGRAM_COMMANDS_IN_SCAN = True

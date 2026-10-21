@@ -25,6 +25,7 @@ python tests/test_renovacao_sl.py
 python tests/test_placar.py
 python tests/test_trava_perda_diaria.py
 python tests/test_whitelist_php.py
+python tests/test_telegram_mensagens.py
 php tests/test_watchdog_scan.php        # no GitHub (o checks roda); local só com PHP instalado
 php tests/test_trigger_scan.php
 php tests/test_agent_gate.php
@@ -125,8 +126,8 @@ e conte ordens com `grep -o '"id"' | wc -l` (o `grep -c` conta linhas e dá fals
 
 ## 7. Armadilhas recorrentes
 - Run verde ≠ passo funcionou: confira códigos HTTP.
-- `/pausar` no Telegram pode levar horas (o commander depende do cron do GitHub, P-17). Para parar já: desabilitar o
-  `main.yml` em Actions.
+- Comandos do Telegram (`/pausar`, `/status`…) valem no próximo scan, ~5 min (D-046); antes levavam horas (P-17).
+  Para parar já: desabilitar o `main.yml` em Actions.
 - O log do relay usa `"event":"execute"` (não `"order"`): confirme o nome real do campo antes de concluir por ausência.
 - Para medir alcance de incidente, use `state/orders_executed.csv` (versionado), não o `execution_log.jsonl` (rotacionado).
 - O cooldown de 4h vive no repositório (`last_signals.json`), não no servidor.

@@ -4,7 +4,8 @@ Telegram Commander (Fase C4 MVP)
 Polling do getUpdates do Telegram, parsing de comandos e aplicação
 em state/runtime_config.json.
 
-Executado pelo workflow .github/workflows/commander.yml a cada 2min.
+Desde 2026-10-21 (D-046) roda no inicio de cada scan (bot/main.py, ~5 min). O
+commander.yml ficou so manual: o cron do GitHub o rodava a cada 3-5 h (P-17).
 
 Segurança:
   - Apenas chat_id em ALLOWED_CHAT_ID processa comandos
@@ -39,7 +40,8 @@ OFFSET_PATH = _REPO_ROOT / "state" / "telegram_offset.txt"
 LOG_PATH    = _REPO_ROOT / "state" / "command_log.jsonl"
 
 TELEGRAM_TOKEN  = os.getenv("TELEGRAM_TOKEN", "").strip()
-ALLOWED_CHAT_ID = os.getenv("ALLOWED_CHAT_ID", "").strip()
+# commander.yml usa ALLOWED_CHAT_ID; o main.yml (scan) expoe o mesmo secret como TELEGRAM_CHAT_ID.
+ALLOWED_CHAT_ID = (os.getenv("ALLOWED_CHAT_ID", "") or os.getenv("TELEGRAM_CHAT_ID", "")).strip()
 API = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
 
@@ -130,21 +132,21 @@ def validate_symbol_on_exchange(symbol: str) -> tuple[bool, str]:
 HELP_TEXT = (
     "<b>🤖 Crypto Signal Bot — Comandos</b>\n\n"
     "<b>📊 Info</b>\n"
-    "/status — config atual + último scan\n"
-    "/listar — watchlist numerada\n"
+    "/status — estratégias, posições abertas e cadência\n"
+    "/listar — watchlist (vem de bot/config.py, D-004)\n"
     "/ajuda — esta mensagem\n\n"
-    "<b>📝 Watchlist</b>\n"
-    "/add BTC — adiciona ativo\n"
-    "/remover BTC — remove por símbolo\n"
-    "/rm 3 — remove por número\n\n"
     "<b>⏱️ Frequência</b>\n"
     "/intervalo 5|15|30 — muda intervalo\n"
     "/dnd on|off — modo não perturbe\n\n"
     "<b>🛑 Controle</b>\n"
     "/pausar — para o bot\n"
     "/retomar — religa o bot\n"
-    "/forcar — scan imediato (no próximo cron)\n"
+    "/forcar — scan imediato (no próximo cron)\n\n"
+    "<i>Comandos valem no próximo scan (~5 min).</i>\n"
 )
+
+_WATCHLIST_INERTE = ("ℹ️ A watchlist vem só de <code>bot/config.py</code> (D-004). "
+                     "Para mudar ativos, edite o arquivo e faça o deploy.")
 
 
 def _fmt_status(cfg: dict) -> str:
@@ -166,7 +168,24 @@ def _fmt_status(cfg: dict) -> str:
         f"Watchlist: {len(cfg.get('watchlist') or [])} ativos\n"
         f"Último scan: {last}\n"
         f"Atualizado por: {cfg.get('_updated_by','—')}\n"
+        + _fmt_estrategias()
     )
+
+
+def _fmt_estrategias() -> str:
+    """Estrategias ligadas/desligadas e posicoes abertas (D-046). Nunca derruba o /status."""
+    try:
+        from . import status_view as sv
+        linhas = ["", "<b>🧭 Estratégias</b>"] + [_esc(x) for x in sv.linhas_estrategias()]
+        abertas = sv.posicoes_abertas(str(_REPO_ROOT / "state" / "positions.jsonl"))
+        linhas += ["", "<b>📂 Posições abertas do bot:</b> %d" % len(abertas)] + [_esc(x) for x in abertas]
+        return "\n".join(linhas) + "\n"
+    except Exception as e:                                       # noqa: BLE001
+        return "\n(estratégias indisponíveis: %s)\n" % _esc(str(e)[:80])
+
+
+def _esc(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def _fmt_listar(cfg: dict) -> str:
@@ -201,40 +220,9 @@ def handle_command(text: str, cfg: dict) -> tuple[str, bool]:
     if cmd == "/listar":
         return _fmt_listar(cfg), False
 
-    # --- Watchlist ---
-    if cmd == "/add":
-        if not args:
-            return "❓ Uso: <code>/add BTC</code>", False
-        sym = normalize_symbol(args[0])
-        if sym in (cfg.get("watchlist") or []):
-            return f"⚠️ <code>{sym}</code> já está na watchlist.", False
-        ok, msg = validate_symbol_on_exchange(sym)
-        if not ok:
-            return f"❌ {msg}", False
-        cfg.setdefault("watchlist", []).append(sym)
-        return f"✅ <code>{sym}</code> adicionado.\nTotal: {len(cfg['watchlist'])} ativos.", True
-
-    if cmd in ("/remover", "/remove"):
-        if not args:
-            return "❓ Uso: <code>/remover BTC</code>", False
-        sym = normalize_symbol(args[0])
-        wl = cfg.get("watchlist") or []
-        if sym not in wl:
-            return f"⚠️ <code>{sym}</code> não está na watchlist.", False
-        wl.remove(sym)
-        cfg["watchlist"] = wl
-        return f"🗑️ <code>{sym}</code> removido.\nTotal: {len(wl)} ativos.", True
-
-    if cmd == "/rm":
-        if not args or not args[0].isdigit():
-            return "❓ Uso: <code>/rm 3</code> (índice da lista)", False
-        idx = int(args[0]) - 1
-        wl = cfg.get("watchlist") or []
-        if idx < 0 or idx >= len(wl):
-            return f"⚠️ Índice fora do range (1..{len(wl)}).", False
-        removed = wl.pop(idx)
-        cfg["watchlist"] = wl
-        return f"🗑️ <code>{removed}</code> removido.\nTotal: {len(wl)} ativos.", True
+    # --- Watchlist: inerte desde o D-004 (runtime_config.load() sempre usa bot/config.py) ---
+    if cmd in ("/add", "/remover", "/remove", "/rm"):
+        return _WATCHLIST_INERTE, False
 
     # --- Frequência ---
     if cmd == "/intervalo":

@@ -24,6 +24,9 @@
 - **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 2026-09-21: decisão do usuário.
 
 ## Próximos passos
+- **Telegram, Fases 2 a 4** (plano de 2026-10-21): catálogo de estratégias no `config.py` com liga/desliga pelo
+  Telegram (exige decisão que ajuste o D-004 e a proibição do `CLAUDE.md`); DCA (decidir proteção: D-006/R-006);
+  combinações novas (Maré Alta no HYPE, range trading) só após backtest (P-12).
 1. Acompanhar a primeira compra com TP1 parcial (mensagens "TP1 parcial NAO aplicado" ou "🎯 TP1" no Telegram) e o
    primeiro fechamento com `pnl_usdt_est` gravado (D-034).
 2. Revisar a estratégia só com amostra limpa (pós-2026-10-09): Maré Alta 0/6 desde 2026-09-04, parte em cadência

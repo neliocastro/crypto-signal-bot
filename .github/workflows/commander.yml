@@ -1,8 +1,12 @@
 name: Telegram Commander
 
+# D-046 (2026-10-21): os comandos passaram a ser lidos no inicio de cada scan (bot/main.py).
+# O schedule abaixo foi desligado para os dois nao disputarem o mesmo telegram_offset.txt;
+# o cron do GitHub rodava este workflow so a cada 3-5 h (P-17). Fica o disparo manual.
+# Rollback: descomentar o schedule (e TELEGRAM_COMMANDS_IN_SCAN = False no config.py).
 on:
-  schedule:
-    - cron: '*/2 * * * *'
+  # schedule:
+  #   - cron: '*/2 * * * *'
   workflow_dispatch:
 
 permissions:

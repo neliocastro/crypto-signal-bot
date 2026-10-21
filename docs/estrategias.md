@@ -72,7 +72,8 @@ A allowlist casa por **string exata, com acento**. Renomear o campo `strategy` e
 operar em silêncio; o canário `tests/test_roteamento_strings.py` pega isso. Altere os dois arquivos no mesmo commit.
 O Maré Alta roda **fora** dessa allowlist, em bloco próprio do `main.py`.
 
-🟢 PRONTO no Telegram vem do diagnóstico de todos os ativos e **não** significa que houve ordem.
+O Telegram recebe só **eventos** (sinal, ordem, TP/SL, TP1, trailing, falhas, alertas), o resumo diário e o `/status`
+(D-046). O antigo resumo a cada scan, com "🟢 PRONTO / quase lá" baseado em MACD, foi desligado (`SCAN_SUMMARY_ENABLED`).
 
 ## Cenários (spec do comportamento, D-038)
 

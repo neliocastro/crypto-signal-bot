@@ -70,8 +70,8 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
   (adotar / adotar em parte / não adotar) e o motivo.
 
 ## Emergência: parar o bot já
-- **Scan e ordens novas:** GitHub → Actions → `main.yml` → *Disable workflow*. O `/pausar` do Telegram pode levar
-  horas (P-17). Stops e TPs já criados seguem ativos na Gate.
+- **Scan e ordens novas:** GitHub → Actions → `main.yml` → *Disable workflow* (imediato). O `/pausar` do Telegram
+  vale no próximo scan, ~5 min (D-046). Stops e TPs já criados seguem ativos na Gate.
 - **Cron PAXG:** `touch /home/ineocom/public_html/cryptosignals/.paxg_pause`.
 - **Trigger do servidor:** `touch /home/ineocom/cryptosignals/bin/.trigger_pause` (senão ele alerta falhas de disparo
   enquanto o `main.yml` estiver desligado).
@@ -86,7 +86,7 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
   uma feature nova nunca derruba o scan.
 - Antes de commitar: `python -m py_compile bot/*.py`, `python tests/test_roteamento_strings.py`,
   `python tests/test_saida_tp1.py`, `python tests/test_renovacao_sl.py`, `python tests/test_placar.py`,
-  `python tests/test_trava_perda_diaria.py`, `python tests/test_whitelist_php.py`,
+  `python tests/test_trava_perda_diaria.py`, `python tests/test_whitelist_php.py`, `python tests/test_telegram_mensagens.py`,
   `php tests/test_watchdog_scan.php`, `php tests/test_trigger_scan.php`, `php tests/test_agent_gate.php` (se houver PHP local);
   mexeu em workflow: `python scripts/check_workflows.py` (precisa de PyYAML; o `checks` roda). O workflow `checks` roda `php -l` no relay e os testes no GitHub.
 - `server/execute.php` exige **deploy manual** conferido por bytes e hash (`docs/operacao.md`). Flag que dependa do
