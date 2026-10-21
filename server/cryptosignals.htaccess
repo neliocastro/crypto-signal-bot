@@ -1,0 +1,15 @@
+# 2026-10-20: pela web, so o execute.php (relay). Scripts de compra e logs ficam bloqueados.
+# Os crons rodam pelo terminal e nao passam por aqui. Rollback: apagar este arquivo.
+<IfModule mod_authz_core.c>
+  Require all denied
+  <Files "execute.php">
+    Require all granted
+  </Files>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order deny,allow
+  Deny from all
+  <Files "execute.php">
+    Allow from all
+  </Files>
+</IfModule>

@@ -99,6 +99,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-040 (2026-10-20)** **Pela web, a pasta `public_html/cryptosignals/` só expõe o `execute.php`**: `.htaccess` com
   `Require all denied` + exceção para o relay (P-19). Scripts de compra (`gerar_teste_*.php`), logs e estado ficam
   bloqueados (HTTP 403); os crons rodam pelo terminal e não são afetados. Conferido: relay 401, demais 403.
+  Fonte versionada: `server/cryptosignals.htaccess`.
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 

@@ -164,7 +164,11 @@ rm -f $B/.trigger_pause                             # REATIVAR
 Linha do crontab: `*/5 * * * * /usr/local/bin/php /home/ineocom/cryptosignals/bin/trigger_scan.php >> /home/ineocom/cryptosignals/bin/trigger_scan.log 2>&1`
 
 ## 10. Pasta pública do servidor (`.htaccess`, D-040)
-Pela web, só o `execute.php` responde. Conferir depois de qualquer mudança na pasta:
+Pela web, só o `execute.php` responde. A fonte do arquivo é `server/cryptosignals.htaccess` (sem segredo; 15 linhas,
+428 bytes, sha256 `93b1e4ef…`). Paridade servidor × Git: `sha256sum /home/ineocom/public_html/cryptosignals/.htaccess`.
+Para recriar: `curl -fsSL https://raw.githubusercontent.com/neliocastro/crypto-signal-bot/<SHA>/server/cryptosignals.htaccess
+-o /home/ineocom/public_html/cryptosignals/.htaccess`, conferir o hash, `chown ineocom:ineocom` e `chmod 644`.
+Conferir depois de qualquer mudança na pasta:
 ```bash
 U=https://ineo.com.br/cryptosignals; curl -s -w " HTTP %{http_code}\n" $U/execute.php; for f in watchdog_scan.php paxg_cron.log execution_log.jsonl error_log; do echo "$f -> $(curl -s -o /dev/null -w '%{http_code}' $U/$f)"; done
 ```
