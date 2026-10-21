@@ -20,7 +20,7 @@ function eq($a, $b, string $msg = ''): void {
 }
 
 t('acoes_do_menu_passam', function () {
-    foreach (['help', 'status', 'hashes', 'crontab', 'env-keys', 'http'] as $a) eq(ag_acao($a), $a, $a);
+    foreach (['help', 'status', 'hashes', 'crontab', 'env-keys', 'http', 'resumo'] as $a) eq(ag_acao($a), $a, $a);
     eq(ag_acao('  status  '), 'status');
 });
 t('sem_comando_vira_help', function () {
@@ -29,7 +29,8 @@ t('sem_comando_vira_help', function () {
 t('qualquer_outra_coisa_e_recusada', function () {
     $ruins = ['cat /home/ineocom/cryptosignals/secrets/.env', 'status; cat .env', 'status && id', 'status | sh',
               'status $(id)', 'status `id`', "status\ncat .env", 'hashes extra', 'STATUS', 'env', 'env-keys -v',
-              'bash', 'sh -c id', 'php -r "echo 1;"', 'crontab -e', 'crontab -r', 'rm -rf /', 'scp -t .', 'rsync --server'];
+              'bash', 'sh -c id', 'php -r "echo 1;"', 'crontab -e', 'crontab -r', 'rm -rf /', 'scp -t .', 'rsync --server',
+              'resumo; id', 'resumo extra', 'RESUMO'];
     foreach ($ruins as $r) eq(ag_acao($r), null, $r);
 });
 t('mascara_tokens', function () {
@@ -58,6 +59,24 @@ t('arquivos_de_hash_sao_fixos_e_sem_segredo', function () {
     $fs = ag_arquivos_hash($AG);
     eq(count($fs), 7);
     foreach ($fs as $f) if (strpos($f, '.env') !== false || strpos($f, 'secrets') !== false) throw new Exception($f);
+});
+
+t('lista_da_pasta_ordenada_e_formatada', function () {
+    $l = ag_formatar_lista(['execute.php' => [21008, 1792540000], '.htaccess' => [428, 1792450000]]);
+    eq(count($l), 2);
+    eq($l[0], gmdate('Y-m-d H:i', 1792450000) . '        428  .htaccess');
+    eq($l[1], gmdate('Y-m-d H:i', 1792540000) . '      21008  execute.php');
+});
+t('lista_da_pasta_le_diretorio_real', function () {
+    $d = sys_get_temp_dir() . '/ag_test_' . getmypid();
+    @mkdir($d);
+    file_put_contents("$d/b.txt", 'xyz');
+    file_put_contents("$d/a.php", '');
+    $o = ag_lista_pasta($d);
+    if (strpos($o, 'a.php') === false || strpos($o, 'b.txt') === false || strpos($o, 'a.php') > strpos($o, 'b.txt')) throw new Exception($o);
+    if (strpos($o, '          3  b.txt') === false) throw new Exception($o);
+    unlink("$d/b.txt"); unlink("$d/a.php"); rmdir($d);
+    eq(ag_lista_pasta('/nao/existe'), "  (sem leitura)\n");
 });
 
 exit($falhas ? 1 : 0);

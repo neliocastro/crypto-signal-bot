@@ -14,6 +14,7 @@
  *   crontab   crontab -l do ineocom
  *   env-keys  so os NOMES das chaves do .env de segredos (nunca os valores)
  *   http      relay deve dar 401; arquivos da pasta publica devem dar 403 (D-040)
+ *   resumo    status + hashes + http numa conexao so (D-045; P-20: muitas conexoes bloqueiam a porta 22)
  *
  * Nunca le nem imprime valor de segredo. Nunca cria, altera ou cancela ordem.
  * Rollback: apagar a linha da chave no /home/ineocom/.ssh/authorized_keys.
@@ -28,7 +29,7 @@ $AG = [
     'url'    => 'https://ineo.com.br/cryptosignals',
 ];
 
-const AG_ACOES = ['help', 'status', 'hashes', 'crontab', 'env-keys', 'http'];
+const AG_ACOES = ['help', 'status', 'hashes', 'crontab', 'env-keys', 'http', 'resumo'];
 
 // ---------------------------- funcoes puras (testaveis) ----------------------------
 
@@ -53,6 +54,16 @@ function ag_ultimas(string $texto, int $n): array {
     $linhas = preg_split('/\r?\n/', rtrim($texto, "\r\n"));
     if ($linhas === [''] ) return [];
     return array_slice($linhas, -$n);
+}
+
+/** Linhas "data  tamanho  nome" de uma listagem [nome => [tamanho, mtime]], em ordem de nome. */
+function ag_formatar_lista(array $itens): array {
+    ksort($itens, SORT_STRING);
+    $out = [];
+    foreach ($itens as $nome => [$tam, $mtime]) {
+        $out[] = sprintf('%s  %9d  %s', gmdate('Y-m-d H:i', (int)$mtime), (int)$tam, $nome);
+    }
+    return $out;
 }
 
 /** Lista de arquivos conferidos pela acao hashes (caminhos fixos). */
@@ -83,10 +94,25 @@ function ag_tail_arquivo(string $f, int $n): string {
     return $out;
 }
 
+function ag_lista_pasta(string $dir): string {
+    $nomes = @scandir($dir);
+    if ($nomes === false) return "  (sem leitura)\n";
+    $itens = [];
+    foreach ($nomes as $n) {
+        if ($n === '.' || $n === '..') continue;
+        $st = @stat($dir . '/' . $n);
+        if ($st !== false) $itens[$n] = [$st['size'], $st['mtime']];
+    }
+    $o = '';
+    foreach (ag_formatar_lista($itens) as $l) $o .= '  ' . $l . "\n";
+    return $o;
+}
+
 function ag_status(array $AG): string {
     $o = '';
     foreach ([[$AG['bin'] . '/trigger_scan.log', 5], [$AG['pub'] . '/watchdog_cron.log', 4],
-              [$AG['pub'] . '/paxg_cron.log', 4], [$AG['pub'] . '/error_log', 5]] as [$f, $n]) {
+              [$AG['pub'] . '/paxg_cron.log', 4], [$AG['pub'] . '/error_log', 5],
+              [$AG['bin'] . '/agent_gate.log', 5]] as [$f, $n]) {
         $o .= "== $f (ultimas $n)\n" . ag_tail_arquivo($f, $n);
     }
     foreach ([$AG['bin'] . '/.trigger_state.json', $AG['pub'] . '/.watchdog_state.json'] as $f) {
@@ -95,6 +121,7 @@ function ag_status(array $AG): string {
     foreach (['.paxg_pause' => $AG['pub'], '.watchdog_pause' => $AG['pub'], '.trigger_pause' => $AG['bin']] as $p => $d) {
         $o .= "== pausa $p: " . (file_exists("$d/$p") ? 'ATIVA' : 'nao') . "\n";
     }
+    $o .= "== arquivos em " . $AG['pub'] . " (UTC)\n" . ag_lista_pasta($AG['pub']);
     return $o;
 }
 
@@ -155,7 +182,9 @@ function ag_main(array $AG): int {
         case 'hashes':   $out = ag_hashes($AG); break;
         case 'crontab':  $out = ag_crontab(); break;
         case 'env-keys': $out = ag_env_keys($AG); break;
-        default:         $out = ag_http($AG); break;
+        case 'http':     $out = ag_http($AG); break;
+        default:         $out = "##### status\n" . ag_status($AG) . "##### hashes\n" . ag_hashes($AG)
+                              . "##### http\n" . ag_http($AG); break;
     }
     echo ag_mascara($out);
     return 0;

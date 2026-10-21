@@ -53,7 +53,8 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 
 ## Como trabalhar com o usuário
 - Quem muda o servidor é o usuário (como `root`), colando a saída no chat. O agente **só lê**, e só por
-  `ssh cryptosignals-gate <ação>` (D-042: `help`, `status`, `hashes`, `crontab`, `env-keys`, `http`). Conferência que o
+  `ssh cryptosignals-gate <ação>` (D-042/D-045: `help`, `status`, `hashes`, `crontab`, `env-keys`, `http`, `resumo`;
+  prefira `resumo`, que junta as conferências numa conexão só, P-20). Conferência que o
   porteiro cobre, o agente faz sozinho em vez de pedir ao usuário.
 - Comando de servidor: um bloco por passo, com valores **já preenchidos** (SHA, sha256, bytes, caminhos absolutos),
   o resultado esperado e o rollback. Nunca deixar placeholder (`<SHA>`, `<token>`) num comando executável.

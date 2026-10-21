@@ -31,7 +31,10 @@ passa por uma máscara de segredos e toda chamada é registrada em `agent_gate.l
 - `env-keys` mostra só nomes de chaves; o porteiro nunca lê valor de segredo para exibir.
 - O `.env` continua legível pela conta `ineocom` (o porteiro roda como ela): a proteção é o menu fixo, não a
   permissão de arquivo. Mudar o menu é mudar código versionado, com teste e revisão.
-- Chave antiga `id_rsa.1781635343` segue autorizada no cPanel com origem não registrada: revisar à parte.
+- Chave antiga `id_rsa.1781635343` segue autorizada no cPanel com origem não registrada: revisar à parte (feito em
+  2026-10-21: revisada e excluída pelo usuário).
+- **2026-10-21 (D-045):** ação `resumo` (status + hashes + http numa conexão) e, no `status`, o `agent_gate.log` e a
+  lista de arquivos da pasta pública. Continua só leitura.
 
 ## Referências
 `server/agent_gate.php`, `tests/test_agent_gate.php`, `docs/operacao.md` (seção 11), `CLAUDE.md`.

@@ -180,7 +180,8 @@ Rollback: `rm -f /home/ineocom/public_html/cryptosignals/.htaccess`.
 ## 11. Acesso do agente ao servidor (`agent_gate.php`, D-042)
 O agente só lê, e só por `ssh cryptosignals-gate <ação>`. A chave do agente fica no Mac do usuário
 (`~/.ssh/cryptosignals_agent`) e, no servidor, é autorizada com comando forçado: qualquer conexão com ela executa o
-`agent_gate.php`, que aceita só `help`, `status`, `hashes`, `crontab`, `env-keys` e `http`.
+`agent_gate.php`, que aceita só `help`, `status`, `hashes`, `crontab`, `env-keys`, `http` e `resumo` (status + hashes + http
+numa conexão só; D-045). O `status` mostra também o `agent_gate.log` e a lista de arquivos da pasta pública.
 
 - Entrada no `~/.ssh/config` do Mac:
   `Host cryptosignals-gate` / `HostName ineo.com.br` / `User ineocom` / `IdentityFile ~/.ssh/cryptosignals_agent` /

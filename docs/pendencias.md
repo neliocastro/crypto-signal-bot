@@ -6,15 +6,14 @@
 > Revisado em 2026-10-21.
 
 ## Pendências
-- **Porteiro (D-042), melhorias possíveis**: uma ação que junte `status` + `hashes` + `http` numa conexão só (P-20) e
-  incluir o `agent_gate.log` no `status`.
+- **Porteiro com `resumo` (D-045)**: código no Git; falta o deploy do `agent_gate.php` por hash.
+- **Arquivar o `gerar_teste_trx.php`** (D-040): mover de `public_html/cryptosignals/` para
+  `/home/ineocom/cryptosignals/arquivo/` (permissão 600). Conferir pela lista de arquivos do `status`.
 - **Backup do `.env`**: apagar `/home/ineocom/cryptosignals/secrets/.env.bak-20261020` depois da primeira compra
   real bem-sucedida (é ela que exercita as chaves da Gate e o HMAC do `.env` atual). Tokens antigos já revogados e
   backups com token vencido já apagados em 2026-10-21.
-- **Watchdog mais rápido (D-044)**: código no Git; falta o deploy do `watchdog_scan.php` por hash e trocar a linha do
-  crontab de `30 * * * *` para `*/15 * * * *` (método do `diff`). Conferir pelo `cryptosignals-gate` (`hashes`, `crontab`).
-- **Pasta pública (D-040)**: contida com `.htaccess`. Falta decidir se `gerar_teste_trx.php` (sem uso conhecido) sai
-  do servidor e se os logs de acesso do domínio existem em outro caminho (o `grep` deu 0 linhas, não conclusivo).
+- **Logs de acesso do domínio**: o `grep` em `/usr/local/apache/domlogs/` e `~/access-logs/` deu 0 linhas
+  (não conclusivo; os caminhos podem não existir). Saber se alguém acessou os `gerar_teste_*` antes do `.htaccess`.
 - **Cron PAXG (D-032)**: fix do P-16 deployado em 2026-10-15 (commit `8dc5668a`, sha256 `0e3624f6…`). Falta ver o
   primeiro `COMPRA OK` no `paxg_cron.log` e o SL −15% na Gate. Em aberto (o usuário manteve o D-032 por enquanto):
   registrar essas compras em `positions.jsonl`; se for feito, o trailing precisa pular o PAXG, pois
