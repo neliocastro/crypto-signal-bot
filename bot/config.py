@@ -335,9 +335,10 @@ TELEGRAM_COMMANDS_IN_SCAN = True
 # Conta, sim, nas travas de ordens por dia e no teto por ordem (D-024).
 # EXIGE o execute.php com o FIX 11 no servidor (compra DCA sem TP/SL). Ligar SO depois do
 # deploy conferido por hash. Rollback: False.
-DCA_ENABLED = False
+DCA_ENABLED = True   # ligado 2026-10-23 apos deploy conferido do FIX 11 (sha256 945b2015). Rollback: False
 DCA_ASSETS = {"BTC/USDT": 10.0, "PAXG/USDT": 10.0}   # US$ por semana (<= teto por ordem, D-024)
 DCA_WEEKDAY = 0                 # 0 = segunda-feira (UTC)
 DCA_HOUR_UTC = 13               # a partir das 13:00 UTC (10:00 em Salvador)
 DCA_MONTHLY_CAP_USDT = 50.0     # teto por ativo por mes (5 semanas x US$ 10)
+DCA_START_DATE = "2026-10-26"   # nenhuma compra antes (UTC): ligado numa sexta, a 1a compra fica para segunda
 DCA_FILE = "state/dca.jsonl"

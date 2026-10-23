@@ -35,6 +35,7 @@ def _ambiente():
     config.DCA_ASSETS = {"BTC/USDT": 10.0, "PAXG/USDT": 10.0}
     config.DCA_WEEKDAY, config.DCA_HOUR_UTC, config.DCA_MONTHLY_CAP_USDT = 0, 13, 50.0
     config.DCA_FILE = os.path.join(d, "dca.jsonl")
+    config.DCA_START_DATE = ""
     ex.PAPER_TRADES_FILE = os.path.join(d, "paper_trades.jsonl")
     ex.ORDERS_CSV_FILE = os.path.join(d, "orders_executed.csv")
     ex.EXECUTION_STATE_FILE = os.path.join(d, "execution_guard.json")
@@ -82,6 +83,16 @@ def test_desligado_nao_faz_nada():
     config.DCA_ENABLED = False
     env = []
     assert dca.run_dca(SEG_13H, enviar=_relay(env), guardas=_ok, preco=_preco) == [] and env == []
+
+
+def test_nao_compra_antes_da_data_de_inicio():
+    _ambiente()
+    config.DCA_START_DATE = "2026-10-26"
+    env = []
+    sexta = datetime(2026, 10, 23, 18, 0, tzinfo=timezone.utc)      # semana ja passou da segunda 13h
+    assert dca.hora_de_comprar(sexta, 0, 13)                          # sem a data, compraria hoje
+    assert dca.run_dca(sexta, enviar=_relay(env), guardas=_ok, preco=_preco) == [] and env == []
+    assert len(dca.run_dca(SEG_13H, enviar=_relay(env), guardas=_ok, preco=_preco)) == 2   # segunda 26/10
 
 
 def test_antes_do_horario_nao_compra():
@@ -177,7 +188,7 @@ def test_relay_aceita_sem_protecao_so_para_dca_dos_ativos_do_config():
     assert "(($order['strategy'] ?? '') === 'DCA')" in src
     assert "&& !$is_dca" in src
     assert all(v <= config.EXECUTION_MAX_NOTIONAL_USDT for v in config.DCA_ASSETS.values())
-    assert config.DCA_ENABLED is False, "so ligar depois do deploy do FIX 11 (CLAUDE.md)"
+    # DCA_ENABLED foi ligado em 2026-10-23, depois do FIX 11 deployado e conferido (sha256 945b2015).
 
 
 if __name__ == "__main__":

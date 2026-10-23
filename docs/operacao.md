@@ -61,9 +61,10 @@ grep -nP "[\x00-\x08\x0B\x0C\x0E-\x1F]" $F      # bytes de controle (exit 1 = li
 ```
 Hash local: `shasum -a 256 server/execute.php`.
 
-Versões do relay em produção: **D-036 (whitelist)**, deployado em 2026-10-15 a partir do commit `8298f20d`,
-sha256 `4ec3b375…`, 21008 bytes, backup `execute.php.bak-20261015b` (= FIX 10). Anterior: FIX 10 (TP parcial),
-sha256 `6e3da8cb…`, backup `execute.php.bak-20261015`.
+Versões do relay em produção: **FIX 11 (DCA sem TP/SL, D-049)**, deployado em 2026-10-23 a partir do commit
+`e08f5d35`, sha256 `945b2015…`, 21772 bytes, backup `execute.php.bak-20261023` (= D-036). Anteriores: D-036
+(whitelist), sha256 `4ec3b375…`, backup `execute.php.bak-20261015b` (= FIX 10); FIX 10 (TP parcial), sha256
+`6e3da8cb…`.
 
 ## 3. Token `SELF_DISPATCH_PAT`
 - Fica em **dois lugares**: secret do GitHub **e** `.env` de segredos do servidor (`SELF_DISPATCH_PAT=`, lido pelo

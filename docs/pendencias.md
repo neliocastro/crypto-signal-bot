@@ -9,10 +9,10 @@
 - **Backup do `.env`**: apagar `/home/ineocom/cryptosignals/secrets/.env.bak-20261020` depois da primeira compra
   real bem-sucedida (é ela que exercita as chaves da Gate e o HMAC do `.env` atual). Tokens antigos já revogados e
   backups com token vencido já apagados em 2026-10-21.
-- **DCA semanal (D-049)**: código no Git, `DCA_ENABLED = False`. Falta: deploy do `execute.php` com o FIX 11 (por
-  hash), ligar `DCA_ENABLED`, conferir a 1ª compra de cada ativo (segunda 13:00 UTC) e, depois, tirar a linha do cron
-  do PAXG do crontab (já pausado com `.paxg_pause`) e arquivar `paxg_rsi_check.php`/`gerar_teste_paxg.php` fora da
-  pasta pública.
+- **DCA semanal (D-049)**: ligado em 2026-10-23 (FIX 11 no servidor, sha256 `945b2015…`). Falta: conferir a 1ª compra
+  de BTC e de PAXG na segunda 2026-10-26 a partir das 13:00 UTC (Telegram, `state/dca.jsonl`, Gate); depois, tirar a
+  linha do cron do PAXG do crontab (já pausado) e arquivar `paxg_rsi_check.php`/`gerar_teste_paxg.php` fora da pasta
+  pública.
 - **Gatilhos expiram em 30 dias**: o SL é renovado (D-033). Falta renovar o TP1 (ação nova no PHP + deploy) e
   confirmar na API da Gate o nome do status de gatilho expirado (o alerta cobre `expired/cancelled/failed`).
 - **Placar**: estimado pelo gatilho (D-034). Falta o fill real da saída (o `oco_sync` do PHP consultar a ordem

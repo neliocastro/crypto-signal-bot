@@ -141,7 +141,8 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   mensal US$ 50 por ativo). Substitui o D-032 (cron do PAXG, pausado já) e abre exceção ao D-006/R-006 só para
   `strategy == "DCA"` (relay FIX 11, `$DCA_NO_PROTECTION`). O DCA fica em `state/dca.jsonl`, fora do
   `positions.jsonl`: não conta na trava de posição viva (D-022) nem no trailing/OCO; convive com a Tendência Diária
-  no BTC. Uma tentativa por semana, sem compra dobrada. `DCA_ENABLED` só depois do deploy do FIX 11.
+  no BTC. Uma tentativa por semana, sem compra dobrada. FIX 11 deployado em 2026-10-23 (sha256 `945b2015…`, backup
+  `execute.php.bak-20261023`) e `DCA_ENABLED` ligado em seguida; cron do PAXG pausado (`.paxg_pause`).
   `docs/decisoes/D-049-dca-semanal.md`
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).

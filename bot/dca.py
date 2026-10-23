@@ -142,6 +142,9 @@ def run_dca(agora=None, notify=None, enviar=None, guardas=None, preco=None) -> l
     if not _cfg("DCA_ENABLED", False):
         return []
     agora = agora or datetime.now(timezone.utc)
+    inicio = str(_cfg("DCA_START_DATE", "") or "")
+    if inicio and agora.strftime("%Y-%m-%d") < inicio:
+        return []
     if not hora_de_comprar(agora, int(_cfg("DCA_WEEKDAY", 0)), int(_cfg("DCA_HOUR_UTC", 13))):
         return []
     from . import executor as ex

@@ -47,15 +47,16 @@ Breakout 1h   -> HYPE                 DESLIGADO desde 2026-10-13 (D-013)
 - `BREAKOUT_SHADOW_MODE = True` acrescenta `[SHADOW]` ao nome e, de propósito, quebra o match da allowlist (sem ordem).
 - Desempenho ao vivo: PF ~0,78 em 12 trades (backtest original 2,55).
 
-## DCA semanal (`bot/dca.py`, D-049) — pronto, desligado até o relay FIX 11
+## DCA semanal (`bot/dca.py`, D-049) — ligado em 2026-10-23
 
 - **Regra:** US$ 10 por semana em BTC e em PAXG (`DCA_ASSETS`), a mercado, no primeiro scan a partir de segunda
-  13:00 UTC. **Sem TP nem SL: o bot nunca vende o DCA.** Teto mensal de US$ 50 por ativo.
+  13:00 UTC (se o scan de segunda falhar, compra no primeiro scan seguinte da mesma semana). **Sem TP nem SL: o bot
+  nunca vende o DCA.** Teto mensal de US$ 50 por ativo. Primeira compra a partir de `DCA_START_DATE` (2026-10-26).
 - **Convivência com a Tendência Diária no BTC:** o DCA fica em `state/dca.jsonl`, fora do `positions.jsonl`. Não conta
   na trava de 1 posição viva por ativo (D-022) e não entra no trailing, no OCO nem na renovação de SL. Conta nas
   travas de ordens por dia e no teto por ordem.
 - **Uma tentativa por ativo por semana** (sem nova tentativa se falhar, para não comprar em dobro); aviso no Telegram.
-- Kill-switch: `DCA_ENABLED` (hoje `False`); no relay, `$DCA_NO_PROTECTION`.
+- Kill-switch: `DCA_ENABLED` (ligado); no relay, `$DCA_NO_PROTECTION`.
 
 ## Desligadas ou removidas
 | Estratégia | Estado |
@@ -134,7 +135,7 @@ Mudou o comportamento? Atualize o cenário e o teste no mesmo commit.
 | `EXECUTION_DAILY_LOSS_STOP` | 20,0 | bloqueia **novas compras** quando a perda líquida do dia UTC chega a US$ 20; derivada do `pnl_usdt_est` do `positions.jsonl` (`EXECUTION_DAILY_LOSS_FROM_POSITIONS`, D-035). Inerte até 2026-10-15 |
 | Trava de concentração | 1 posição viva + 2 ordens/dia por ativo | D-022; defaults no `executor.py` |
 | `OCO_GUARD_ENABLED` | `True` | OCO emulado (D-005) |
-| `DCA_ENABLED` / `DCA_ASSETS` / `DCA_MONTHLY_CAP_USDT` | `False` / BTC e PAXG US$ 10 / 50 | DCA semanal sem stop (D-049); ligar só após o FIX 11 |
+| `DCA_ENABLED` / `DCA_ASSETS` / `DCA_MONTHLY_CAP_USDT` | `True` / BTC e PAXG US$ 10 / 50 | DCA semanal sem stop (D-049); relay FIX 11 no servidor |
 | `SL_RENEW_ENABLED` / `SL_RENEW_AFTER_DAYS` | `True` / 25 | renova o SL antes dos 30 dias da Gate (D-033) |
 | `EXIT_RECORD_ENABLED` / `EXIT_FEE_RATE` | `True` / 0,001 | grava saída e P&L estimados no fechamento (D-034) |
 | `SL_EXPIRED_ALERT_ENABLED` | `True` | alerta 1x se SL ou TP1 pendente morrer sem executar (D-033) |
