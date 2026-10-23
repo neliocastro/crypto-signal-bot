@@ -54,6 +54,10 @@ try:
 except Exception:
     SL_RENEW_ENABLED = False
     SL_RENEW_AFTER_DAYS = 25
+try:
+    from .config import TP_RENEW_ENABLED          # D-050; mesma idade do SL (SL_RENEW_AFTER_DAYS)
+except Exception:
+    TP_RENEW_ENABLED = False
 
 _HMAC_SECRET = os.environ.get("EXECUTION_HMAC_SECRET", "")
 POSITIONS_FILE = "state/positions.jsonl"
@@ -168,6 +172,7 @@ def register_position(signal_id, symbol, base_qty, entry_price,
             "opened_at": _now_iso(),
             "updated_at": _now_iso(),
             "sl_set_at": _now_iso(),          # idade do gatilho SL (D-033)
+            "tp_set_at": _now_iso(),          # idade do gatilho TP (D-050)
         }
         if strategy:
             rec["strategy"] = str(strategy)   # trilho que comprou (placar, D-034)
@@ -406,3 +411,80 @@ def renew_expiring_sl(notify=None) -> list:
     if changed:
         _save_positions(positions)
     return results
+
+
+# --------------------- Renovacao do TP1 (D-050, 2026-10-23) ------------------ #
+def renew_expiring_tp1(notify=None) -> list:
+    """Renova no MESMO preco e qty o TP1 pendente (tp_partial e nao tp1_done) com
+    >= SL_RENEW_AFTER_DAYS dias. Acao renew_tp do relay (FIX 12b): so renova TP 'open',
+    APAGA o antigo e SO DEPOIS cria o novo. Se apagou e nao criou, a posicao fica com
+    tp_renew_pending e o proximo scan cria o TP sem id antigo. Se o TP antigo ja nao
+    esta 'open' (disparou ou expirou), nao faz nada: o oco_sync trata. NUNCA levanta."""
+    results = []
+    if not TP_RENEW_ENABLED:
+        return results
+    try:
+        positions = _load_positions()
+    except Exception:
+        log.exception("renew_expiring_tp1: falha ao ler posicoes")
+        return results
+    changed = False
+    for pos in positions:
+        if pos.get("status") != "open" or not pos.get("tp_partial") or pos.get("tp1_done"):
+            continue
+        symbol = pos.get("symbol", "")
+        try:
+            tp_id = str(pos.get("tp_order_id", "") or "")
+            tp_price = float(pos.get("tp_price") or 0.0)
+            tp_qty = str(pos.get("tp1_qty", "") or "")
+            pendente = bool(pos.get("tp_renew_pending"))
+            if tp_price <= 0 or not tp_qty or (not tp_id and not pendente):
+                continue
+            if not pendente:
+                age = _age_days(pos.get("tp_set_at") or pos.get("opened_at") or "")
+                if age is not None and age < SL_RENEW_AFTER_DAYS:
+                    continue
+            payload = {"action": "renew_tp", "symbol": symbol, "tp_price": tp_price, "tp_qty": tp_qty,
+                       "old_tp_order_id": "" if pendente else tp_id,
+                       "signal_id": str(pos.get("signal_id", ""))}
+            resp = _sign_and_send(payload) or {}
+            st = resp.get("status")
+            if st == "tp_renewed":
+                novo = resp.get("new_tp") or {}
+                pos["tp_order_id"] = str(novo.get("id") or "")
+                pos["tp_set_at"] = _now_iso()
+                pos["updated_at"] = pos["tp_set_at"]
+                pos["tp_renewed_count"] = int(pos.get("tp_renewed_count") or 0) + 1
+                pos.pop("tp_renew_pending", None)
+                pos.pop("tp_renew_fail_notified", None)
+                changed = True
+                results.append({"symbol": symbol, "signal_id": pos.get("signal_id"), "action": "tp_renewed",
+                                "tp": tp_price, "new_tp_order_id": pos["tp_order_id"]})
+                continue
+            if st == "not_open":
+                results.append({"symbol": symbol, "signal_id": pos.get("signal_id"), "action": "tp_not_open",
+                                "old_status": resp.get("old_status")})
+                continue
+            if resp.get("old_deleted"):
+                pos["tp_order_id"] = ""                  # antigo apagado de fato: proximo scan so cria
+                pos["tp_renew_pending"] = True
+                changed = True
+            hoje = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            if notify and pos.get("tp_renew_fail_notified") != hoje:
+                pos["tp_renew_fail_notified"] = hoje
+                changed = True
+                try:
+                    notify("\u26a0\ufe0f %s: o TP1 (%s) NAO foi renovado (%s). %s" % (
+                        symbol, tp_price, resp.get("reason") or st or "sem resposta",
+                        "O antigo foi apagado: o bot tenta criar de novo a cada scan." if resp.get("old_deleted")
+                        else "O antigo segue valendo; nova tentativa a cada scan."))
+                except Exception:
+                    pass
+            results.append({"symbol": symbol, "signal_id": pos.get("signal_id"), "action": "tp_renew_failed",
+                            "response": resp})
+        except Exception:
+            log.exception("renew_expiring_tp1 falhou p/ %s (TP mantido)", symbol)
+    if changed:
+        _save_positions(positions)
+    return results
+

@@ -539,6 +539,20 @@ def main() -> int:
     except Exception:
         log.error("Falha na renovacao do SL (ignorada):\n%s", traceback.format_exc())
 
+    # --- RENOVACAO DO TP1 (D-050): mesma idade do SL; relay renew_tp (FIX 12b). ---
+    # Kill-switch: config.TP_RENEW_ENABLED (so ligar depois do execute.php FIX 12 no servidor).
+    try:
+        from . import mare_alta_trailing as _ma_tp
+        for _r in _ma_tp.renew_expiring_tp1(notify=send):
+            if _r.get("action") == "tp_renewed":
+                try:
+                    send("\U0001F501 %s: TP1 renovado no mesmo preco %s (gatilho da Gate expira em 30 dias)"
+                         % (_r.get("symbol"), _r.get("tp")))
+                except Exception:
+                    pass
+    except Exception:
+        log.error("Falha na renovacao do TP1 (ignorada):\n%s", traceback.format_exc())
+
     # --- OCO EMULADO (2026-08-11): Gate.io spot NAO vincula TP<->SL. ---
     # A cada scan, o oco_guard reconcilia os pares TP/SL das posicoes abertas
     # via relay (acao oco_sync): se uma perna disparou, o PHP cancela a

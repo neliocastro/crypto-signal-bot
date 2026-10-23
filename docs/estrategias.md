@@ -117,6 +117,10 @@ Mudou o comportamento? Atualize o cenário e o teste no mesmo commit.
 | C-19 | a compra passaria do teto mensal do ativo | não compra e avisa | `test_dca::test_teto_mensal` |
 | C-20 | o DCA compra BTC | o `positions.jsonl` não muda e a Tendência Diária segue livre para comprar BTC | `test_dca::test_nao_mexe_no_positions_nem_na_trava_da_tendencia` |
 | C-21 | o relay recebe compra sem TP/SL | só aceita se `strategy == "DCA"` e o ativo estiver na `$DCA_WHITELIST` | conteúdo: `test_dca::test_relay_aceita_sem_protecao_so_para_dca_dos_ativos_do_config`; o PHP em execução: **sem teste** |
+| C-22 | uma perna fecha e o relay devolve o fill real | o P&L é gravado com o preço e a taxa reais (`exit_basis: fill_real`) | `test_fill_tp1::test_oco_grava_fill_real_quando_vem`, `::test_pnl_real_sol_08_10` |
+| C-23 | o relay não consegue o fill | o P&L cai na estimativa pelo gatilho | `test_fill_tp1::test_oco_cai_na_estimativa_sem_fill` |
+| C-24 | o TP1 pendente tem 25 dias ou mais | é renovado no mesmo preço e qty; se já não estiver `open`, nada muda | `test_fill_tp1::test_tp1_renova_mesmo_preco_e_qty`, `::test_tp1_que_ja_nao_esta_aberto_nao_muda_nada` |
+| C-25 | o relay apagou o TP1 antigo e não criou o novo | a posição fica pendente e o próximo scan só cria | `test_fill_tp1::test_tp1_apagado_e_nao_criado_fica_pendente_e_recria`; a ordem apagar → criar no PHP: `::test_relay_renew_tp_confere_apaga_e_so_depois_cria` |
 
 ## Parâmetros de execução (`bot/config.py`)
 
@@ -138,6 +142,7 @@ Mudou o comportamento? Atualize o cenário e o teste no mesmo commit.
 | `DCA_ENABLED` / `DCA_ASSETS` / `DCA_MONTHLY_CAP_USDT` | `True` / BTC e PAXG US$ 10 / 50 | DCA semanal sem stop (D-049); relay FIX 11 no servidor |
 | `SL_RENEW_ENABLED` / `SL_RENEW_AFTER_DAYS` | `True` / 25 | renova o SL antes dos 30 dias da Gate (D-033) |
 | `EXIT_RECORD_ENABLED` / `EXIT_FEE_RATE` | `True` / 0,001 | grava saída e P&L estimados no fechamento (D-034) |
+| `TP_RENEW_ENABLED` | `False` | renova o TP1 pendente aos 25 dias (D-050); ligar após o FIX 12 |
 | `SL_EXPIRED_ALERT_ENABLED` | `True` | alerta 1x se SL ou TP1 pendente morrer sem executar (D-033) |
 | `SIGNAL_COOLDOWN_HOURS` | 4 | cooldown por `símbolo|estratégia` |
 | `REQUIRE_PROTECTION` (PHP) | `true` | compra sem TP nem SL é recusada (D-006) |

@@ -48,3 +48,4 @@ jobs:
           python tests/test_telegram_mensagens.py
           python tests/test_backtests.py
           python tests/test_dca.py
+          python tests/test_fill_tp1.py

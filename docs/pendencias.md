@@ -6,6 +6,9 @@
 > Revisado em 2026-10-21.
 
 ## Pendências
+- **Relay FIX 12 (D-050)**: código no Git (fill real no `oco_sync` + ação `renew_tp`). Falta: deploy do `execute.php` por
+  hash, ligar `TP_RENEW_ENABLED` e conferir o primeiro fechamento com `exit_basis: fill_real`. O nome do status de
+  gatilho vencido segue sem confirmação (nenhum venceu ainda); o alerta cobre `expired/cancelled/failed`.
 - **Backup do `.env`**: apagar `/home/ineocom/cryptosignals/secrets/.env.bak-20261020` depois da primeira compra
   real bem-sucedida (é ela que exercita as chaves da Gate e o HMAC do `.env` atual). Tokens antigos já revogados e
   backups com token vencido já apagados em 2026-10-21.
@@ -13,10 +16,6 @@
   de BTC e de PAXG na segunda 2026-10-26 a partir das 13:00 UTC (Telegram, `state/dca.jsonl`, Gate); depois, tirar a
   linha do cron do PAXG do crontab (já pausado) e arquivar `paxg_rsi_check.php`/`gerar_teste_paxg.php` fora da pasta
   pública.
-- **Gatilhos expiram em 30 dias**: o SL é renovado (D-033). Falta renovar o TP1 (ação nova no PHP + deploy) e
-  confirmar na API da Gate o nome do status de gatilho expirado (o alerta cobre `expired/cancelled/failed`).
-- **Placar**: estimado pelo gatilho (D-034). Falta o fill real da saída (o `oco_sync` do PHP consultar a ordem
-  executada; exige deploy).
 - **Reauditoria do degrau**: `python scripts/placar.py --degrau`. Em 2026-10-15: 6/20 trades (−US$ 2,41, PF 0); sem os
   de cadência degradada, 3/20 (−US$ 1,15, PF 0). Reprovado; reauditar ao chegar a 20.
 - **Tabelas de precisão de fallback divergem** entre PHP (`$SAFE_PRICE_PREC`: TRX 4, HYPE 2) e Python

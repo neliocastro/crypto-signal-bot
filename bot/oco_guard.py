@@ -84,15 +84,54 @@ def exit_pnl_est(p: dict, closed_by: str, fee_rate: float = 0.001) -> dict:
             "pnl_usdt_est": round(float(pnl), 6), "pnl_pct_est": round(float(pct), 4)}
 
 
+def fill_liquido(fill) -> tuple | None:
+    """D-050: (preco medio, quantidade, USDT liquidos) de uma venda executada, a partir do 'fill'
+    que o relay devolve (FIX 12a). Usa avg_deal_price (o fill_price da Gate e o TOTAL, nao o preco).
+    Taxa em USDT e descontada; em outra moeda (ex.: pontos GT) nao entra. None se faltar dado."""
+    if not isinstance(fill, dict):
+        return None
+    preco, qtd, total = _d(fill.get("avg_deal_price")), _d(fill.get("filled_amount")), _d(fill.get("filled_total"))
+    if preco <= 0 or qtd <= 0 or total <= 0:
+        return None
+    taxa = _d(fill.get("fee")) if str(fill.get("fee_currency") or "").upper() == "USDT" else Decimal("0")
+    return preco, qtd, total - taxa
+
+
+def exit_pnl_real(p: dict, fill_saida: dict, tp1_fill=None, fee_rate: float = 0.001) -> dict | None:
+    """D-050: P&L com o fill REAL da venda que fechou a posicao (e do TP1, se houver).
+    A entrada continua estimada (preco de entrada x quantidade comprada, com taxa). None se o fill nao servir."""
+    saida = fill_liquido(fill_saida)
+    if saida is None:
+        return None
+    preco, qtd_saida, liquido = saida
+    entry, base, fee = _d(p.get("entry_price")), _d(p.get("base_qty")), _d(fee_rate)
+    tp1_qty = _d(p.get("tp1_qty"))
+    teve_tp1 = bool(p.get("tp_partial") and tp1_qty > 0 and (p.get("tp1_done") or p.get("tp1_hit_at")))
+    if teve_tp1:
+        comprada = base + tp1_qty if p.get("tp1_done") else base     # apos o TP1, base_qty ja e o restante
+        f1 = fill_liquido(tp1_fill)
+        tp1_px = _d(p.get("tp1_price") or p.get("tp_price"))
+        liquido += f1[2] if f1 else tp1_px * tp1_qty * (1 - fee)
+    else:
+        comprada = base
+    custo = entry * comprada * (1 + fee)
+    pnl = liquido - custo
+    pct = (pnl / custo * 100) if custo > 0 else Decimal("0")
+    return {"exit_price": float(preco), "exit_qty": format(qtd_saida.normalize(), "f"),
+            "pnl_usdt_est": round(float(pnl), 6), "pnl_pct_est": round(float(pct), 4)}
+
+
 def _record_exit(p: dict, item: dict, closed_by: str) -> None:
-    """Grava na posicao (no lugar) a saida estimada e os ids da perna executada."""
+    """Grava na posicao (no lugar) a saida e o P&L: com o fill REAL se o relay devolveu (D-050),
+    senao a estimativa pelo gatilho (D-034). Os nomes dos campos sao os mesmos nos dois casos."""
     if not EXIT_RECORD_ENABLED:
         return
     try:
-        est = exit_pnl_est(p, closed_by, EXIT_FEE_RATE)
         leg = item.get(closed_by) or {}
-        p.update(est)
-        p["exit_basis"] = "gatilho_est"
+        tp1_fill = p.get("tp1_fill") or ((item.get("tp") or {}).get("fill") if closed_by == "sl" else None)
+        real = exit_pnl_real(p, leg.get("fill"), tp1_fill, EXIT_FEE_RATE)
+        p.update(real if real else exit_pnl_est(p, closed_by, EXIT_FEE_RATE))
+        p["exit_basis"] = "fill_real" if real else "gatilho_est"
         p["exit_fee_rate"] = EXIT_FEE_RATE
         p["exit_fired_order_id"] = leg.get("fired_order_id")
         p["exit_ftime"] = leg.get("ftime")
@@ -188,6 +227,8 @@ def _move_to_breakeven(p: dict, notify=None, item=None) -> dict | None:
     _tp_leg = (item or {}).get("tp") or {}       # D-034: ids da perna do TP1
     p["tp1_fired_order_id"] = _tp_leg.get("fired_order_id")
     p["tp1_ftime"] = _tp_leg.get("ftime")
+    if isinstance(_tp_leg.get("fill"), dict):            # D-050: fill real do TP1 (relay FIX 12a)
+        p["tp1_fill"] = _tp_leg["fill"]
     p["tp_order_id"] = ""                 # restante segue sem TP (so trailing)
     p["tp_price"] = 0.0
     p["base_qty"] = rest

@@ -296,6 +296,11 @@ SL_RENEW_AFTER_DAYS  = 25     # idade do SL (sl_set_at, senao opened_at) p/ reno
 # expired/cancelled/failed, ou se o TP1 expirar antes de executar. So avisa:
 # nao cria nem cancela ordem. Rollback: False.
 SL_EXPIRED_ALERT_ENABLED = True
+# 2026-10-23 (D-050): o TP1 da Tendencia Diaria tambem expira em 30 dias. Com 25 dias ou mais
+# (tp_set_at, senao opened_at) ele e renovado no MESMO preco e qty pela acao renew_tp do relay
+# (FIX 12b), que APAGA o antigo antes de criar o novo. EXIGE o execute.php com FIX 12 no servidor.
+# Ligar SO depois do deploy conferido. Rollback: False.
+TP_RENEW_ENABLED = False
 
 # ============ OCO GUARD - emulacao de OCO (bot/oco_guard.py) ============
 # A Gate.io NAO tem OCO nativo no spot: TP e SL sao price_orders INDEPENDENTES,

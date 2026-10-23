@@ -22,12 +22,19 @@
  * FIX 11 (2026-10-23, D-049): DCA semanal SEM TP/SL. A compra so e aceita sem protecao se
  *   'strategy' == 'DCA', o ativo esta em $DCA_WHITELIST e o teto por ordem continua valendo.
  *   Qualquer outra compra sem TP nem SL segue recusada (D-006). Rollback: $DCA_NO_PROTECTION = false.
+ * FIX 12 (2026-10-23, D-050): (a) oco_sync devolve, para cada perna executada ('finish'), o fill REAL da
+ *   ordem disparada (avg_deal_price, filled_amount, filled_total, fee) via GET /spot/orders/{fired_order_id}.
+ *   Rollback: $FILL_LOOKUP = false. (b) acao 'renew_tp': renova o TP1 antes dos 30 dias da Gate. So renova
+ *   TP 'open', APAGA o antigo e SO DEPOIS cria o novo (com os dois vivos, um preco cruzando o alvo no meio da
+ *   troca dispararia os dois e o segundo venderia saldo que nao e da posicao). Rollback: $TP_RENEW_ENABLED = false.
  */
 $DRY_RUN            = false;
 $TPSL_ENABLED       = true;
 $REQUIRE_PROTECTION = true;
 $DCA_NO_PROTECTION  = true;                          // FIX 11 / D-049. Rollback: false
 $DCA_WHITELIST      = ['BTC/USDT','PAXG/USDT'];      // unicos ativos com DCA sem TP/SL
+$FILL_LOOKUP        = true;                          // FIX 12a / D-050. Rollback: false
+$TP_RENEW_ENABLED   = true;                          // FIX 12b / D-050. Rollback: false
 $MAX_NOTIONAL_USDT  = 10.0;  // alinhado ao Python (EXECUTION_MAX_NOTIONAL_USDT = 10.0, DEGRAU 2)
 $SYMBOL_WHITELIST   = ['PAXG/USDT','HYPE/USDT','BTC/USDT','SOL/USDT','TRX/USDT','BNB/USDT']; // D-036 (2026-10-15): universo atual + PAXG (cron D-032)
 $LOG_FILE           = __DIR__ . '/execution_log.jsonl';
@@ -127,6 +134,45 @@ if ($action === 'update_trailing') {
     $ok = ['status'=>'trailing_updated','symbol'=>$symbol,'signal_id'=>$tsid,'new_sl'=>['id'=>$new_id,'price'=>$sl_s,'http'=>$hc],'old_sl'=>['id'=>$old_id,'delete'=>$del],'rules_source'=>$rules['source']];
     log_event($LOG_FILE, ['event'=>'update_trailing','order'=>$order,'result'=>$ok]); respond($ok);
 }
+if ($action === 'renew_tp') {
+    // FIX 12b (D-050): ver o cabecalho. Ordem: confere 'open' -> APAGA o antigo -> cria o novo.
+    if (!$TP_RENEW_ENABLED) respond(['status'=>'disabled','reason'=>'TP_RENEW_ENABLED=false']);
+    $symbol = $order['symbol'] ?? '';
+    if (!in_array($symbol, $SYMBOL_WHITELIST, true)) respond(['status'=>'rejected','reason'=>'symbol fora da whitelist']);
+    $tp_price = (float)($order['tp_price'] ?? 0); $tp_qty = (string)($order['tp_qty'] ?? '');
+    $old_id = (string)($order['old_tp_order_id'] ?? ''); $rsid = $order['signal_id'] ?? '';
+    if ($tp_price <= 0 || $tp_qty === '' || (float)$tp_qty <= 0) respond(['status'=>'error','reason'=>'renew_tp: tp_price/tp_qty invalidos','signal_id'=>$rsid]);
+    if (!$GATE_KEY || !$GATE_SECRET) respond(['status'=>'error','reason'=>'chave Gate.io ausente no .env']);
+    $pair = str_replace('/', '_', $symbol); $rules = pair_rules($pair); $ppz = $rules['price_precision']; $apz = $rules['amount_precision'];
+    $tp_s = fmt_floor($tp_price, $ppz); $q_s = fmt_floor((float)$tp_qty, $apz);
+    if (decimal_places($tp_s) > $ppz || (float)$tp_s <= 0 || (float)$q_s <= 0) {
+        $rej = ['status'=>'error','reason'=>"renew_tp: precisao invalida (tp=$tp_s, qty=$q_s)",'symbol'=>$symbol,'signal_id'=>$rsid];
+        log_event($LOG_FILE, ['event'=>'renew_tp','order'=>$order,'result'=>$rej]); respond($rej);
+    }
+    $ppath = '/api/v4/spot/price_orders'; $del = null;
+    if ($old_id !== '') {
+        list($hg, $gg, $eg) = gate_get($ppath . '/' . rawurlencode($old_id), '', $GATE_KEY, $GATE_SECRET);
+        $st = ($hg >= 200 && $hg < 300 && is_array($gg)) ? ($gg['status'] ?? 'unknown') : 'lookup_failed';
+        if ($st !== 'open') {
+            $r = ['status'=>'not_open','old_status'=>$st,'symbol'=>$symbol,'signal_id'=>$rsid,'http'=>$hg];
+            log_event($LOG_FILE, ['event'=>'renew_tp','order'=>$order,'result'=>$r]); respond($r);
+        }
+        list($hd, $gd, $ed) = gate_delete($ppath . '/' . rawurlencode($old_id), $GATE_KEY, $GATE_SECRET);
+        if (!($hd >= 200 && $hd < 300)) {
+            $r = ['status'=>'error','reason'=>'nao apagou o TP antigo; nada mudou','symbol'=>$symbol,'signal_id'=>$rsid,'http'=>$hd,'detail'=>($ed ?: ($gd['label'] ?? null))];
+            log_event($LOG_FILE, ['event'=>'renew_tp','order'=>$order,'result'=>$r]); respond($r);
+        }
+        $del = ['http'=>$hd];
+    }
+    $tpBody = ['trigger'=>['price'=>$tp_s,'rule'=>'>=','expiration'=>2592000],'put'=>['type'=>'market','side'=>'sell','amount'=>$q_s,'account'=>'normal','time_in_force'=>'ioc'],'market'=>$pair];
+    list($hc, $gc, $ec) = gate_post($ppath, $tpBody, $GATE_KEY, $GATE_SECRET); $new_id = $gc['id'] ?? null;
+    if (!($hc >= 200 && $hc < 300 && $new_id)) {
+        $r = ['status'=>'error','reason'=>'TP antigo apagado e novo NAO criado','old_deleted'=>($old_id !== ''),'symbol'=>$symbol,'signal_id'=>$rsid,'http'=>$hc,'detail'=>($ec ?: ($gc['label'] ?? $gc['message'] ?? null))];
+        log_event($LOG_FILE, ['event'=>'renew_tp','order'=>$order,'result'=>$r]); respond($r);
+    }
+    $ok = ['status'=>'tp_renewed','symbol'=>$symbol,'signal_id'=>$rsid,'new_tp'=>['id'=>$new_id,'price'=>$tp_s,'qty'=>$q_s,'http'=>$hc],'old_tp'=>['id'=>$old_id,'delete'=>$del]];
+    log_event($LOG_FILE, ['event'=>'renew_tp','order'=>$order,'result'=>$ok]); respond($ok);
+}
 if ($action === 'oco_sync') {
     // OCO EMULADO (2026-08-11): a Gate.io NAO tem OCO nativo no spot; TP e SL sao
     // price_orders independentes. Esta acao reconcilia pares TP<->SL:
@@ -143,15 +189,26 @@ if ($action === 'oco_sync') {
         if ($id === '' || $id === null) return ['id'=>'', 'status'=>'absent'];
         list($h, $g, $e) = gate_get($ppath . '/' . rawurlencode((string)$id), '', $GATE_KEY, $GATE_SECRET);
         if ($h >= 200 && $h < 300 && is_array($g)) {
-            return ['id'=>(string)$id, 'status'=>($g['status'] ?? 'unknown'), 'fired_order_id'=>($g['fired_order_id'] ?? null), 'ftime'=>($g['ftime'] ?? null), 'reason'=>($g['reason'] ?? null)];
+            return ['id'=>(string)$id, 'status'=>($g['status'] ?? 'unknown'), 'fired_order_id'=>($g['fired_order_id'] ?? null), 'ftime'=>($g['ftime'] ?? null), 'reason'=>($g['reason'] ?? null), 'market'=>($g['market'] ?? null)];
         }
         return ['id'=>(string)$id, 'status'=>'lookup_failed', 'http'=>$h, 'err'=>($e ?: ($g['label'] ?? $g['message'] ?? null))];
+    };
+    // FIX 12a (D-050): fill REAL da ordem disparada. Usa avg_deal_price (o campo fill_price desta resposta e o
+    // TOTAL em USDT, nao o preco). Falhou a consulta -> perna sem 'fill' e o Python usa a estimativa.
+    $fetch_fill = function($leg) use ($FILL_LOOKUP, $GATE_KEY, $GATE_SECRET) {
+        if (!$FILL_LOOKUP || ($leg['status'] ?? '') !== 'finish' || empty($leg['fired_order_id']) || empty($leg['market'])) return $leg;
+        list($h, $g, $e) = gate_get('/api/v4/spot/orders/' . rawurlencode((string)$leg['fired_order_id']), 'currency_pair=' . rawurlencode((string)$leg['market']), $GATE_KEY, $GATE_SECRET);
+        if ($h >= 200 && $h < 300 && is_array($g) && isset($g['avg_deal_price'])) {
+            $leg['fill'] = ['avg_deal_price'=>$g['avg_deal_price'], 'filled_amount'=>($g['filled_amount'] ?? null), 'filled_total'=>($g['filled_total'] ?? null),
+                            'fee'=>($g['fee'] ?? null), 'fee_currency'=>($g['fee_currency'] ?? null), 'finish_as'=>($g['finish_as'] ?? null)];
+        } else { $leg['fill_err'] = ['http'=>$h, 'err'=>($e ?: ($g['label'] ?? null))]; }
+        return $leg;
     };
     $out = [];
     foreach ($pairs_in as $p) {
         $psid = (string)($p['signal_id'] ?? '');
-        $tp = $fetch_st($p['tp_order_id'] ?? '');
-        $sl = $fetch_st($p['sl_order_id'] ?? '');
+        $tp = $fetch_fill($fetch_st($p['tp_order_id'] ?? ''));
+        $sl = $fetch_fill($fetch_st($p['sl_order_id'] ?? ''));
         $item = ['signal_id'=>$psid, 'tp'=>$tp, 'sl'=>$sl, 'closed_by'=>null, 'cancel'=>null];
         // FIX 10 (2026-10-15): par com TP PARCIAL (Mare Alta TP1). Quando o TP1 dispara,
         // o SL NAO e cancelado: ainda protege o restante. Devolve tp1_hit e o Python troca

@@ -28,6 +28,7 @@ python tests/test_whitelist_php.py
 python tests/test_telegram_mensagens.py
 python tests/test_backtests.py
 python tests/test_dca.py
+python tests/test_fill_tp1.py
 php tests/test_watchdog_scan.php        # no GitHub (o checks roda); local só com PHP instalado
 php tests/test_trigger_scan.php
 php tests/test_agent_gate.php

@@ -59,7 +59,8 @@ Ações, todas exigindo assinatura HMAC-SHA256 do corpo (`X-Signature`):
 |---|---|
 | (padrão) compra | market buy (`ioc`) + TP e SL como `price_orders`; base = `filled_total / fill_price`; aceita `tp_frac` (TP parcial) |
 | `update_trailing` | cria o novo SL → confirma → deleta o antigo (falhou = antigo mantido) |
-| `oco_sync` | lê o status real de cada perna; cancela a sobrevivente; com `tp_partial` devolve `tp1_hit` sem cancelar o SL |
+| `oco_sync` | lê o status real de cada perna; cancela a sobrevivente; com `tp_partial` devolve `tp1_hit` sem cancelar o SL; para perna executada (`finish`), devolve o **fill real** da ordem disparada (FIX 12a, D-050) |
+| `renew_tp` | renova o TP1 antes dos 30 dias: só se o antigo estiver `open`; **apaga o antigo e só depois cria o novo** (FIX 12b, D-050) |
 
 Travas próprias do PHP: `$MAX_NOTIONAL_USDT = 10.0`, `$REQUIRE_PROTECTION = true` (exceção só para compra DCA de BTC/PAXG,
 `$DCA_NO_PROTECTION`, FIX 11, D-049), `$SYMBOL_WHITELIST` (BTC, SOL, TRX,

@@ -6,7 +6,8 @@ So LE o arquivo: nao altera state/, nao chama a exchange. Valores sao ESTIMATIVA
 docs/resultado_financeiro.md. O fill real da corretora pode diferir alguns centavos.
 
 Base de cada trade (coluna "base"):
-  est       pnl_usdt_est gravado pelo oco_guard no fechamento (D-034)
+  real      P&L com o fill REAL da venda (relay FIX 12a, D-050); a entrada segue estimada
+  est       pnl_usdt_est gravado pelo oco_guard no fechamento, pelo preco do gatilho (D-034)
   reg       pnl_usdt gravado a mao numa reconciliacao
   saida     calculado do exit_price gravado
   gatilho   linha antiga sem exit_price: usa o preco da perna (tp_price/sl_price)
@@ -58,7 +59,8 @@ def trade_pnl(p):
     """(pnl_usdt, pnl_pct, saida, base) de uma linha closed_tp/closed_sl."""
     closed_by = "tp" if p.get("status") == "closed_tp" else "sl"
     if p.get("pnl_usdt_est") is not None:
-        return float(p["pnl_usdt_est"]), float(p.get("pnl_pct_est") or 0), p.get("exit_price"), "est"
+        base = "real" if p.get("exit_basis") == "fill_real" else "est"      # D-050: fill real da saida
+        return float(p["pnl_usdt_est"]), float(p.get("pnl_pct_est") or 0), p.get("exit_price"), base
     if p.get("pnl_usdt") is not None:
         return float(p["pnl_usdt"]), float(p.get("pnl_pct") or 0), p.get("exit_price"), "reg"
     q = dict(p)

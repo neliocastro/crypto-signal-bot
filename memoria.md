@@ -144,6 +144,13 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   no BTC. Uma tentativa por semana, sem compra dobrada. FIX 11 deployado em 2026-10-23 (sha256 `945b2015…`, backup
   `execute.php.bak-20261023`) e `DCA_ENABLED` ligado em seguida; cron do PAXG pausado (`.paxg_pause`).
   `docs/decisoes/D-049-dca-semanal.md`
+- **D-050 (2026-10-23)** **Fill real da saída e renovação do TP1** (relay FIX 12). (a) O `oco_sync` devolve o fill real
+  da ordem disparada (`GET /spot/orders/{fired_order_id}`; usar `avg_deal_price`, pois o `fill_price` dessa resposta é o
+  total em USDT); o `oco_guard` grava o P&L com ele (`exit_basis: fill_real`) e cai na estimativa se faltar
+  (`$FILL_LOOKUP`). (b) Ação `renew_tp`: TP1 com 25 dias ou mais é renovado no mesmo preço e qty, só se estiver `open`,
+  **apagando o antigo antes de criar o novo** (os dois vivos poderiam disparar juntos e vender saldo do DCA ou manual);
+  se apagar e não criar, fica `tp_renew_pending` e o scan seguinte cria (`TP_RENEW_ENABLED`, ligar após o deploy).
+  Conferido na Gate em 2026-10-23: gatilho executado = `finish`; a ordem de 15 dias atrás ainda é consultável.
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
