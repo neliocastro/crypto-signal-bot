@@ -24,6 +24,9 @@
 - **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 2026-09-21: decisão do usuário.
 
 ## Próximos passos
+- **Rodar os backtests** (workflow `backtest`, manual): `backtest_acumulo` (BTC e PAXG, RSI 4h < 30 x DCA semanal) e
+  `backtest_range` (BTC, SOL, TRX, BNB, PAXG, faixa lateral só compra). Os relatórios vão para `docs/backtests/`.
+  Com eles, decidir: acúmulo no BTC/PAXG (D-003, D-022, D-006/R-006, D-012/D-032) e quais ativos entram no range.
 - **Telegram, Fases 2 a 4** (plano de 2026-10-21): catálogo de estratégias no `config.py` com liga/desliga pelo
   Telegram (exige decisão que ajuste o D-004 e a proibição do `CLAUDE.md`); DCA (decidir proteção: D-006/R-006);
   combinações novas (Maré Alta no HYPE, range trading) só após backtest (P-12).

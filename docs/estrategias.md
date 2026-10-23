@@ -14,7 +14,7 @@ Breakout 1h   -> HYPE                 DESLIGADO desde 2026-10-13 (D-013)
 **Watchlist (scan intraday, 5):** BTC, SOL, TRX, BNB, HYPE (`WATCHLIST` em `bot/config.py`).
 **Universo do Maré Alta (4):** `MARE_ALTA_UNIVERSE` em `bot/mare_alta.py`, independente da watchlist.
 
-## Maré Alta D1 (`bot/mare_alta.py`) — em produção
+## Tendência Diária (antiga "Maré Alta D1"; id `MARE_ALTA_D1`, `bot/mare_alta.py`) — em produção
 
 - **Entrada (vela D1 fechada):** MACD(12,26,9) cruza acima da linha de sinal (vale abaixo de zero, D-014) **e**
   EMA9 > EMA21. Um alerta por vela (`state/mare_alta_state.json`).

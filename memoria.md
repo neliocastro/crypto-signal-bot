@@ -124,6 +124,10 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   paper trading (`PAPER_EVAL_ENABLED`, D-028); o resumo diário e o `/status` mostram estratégias ligadas/desligadas,
   posições e a trava real (D-035); `/add` e `/rm` respondem que a watchlist vem do `config.py` (D-004). Os comandos
   passam a ser lidos no início de cada scan (`TELEGRAM_COMMANDS_IN_SCAN`, ~5 min) e o `commander.yml` fica só manual.
+- **D-047 (2026-10-23)** **"Maré Alta D1" passa a se chamar "Tendência Diária"** no que o usuário lê (Telegram e docs
+  novos). O id interno continua `MARE_ALTA_D1` (executor do TP1, placar, `positions.jsonl`, testes); o módulo e as flags
+  `MARE_ALTA_*` também ficam. Decisões e históricos antigos seguem citando "Maré Alta" (mesma estratégia). Outros nomes
+  exibidos: "Rompimento 1h" (breakout), "Acúmulo na Queda" (RSI).
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 

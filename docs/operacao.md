@@ -26,6 +26,7 @@ python tests/test_placar.py
 python tests/test_trava_perda_diaria.py
 python tests/test_whitelist_php.py
 python tests/test_telegram_mensagens.py
+python tests/test_backtests.py
 php tests/test_watchdog_scan.php        # no GitHub (o checks roda); local só com PHP instalado
 php tests/test_trigger_scan.php
 php tests/test_agent_gate.php

@@ -6,6 +6,8 @@ name: backtest
 #   - backtest_meanrev_paxg   : RSI<30 & banda inf. Bollinger -> saida SMA20 (reversao) -> log
 #   - backtest_breakout_hype  : EMA9>21>50 + breakout N velas + RSI>50 -> trailing stop -> log
 #   - backtest_risco_maximo   : MACD cruza^ (mesmo <0) & EMA9>EMA21 -> TP 6% -> stop ATR vs min -> log
+#   - backtest_acumulo        : RSI 4h < 30 (espera 12h) x DCA semanal, BTC e PAXG -> docs/backtests/
+#   - backtest_range          : faixa lateral (ADX D1 < 20), so compra, fora da amostra -> docs/backtests/
 on:
   workflow_dispatch:
     inputs:
@@ -19,6 +21,8 @@ on:
           - backtest_meanrev_paxg
           - backtest_breakout_hype
           - backtest_risco_maximo
+          - backtest_acumulo
+          - backtest_range
       args:
         description: "Args extras (ex: --compare | --rsi 25 --bb-std 2.5)"
         type: string
@@ -60,6 +64,12 @@ jobs:
             backtest_risco_maximo)
               python -m scripts.backtest_risco_maximo ${{ github.event.inputs.args }}
               ;;
+            backtest_acumulo)
+              python -m scripts.backtest_acumulo ${{ github.event.inputs.args }}
+              ;;
+            backtest_range)
+              python -m scripts.backtest_range ${{ github.event.inputs.args }}
+              ;;
             *)
               python -m scripts.backtest_macd ${{ github.event.inputs.args }}
               ;;
@@ -69,10 +79,11 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/backtest_results.json docs/backtest_report.md 2>/dev/null || true
+          git add state/backtest_results.json docs/backtest_report.md docs/backtests/ 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "Nenhuma mudanca no relatorio."
           else
             git commit -m "chore(backtest): atualiza resultados [skip ci]"
+            git pull --rebase --autostash origin main || true
             git push
           fi

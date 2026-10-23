@@ -26,6 +26,9 @@ from typing import Callable, Optional, Dict, Any, List
 # ---------------- config / kill-switches ----------------
 MARE_ALTA_ENABLED     = True    # False = desliga tudo
 MARE_ALTA_SHADOW_MODE = False   # PRODUCAO: sinais vao ao executor (ordens reais)
+# 2026-10-23 (D-047): nome EXIBIDO ao usuario. O id interno continua "MARE_ALTA_D1"
+# (executor, placar, positions.jsonl e testes dependem dele; nao renomear).
+MARE_ALTA_DISPLAY = "Tendência Diária"
 
 # UNIVERSO (2026-08-23): ETH e XRP REMOVIDOS.
 #   Tres evidencias independentes convergiram contra os dois:
@@ -124,7 +127,7 @@ def _format_msg(symbol: str, s: Dict[str, Any]) -> str:
     tag  = "[SHADOW] " if s["shadow"] else ""
     zero = " (MACD ainda <0: entrada antecipada)" if s["macd_below_zero"] else ""
     return (
-        f"\U0001F30A [MARE ALTA D1] {tag}Sinal de COMPRA: {symbol}{zero}\n"
+        f"\U0001F30A [{MARE_ALTA_DISPLAY.upper()}] {tag}Sinal de COMPRA: {symbol}{zero}\n"
         f"Entrada ref (fech. D1): {s['entry_ref']}\n"
         f"Stop inicial (2.5xATR): {s['stop']}\n"
         f"TP1 +10% (vende 50%):   {s['tp1']}\n"

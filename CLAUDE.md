@@ -87,6 +87,7 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 - Antes de commitar: `python -m py_compile bot/*.py`, `python tests/test_roteamento_strings.py`,
   `python tests/test_saida_tp1.py`, `python tests/test_renovacao_sl.py`, `python tests/test_placar.py`,
   `python tests/test_trava_perda_diaria.py`, `python tests/test_whitelist_php.py`, `python tests/test_telegram_mensagens.py`,
+  `python tests/test_backtests.py`,
   `php tests/test_watchdog_scan.php`, `php tests/test_trigger_scan.php`, `php tests/test_agent_gate.php` (se houver PHP local);
   mexeu em workflow: `python scripts/check_workflows.py` (precisa de PyYAML; o `checks` roda). O workflow `checks` roda `php -l` no relay e os testes no GitHub.
 - `server/execute.php` exige **deploy manual** conferido por bytes e hash (`docs/operacao.md`). Flag que dependa do

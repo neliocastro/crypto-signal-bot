@@ -20,6 +20,11 @@ def _flag(mod, nome, padrao):
         return padrao
 
 
+def _nome_ma(m) -> str:
+    """Nome exibido da estrategia de tendencia diaria (id interno MARE_ALTA_D1, D-047)."""
+    return str(_flag(m, "MARE_ALTA_DISPLAY", "Tendência Diária"))
+
+
 def linhas_estrategias() -> list:
     """Uma linha por estrategia: estado, ativos e o que faz."""
     try:
@@ -37,16 +42,16 @@ def linhas_estrategias() -> list:
     universo = ", ".join(s.split("/")[0] for s in (_flag(m, "MARE_ALTA_UNIVERSE", []) or []))
     if ma_on:
         modo = "SOMBRA (sem ordem)" if ma_shadow else "REAL"
-        out.append("🟢 Maré Alta D1 — %s — %s — tendência diária, stop 2,5×ATR, TP1 +10%%" % (modo, universo or "?"))
+        out.append("🟢 %s — %s — %s — tendência no diário, stop 2,5×ATR, TP1 +10%%" % (_nome_ma(m), modo, universo or "?"))
     else:
-        out.append("⚪ Maré Alta D1 — DESLIGADA")
+        out.append("⚪ %s — DESLIGADA" % _nome_ma(m))
 
     bo_on = bool(_flag(c, "BREAKOUT_ENABLED", False))
     bo_syms = ", ".join(s.split("/")[0] for s in (_flag(c, "BREAKOUT_SYMBOLS", {}) or {}))
-    out.append(("🟢 Breakout 1h — %s" % (bo_syms or "?")) if bo_on else "⚪ Breakout 1h — DESLIGADA (D-013)")
+    out.append(("🟢 Rompimento 1h — %s" % (bo_syms or "?")) if bo_on else "⚪ Rompimento 1h — DESLIGADA (D-013)")
 
     ac_on = bool(_flag(c, "ACCUMULATION_ENABLED", False))
-    out.append("🟢 Acúmulo RSI (bot)" if ac_on else "⚪ Acúmulo RSI no bot — DESLIGADA (D-012)")
+    out.append("🟢 Acúmulo na Queda (bot)" if ac_on else "⚪ Acúmulo na Queda no bot — DESLIGADA (D-012)")
     out.append("🔵 PAXG RSI 4h < 30 — cron do SERVIDOR, fora do bot e do placar (D-032)")
 
     teto = _flag(c, "EXECUTION_MAX_NOTIONAL_USDT", None)

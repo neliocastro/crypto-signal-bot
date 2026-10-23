@@ -78,14 +78,14 @@ def test_comandos_de_watchlist_sao_inertes():
 def test_status_mostra_estrategias():
     resp, mudou = commander.handle_command("/status", {"watchlist": [], "scan_interval_min": 5})
     assert mudou is False
-    assert "Maré Alta D1" in resp and "BTC, SOL, TRX, BNB" in resp, resp
-    assert "Breakout 1h — DESLIGADA (D-013)" in resp, resp
+    assert "Tendência Diária" in resp and "BTC, SOL, TRX, BNB" in resp, resp
+    assert "Rompimento 1h — DESLIGADA (D-013)" in resp, resp
     assert "Posições abertas do bot" in resp, resp
 
 
 def test_linhas_estrategias_refletem_flags():
     ls = sv.linhas_estrategias()
-    assert any(l.startswith("🟢 Maré Alta D1 — REAL") for l in ls), ls
+    assert any(l.startswith("🟢 Tendência Diária — REAL") for l in ls), ls
     assert any("PAXG" in l and "D-032" in l for l in ls), ls
     assert any("US$ 10" in l for l in ls), ls
 
@@ -123,7 +123,7 @@ def test_resumo_diario_sem_papel_e_com_trava_real():
         ds._STATE = antigo
     assert "paper" not in txt.lower(), txt
     assert "-$10" not in txt, txt
-    assert "Estrategias" in txt and "Maré Alta D1" in txt, txt
+    assert "Estrategias" in txt and "Tendência Diária" in txt, txt
     assert "Posicoes abertas do bot:* 1" in txt, txt
     assert "Fechadas em 24h:* 1" in txt and "$-0.40" in txt, txt
     assert "US$ 20" in txt, txt

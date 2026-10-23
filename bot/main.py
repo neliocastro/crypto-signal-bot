@@ -454,7 +454,7 @@ def main() -> int:
                             # qty pequena demais. Avisa (o TP saiu na base inteira).
                             if (((_ma_res or {}).get("order") or {}).get("tp_frac")
                                     and not _tpsl.get("tp_frac_applied")):
-                                _w = ("\u26a0\ufe0f MARE ALTA %s: TP1 parcial NAO aplicado pelo relay "
+                                _w = ("\u26a0\ufe0f TENDENCIA DIARIA %s: TP1 parcial NAO aplicado pelo relay "
                                       "(%s). TP ficou na base inteira; trailing segue o modo antigo."
                                       % (_ma_sig.get("symbol"),
                                          _tpsl.get("tp_frac_note") or "execute.php sem FIX 10?"))
@@ -504,7 +504,7 @@ def main() -> int:
                 log.info("\U0001F30A TRAILING subiu %s -> %s",
                          _t.get("symbol"), _t.get("new_sl"))
                 try:
-                    send("\U0001F30A Trailing Mare Alta: %s stop SUBIU para %s"
+                    send("\U0001F30A Trailing Tendencia Diaria: %s stop SUBIU para %s"
                          % (_t.get("symbol"), _t.get("new_sl")))
                 except Exception:
                     pass
