@@ -28,7 +28,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   `/add` e `/rm` do Telegram ficaram inertes. `historico/watchlist_runtime_2026-08-24.md`
 - **D-005 (2026-08-11)** **OCO emulado**: a Gate.io spot não tem OCO; o `oco_guard` + a ação `oco_sync` do relay
   cancelam a perna sobrevivente. `historico/gateio_limitacoes.md`
-- **D-006 (2026-06-19)** **Compra sem TP/SL é recusada** (`REQUIRE_PROTECTION` no PHP) e o stop tem piso de
+- **D-006 (2026-06-19)** **Compra sem TP/SL é recusada** (`REQUIRE_PROTECTION` no PHP; exceção só para o DCA, D-049) e o stop tem piso de
   0,8% do preço (`EXECUTION_MIN_STOP_PCT`; bug do TRX, ATR baixo).
 - **D-007 (2026-10-09)** `SELF_DISPATCH_PAT`: token fine-grained, só este repo, Actions RW, **sem vencimento**
   (escolha do usuário). Vive em dois lugares: secret do GitHub e servidor (o local no servidor foi SUBSTITUÍDO pelo D-039: `.env` de
@@ -41,7 +41,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-011 (2026-08-24)** MACD-only, Integrada, Tendência MACD e Confluência **removidas do código**.
   `historico/limpeza_estrategias_2026-08-24.md`
 - **D-012 (2026-09-04)** **PAXG fora da watchlist**, `ACCUMULATION_ENABLED = False` (lado Python). O cron do servidor
-  `paxg_rsi_check.php` continua ativo (D-032). `historico/paxg_removido_2026-09-04.md`
+  `paxg_rsi_check.php` ficou ativo pelo D-032, depois substituído pelo DCA (D-049). `historico/paxg_removido_2026-09-04.md`
 - **D-013 (2026-10-13)** **Breakout HYPE desligado** (`BREAKOUT_ENABLED = False`; PF ao vivo ~0,78 em 12 trades).
   O HYPE segue escaneado, sem sinal nem ordem. Religar: `True`, só após reavaliação.
   `historico/decisao_2026-10-13_hype_desligado_e_paper.md`
@@ -82,7 +82,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   Limite mantido em US$ 20 (inalcançável no degrau de US$ 10; reavaliar ao subir o degrau, D-024). P&L é estimativa
   pelo gatilho (D-034): a trava pode disparar um pouco depois do limite exato.
 - **D-036 (2026-10-15)** **Whitelist do PHP = universo atual + PAXG**: `$SYMBOL_WHITELIST` passa a aceitar só BTC, SOL,
-  TRX, BNB, HYPE e PAXG (este pelo cron do servidor, D-032); saem ETH, XRP, LINK e AAVE (D-010, R-005).
+  TRX, BNB, HYPE e PAXG (este hoje pelo DCA, D-049); saem ETH, XRP, LINK e AAVE (D-010, R-005).
   `tests/test_whitelist_php.py` falha se a whitelist divergir de `WATCHLIST ∪ MARE_ALTA_UNIVERSE ∪ {PAXG}`.
   Deployada em 2026-10-15 (commit `8298f20d`, sha256 `4ec3b375…`, HTTP 401 conferido; backup `execute.php.bak-20261015b`).
 - **D-037 (2026-10-15)** **Watchdog externo no servidor** (`server/watchdog_scan.php`, crontab do `ineocom`, de hora em
@@ -137,6 +137,12 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   o caminho é um DCA simples, com a decisão de proteção (D-006/R-006) ainda em aberto. O cron do PAXG (D-032), que é
   esse RSI com stop −15%, rendeu −2,2% no período contra +0,4% do DCA: rever com o usuário.
   `docs/backtests/acumulo_20261023.md`, `docs/backtests/range_20261023.md`
+- **D-049 (2026-10-23)** **DCA semanal sem stop em BTC e PAXG** (US$ 10/semana cada, segunda 13:00 UTC; teto
+  mensal US$ 50 por ativo). Substitui o D-032 (cron do PAXG, pausado já) e abre exceção ao D-006/R-006 só para
+  `strategy == "DCA"` (relay FIX 11, `$DCA_NO_PROTECTION`). O DCA fica em `state/dca.jsonl`, fora do
+  `positions.jsonl`: não conta na trava de posição viva (D-022) nem no trailing/OCO; convive com a Tendência Diária
+  no BTC. Uma tentativa por semana, sem compra dobrada. `DCA_ENABLED` só depois do deploy do FIX 11.
+  `docs/decisoes/D-049-dca-semanal.md`
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -150,13 +156,6 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   em texto neutro, para irem junto com o repositório em qualquer máquina. O repositório é **público** (conferido em
   2026-10-21): nada pessoal ou sensível em arquivo versionado. A memória local do agente fica só para o que não for
   regra de trabalho. Ajusta o item 7 do D-038.
-- **D-032 (2026-10-15)** **O cron de acumulação do PAXG no servidor permanece ATIVO**, por decisão explícita do
-  usuário: deve continuar comprando PAXG quando o RSI 4h ficar abaixo de 30 (`server/paxg_rsi_check.php`, crontab do
-  `ineocom`, de hora em hora). É uma exceção ao D-012: essa compra fica fora do bot (sem `positions.jsonl`, sem OCO
-  guard, sem trava de concentração, sem alerta próprio no Telegram) e o usuário aceita esse risco. Parâmetros
-  conforme a documentação do cron (confirmar no servidor, pois `gerar_teste_paxg.php` não está no repositório):
-  RSI 14 em 4h, limiar < 30, cooldown 12 h, US$ 10 por compra, SL −15%, sem TP.
-  Para pausar: `touch .paxg_pause` no servidor (`docs/operacao.md`, seção 4).
 - **D-031** Toda feature nova tem kill-switch booleano e rollback de 1 linha; mudanças aditivas; imports opcionais
   com degradação segura.
 
@@ -169,7 +168,8 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **R-004** Stop global 3,0×ATR (piora o D1); resolvido com override só para o HYPE (D-021). (2026-08-23)
 - **R-005** Reentrar ETH, XRP, LINK, AAVE no Maré Alta; XRP, AAVE e BTC no breakout; MACD-only nos majors
   (reprovados em backtest/OOS). `historico/backtest_2026-06-validacao-oos.md`, `historico/backtest_2026-07-mare-alta-d1.md`
-- **R-006** Exceção no executor para PAXG comprar sem TP/SL; optou-se por remover o PAXG. (2026-09-04)
+- **R-006** Exceção no executor para PAXG comprar sem TP/SL; optou-se por remover o PAXG. (2026-09-04) Revertido
+  em 2026-10-23 só para compras DCA (D-049).
 - **R-007** Automatizar o OCO de ordens manuais (exigiria cancelar ordens que o bot não criou). (2026-09-16)
 - **R-008** Religar o HYPE só porque o bloqueio acidental sumiu. (2026-10-13)
 

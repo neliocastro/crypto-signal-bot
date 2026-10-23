@@ -19,10 +19,15 @@
  *   (TP vende so essa fracao; resposta traz tpsl.tp_frac_applied e tpsl.tp.qty) e campo
  *   'tp_partial' por par no oco_sync (TP1 disparado NAO cancela o SL; devolve tp1_hit).
  *   Sem esses campos o comportamento e identico ao FIX 9.
+ * FIX 11 (2026-10-23, D-049): DCA semanal SEM TP/SL. A compra so e aceita sem protecao se
+ *   'strategy' == 'DCA', o ativo esta em $DCA_WHITELIST e o teto por ordem continua valendo.
+ *   Qualquer outra compra sem TP nem SL segue recusada (D-006). Rollback: $DCA_NO_PROTECTION = false.
  */
 $DRY_RUN            = false;
 $TPSL_ENABLED       = true;
 $REQUIRE_PROTECTION = true;
+$DCA_NO_PROTECTION  = true;                          // FIX 11 / D-049. Rollback: false
+$DCA_WHITELIST      = ['BTC/USDT','PAXG/USDT'];      // unicos ativos com DCA sem TP/SL
 $MAX_NOTIONAL_USDT  = 10.0;  // alinhado ao Python (EXECUTION_MAX_NOTIONAL_USDT = 10.0, DEGRAU 2)
 $SYMBOL_WHITELIST   = ['PAXG/USDT','HYPE/USDT','BTC/USDT','SOL/USDT','TRX/USDT','BNB/USDT']; // D-036 (2026-10-15): universo atual + PAXG (cron D-032)
 $LOG_FILE           = __DIR__ . '/execution_log.jsonl';
@@ -179,7 +184,9 @@ $symbol = $order['symbol'] ?? ''; $notional = (float)($order['notional_usdt'] ??
 if (!in_array($symbol, $SYMBOL_WHITELIST, true)) respond(['status'=>'rejected','reason'=>'symbol fora da whitelist']);
 if ($notional <= 0 || $notional > $MAX_NOTIONAL_USDT) respond(['status'=>'rejected','reason'=>"notional fora do teto ($MAX_NOTIONAL_USDT)"]);
 $sl_price_in = isset($order['sl_price']) ? (float)$order['sl_price'] : 0.0; $tp_price_in = isset($order['tp_price']) ? (float)$order['tp_price'] : 0.0;
-if ($REQUIRE_PROTECTION && $TPSL_ENABLED && $sl_price_in <= 0 && $tp_price_in <= 0) {
+$is_dca = $DCA_NO_PROTECTION && (($order['strategy'] ?? '') === 'DCA') && in_array($symbol, $DCA_WHITELIST, true)
+          && $sl_price_in <= 0 && $tp_price_in <= 0;   // FIX 11: DCA nunca leva TP/SL
+if ($REQUIRE_PROTECTION && $TPSL_ENABLED && $sl_price_in <= 0 && $tp_price_in <= 0 && !$is_dca) {
     $rej = ['status'=>'rejected','reason'=>'sem TP nem SL (ATR=0?) - compra recusada (posicao nua)','symbol'=>$symbol,'signal_id'=>$sid];
     log_event($LOG_FILE, ['event'=>'execute','order'=>$order,'result'=>$rej]);
     $seen = file_exists($SEEN_FILE) ? json_decode(file_get_contents($SEEN_FILE), true) : []; $seen[$sid] = gmdate('c'); file_put_contents($SEEN_FILE, json_encode($seen)); respond($rej);
@@ -252,6 +259,7 @@ if ($DRY_RUN) {
                         }
                     }
                     $tpsl['base_qty'] = $base_qty_s;
+                    if ($is_dca) $tpsl['note'] = 'DCA: sem TP/SL por desenho (D-049)';
                 }
             } else { $tpsl['note'] = 'TPSL_ENABLED=false'; }
             $result['tpsl'] = $tpsl;

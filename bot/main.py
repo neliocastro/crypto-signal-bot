@@ -472,6 +472,15 @@ def main() -> int:
     except Exception:
         log.error("Falha na Mare Alta (ignorada):\n%s", traceback.format_exc())
 
+    # --- DCA SEMANAL (D-049): compra fixa por semana, sem TP/SL, fora do positions.jsonl ---
+    # Kill-switch: config.DCA_ENABLED (so ligar depois do execute.php FIX 11 no servidor).
+    try:
+        from . import dca as _dca
+        for _d in _dca.run_dca(notify=send):
+            log.info("DCA %s: %s", _d.get("symbol"), _d.get("status"))
+    except Exception:
+        log.error("Falha no DCA (ignorada):\n%s", traceback.format_exc())
+
     # --- MARE ALTA D1: TRAILING por ATR (catraca: so sobe o stop, nunca desce) ---
     # Roda a cada scan; a catraca interna garante que so envia update_trailing ao
     # relay quando o novo SL e MAIOR que o atual. Kill-switch:

@@ -155,6 +155,19 @@ def main(argv=None):
             r = resumo([t for t in trades if t[grupo] == k])
             print("| %s | %d | %d | %+.2f | %s |" % (k, r["n"], r["wins"], r["pnl"], _fmt_pf(r["pf"])))
 
+    caminho_dca = os.path.join(os.path.dirname(a.arquivo), "dca.jsonl")
+    if os.path.exists(caminho_dca):
+        from bot import dca as _dca
+        regs = _dca.ler_registro(caminho_dca)
+        ativos = sorted({r.get("symbol") for r in regs if r.get("status") == "filled"})
+        if ativos:
+            print("\n## DCA semanal (D-049; sem stop, o bot nunca vende)\n")
+            print("| Ativo | Compras | Investido (US$) | Quantidade estimada | Custo médio |")
+            print("|---|---|---|---|---|")
+            for s in ativos:
+                x = _dca.acumulado(regs, s)
+                print("| %s | %d | %.2f | %.8f | %.2f |" % (s, x["compras"], x["investido"], x["qtd"], x["custo_medio"] or 0))
+
     if outros:
         print("\nFora do placar (closed_manual, summary etc.):")
         for p in outros:

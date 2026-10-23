@@ -20,4 +20,5 @@ A decisão vigente está no `memoria.md`. Evidência em `docs/historico/`.
 | D-007 (trecho): token do servidor dentro do script `trigger_scan.sh` chamado pelo crontab | 2026-10-09 | D-039 (2026-10-20) | script não versionado, sem checar HTTP, caminho errado no crontab (P-18) |
 | D-038 (item 7): preferências do usuário só na memória local do agente, fora do repo | 2026-10-19 | D-041 (2026-10-21) | não migravam de máquina; vão em texto neutro para o `CLAUDE.md` (repo público) |
 | D-037 (trecho): watchdog com limite de 60 min, de hora em hora | 2026-10-15 | D-044 (2026-10-21) | parada só era avisada em até ~2 h (viu 58 min e não avisou em 2026-10-20) |
+| D-032: cron de acúmulo do PAXG no servidor (RSI 4h < 30, stop −15%) ativo e fora do bot | 2026-10-15 | D-049 (2026-10-23) | backtest: não supera um DCA simples (D-048); trocado por DCA semanal sem stop |
 | D-030: estrutura `CLAUDE.md` + `memoria.md` (com pendências) + 4 docs + `historico/`, sem `.gitignore`, sem fluxo de trabalho escrito | 2026-10-15 | D-038 (2026-10-19) | pendências voláteis dentro da memória, buracos apontados na comparação com o framework de contexto |

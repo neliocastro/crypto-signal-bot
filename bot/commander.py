@@ -179,6 +179,9 @@ def _fmt_estrategias() -> str:
         linhas = ["", "<b>🧭 Estratégias</b>"] + [_esc(x) for x in sv.linhas_estrategias()]
         abertas = sv.posicoes_abertas(str(_REPO_ROOT / "state" / "positions.jsonl"))
         linhas += ["", "<b>📂 Posições abertas do bot:</b> %d" % len(abertas)] + [_esc(x) for x in abertas]
+        dca = sv.linhas_dca(str(_REPO_ROOT / "state" / "dca.jsonl"))
+        if dca:
+            linhas += ["", "<b>🧺 DCA acumulado</b>"] + [_esc(x) for x in dca]
         return "\n".join(linhas) + "\n"
     except Exception as e:                                       # noqa: BLE001
         return "\n(estratégias indisponíveis: %s)\n" % _esc(str(e)[:80])

@@ -47,3 +47,4 @@ jobs:
           python tests/test_whitelist_php.py
           python tests/test_telegram_mensagens.py
           python tests/test_backtests.py
+          python tests/test_dca.py

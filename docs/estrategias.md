@@ -47,10 +47,20 @@ Breakout 1h   -> HYPE                 DESLIGADO desde 2026-10-13 (D-013)
 - `BREAKOUT_SHADOW_MODE = True` acrescenta `[SHADOW]` ao nome e, de propósito, quebra o match da allowlist (sem ordem).
 - Desempenho ao vivo: PF ~0,78 em 12 trades (backtest original 2,55).
 
+## DCA semanal (`bot/dca.py`, D-049) — pronto, desligado até o relay FIX 11
+
+- **Regra:** US$ 10 por semana em BTC e em PAXG (`DCA_ASSETS`), a mercado, no primeiro scan a partir de segunda
+  13:00 UTC. **Sem TP nem SL: o bot nunca vende o DCA.** Teto mensal de US$ 50 por ativo.
+- **Convivência com a Tendência Diária no BTC:** o DCA fica em `state/dca.jsonl`, fora do `positions.jsonl`. Não conta
+  na trava de 1 posição viva por ativo (D-022) e não entra no trailing, no OCO nem na renovação de SL. Conta nas
+  travas de ordens por dia e no teto por ordem.
+- **Uma tentativa por ativo por semana** (sem nova tentativa se falhar, para não comprar em dobro); aviso no Telegram.
+- Kill-switch: `DCA_ENABLED` (hoje `False`); no relay, `$DCA_NO_PROTECTION`.
+
 ## Desligadas ou removidas
 | Estratégia | Estado |
 |---|---|
-| Acúmulo RSI 4h (PAXG) | `ACCUMULATION_ENABLED = False` desde 2026-09-04 (código mantido). **O cron do servidor segue ativo por decisão do usuário (D-032)**; compra fora do bot |
+| Acúmulo RSI 4h (PAXG) | `ACCUMULATION_ENABLED = False` desde 2026-09-04 (código mantido). O cron do servidor (D-032) foi pausado e substituído pelo DCA semanal (D-049) |
 | MACD-only, Integrada, Tendência MACD, Confluência | removidas do código em 2026-08-24 |
 | SHORT | descartado em definitivo (D-002) |
 | Acúmulo na Queda (RSI 4h < 30) em BTC e PAXG | testado em 2026-10-23: **não aprovado** contra um DCA simples (D-048) |
@@ -101,6 +111,11 @@ Mudou o comportamento? Atualize o cenário e o teste no mesmo commit.
 | C-14 | já há 1 posição viva ou 2 ordens no dia no mesmo ativo | a compra é recusada (D-022) | **sem teste** |
 | C-15 | um sinal intraday não está na `INTRADAY_EXEC_ALLOWLIST` | não vira ordem; o Maré Alta não depende da allowlist | `test_roteamento_strings::test_allowlist_do_main_bate_com_o_contrato`, `::test_mare_alta_nao_depende_da_allowlist` |
 | C-16 | o relay recebe compra de ativo fora do universo + PAXG | recusa (`symbol fora da whitelist`) | conteúdo da whitelist: `test_whitelist_php::test_whitelist_igual_ao_universo`; a recusa no PHP: **sem teste** |
+| C-17 | chega segunda 13:00 UTC com o DCA ligado | compra US$ 10 de cada ativo do DCA, sem TP/SL, e avisa | `test_dca::test_compra_uma_vez_por_semana_e_avisa` |
+| C-18 | o DCA já tentou o ativo nesta semana (mesmo que o envio tenha quebrado) | não envia de novo | `test_dca::test_envio_quebrado_nao_gera_compra_dobrada` |
+| C-19 | a compra passaria do teto mensal do ativo | não compra e avisa | `test_dca::test_teto_mensal` |
+| C-20 | o DCA compra BTC | o `positions.jsonl` não muda e a Tendência Diária segue livre para comprar BTC | `test_dca::test_nao_mexe_no_positions_nem_na_trava_da_tendencia` |
+| C-21 | o relay recebe compra sem TP/SL | só aceita se `strategy == "DCA"` e o ativo estiver na `$DCA_WHITELIST` | conteúdo: `test_dca::test_relay_aceita_sem_protecao_so_para_dca_dos_ativos_do_config`; o PHP em execução: **sem teste** |
 
 ## Parâmetros de execução (`bot/config.py`)
 
@@ -119,6 +134,7 @@ Mudou o comportamento? Atualize o cenário e o teste no mesmo commit.
 | `EXECUTION_DAILY_LOSS_STOP` | 20,0 | bloqueia **novas compras** quando a perda líquida do dia UTC chega a US$ 20; derivada do `pnl_usdt_est` do `positions.jsonl` (`EXECUTION_DAILY_LOSS_FROM_POSITIONS`, D-035). Inerte até 2026-10-15 |
 | Trava de concentração | 1 posição viva + 2 ordens/dia por ativo | D-022; defaults no `executor.py` |
 | `OCO_GUARD_ENABLED` | `True` | OCO emulado (D-005) |
+| `DCA_ENABLED` / `DCA_ASSETS` / `DCA_MONTHLY_CAP_USDT` | `False` / BTC e PAXG US$ 10 / 50 | DCA semanal sem stop (D-049); ligar só após o FIX 11 |
 | `SL_RENEW_ENABLED` / `SL_RENEW_AFTER_DAYS` | `True` / 25 | renova o SL antes dos 30 dias da Gate (D-033) |
 | `EXIT_RECORD_ENABLED` / `EXIT_FEE_RATE` | `True` / 0,001 | grava saída e P&L estimados no fechamento (D-034) |
 | `SL_EXPIRED_ALERT_ENABLED` | `True` | alerta 1x se SL ou TP1 pendente morrer sem executar (D-033) |

@@ -86,7 +86,8 @@ def test_status_mostra_estrategias():
 def test_linhas_estrategias_refletem_flags():
     ls = sv.linhas_estrategias()
     assert any(l.startswith("🟢 Tendência Diária — REAL") for l in ls), ls
-    assert any("PAXG" in l and "D-032" in l for l in ls), ls
+    assert any("DCA semanal" in l and "BTC US$ 10" in l and "PAXG US$ 10" in l for l in ls), ls
+    assert any("PAXG" in l and "substituído pelo DCA" in l for l in ls), ls
     assert any("US$ 10" in l for l in ls), ls
 
 

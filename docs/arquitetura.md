@@ -61,7 +61,8 @@ Ações, todas exigindo assinatura HMAC-SHA256 do corpo (`X-Signature`):
 | `update_trailing` | cria o novo SL → confirma → deleta o antigo (falhou = antigo mantido) |
 | `oco_sync` | lê o status real de cada perna; cancela a sobrevivente; com `tp_partial` devolve `tp1_hit` sem cancelar o SL |
 
-Travas próprias do PHP: `$MAX_NOTIONAL_USDT = 10.0`, `$REQUIRE_PROTECTION = true`, `$SYMBOL_WHITELIST` (BTC, SOL, TRX,
+Travas próprias do PHP: `$MAX_NOTIONAL_USDT = 10.0`, `$REQUIRE_PROTECTION = true` (exceção só para compra DCA de BTC/PAXG,
+`$DCA_NO_PROTECTION`, FIX 11, D-049), `$SYMBOL_WHITELIST` (BTC, SOL, TRX,
 BNB, HYPE + PAXG do cron D-032; D-036, sincronia vigiada por `tests/test_whitelist_php.py`),
 idempotência por `signal_id` (`seen_signals.json`), precisão por par via `/spot/currency_pairs` com tabela de fallback.
 **Qualquer mudança neste arquivo exige deploy manual** (`operacao.md`).
@@ -104,6 +105,7 @@ terminam com "Scan PULADO". Concorrência: `scan-${ref}`, enfileira sem cancelar
 | `mare_alta_state.json` | última vela D1 alertada por ativo | anti-duplicata do Maré Alta |
 | `runtime_config.json` | intervalo de scan, DND, pausa | cadência (a watchlist daqui é ignorada) |
 | `paper_positions.json` | posições-papel (simulação) | — |
+| `dca.jsonl` | compras do DCA semanal (tentativa e resultado), fora do `positions.jsonl` (D-049) | o que o DCA comprou e o custo médio |
 
 ## Servidor (ineocom)
 

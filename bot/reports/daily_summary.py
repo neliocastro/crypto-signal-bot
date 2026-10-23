@@ -82,8 +82,9 @@ def build_summary(now_utc: datetime | None = None) -> str:
         estrategias = sv.linhas_estrategias()
         abertas = sv.posicoes_abertas(positions_path)
         fechadas = sv.fechadas_desde(cutoff.isoformat(), positions_path)
+        dca = sv.linhas_dca(str(_STATE / "dca.jsonl"))
     except Exception:
-        estrategias, abertas, fechadas = ["(estrategias indisponiveis)"], [], []
+        estrategias, abertas, fechadas, dca = ["(estrategias indisponiveis)"], [], [], []
     pnl_24h = sum(p for _, _, p in fechadas if p is not None)
     try:
         from bot.config import EXECUTION_DAILY_LOSS_STOP as _lim
@@ -109,6 +110,9 @@ def build_summary(now_utc: datetime | None = None) -> str:
         L.append(f"\U0001F4CA *Fechadas em 24h:* {len(fechadas)} | P&L estimado: ${pnl_24h:+.2f}")
         for sym, st, pnl in fechadas:
             L.append(f"   - {sym} {st} {'n/d' if pnl is None else f'${pnl:+.2f}'}")
+    if dca:
+        L.append("\U0001F9FA *DCA acumulado*")
+        L.extend(dca)
     if _lim is not None:
         L.append(f"\U0001F6A8 Trava de perda diaria: US$ {float(_lim):.0f} (D-035; perda real 24h: ${min(pnl_24h, 0):+.2f})")
     L.append("")

@@ -52,7 +52,13 @@ def linhas_estrategias() -> list:
 
     ac_on = bool(_flag(c, "ACCUMULATION_ENABLED", False))
     out.append("🟢 Acúmulo na Queda (bot)" if ac_on else "⚪ Acúmulo na Queda no bot — DESLIGADA (D-012)")
-    out.append("🔵 PAXG RSI 4h < 30 — cron do SERVIDOR, fora do bot e do placar (D-032)")
+    dca_on = bool(_flag(c, "DCA_ENABLED", False))
+    dca_ativos = _flag(c, "DCA_ASSETS", {}) or {}
+    if dca_ativos:
+        desc = ", ".join("%s US$ %.0f" % (s.split("/")[0], float(v)) for s, v in dca_ativos.items())
+        out.append(("🧺 DCA semanal — %s — LIGADO, sem stop (D-049)" if dca_on else
+                    "⚪ DCA semanal — %s — DESLIGADO (aguarda o relay FIX 11, D-049)") % desc)
+    out.append("⏸ PAXG RSI 4h < 30 (cron do servidor) — substituído pelo DCA (D-049)")
 
     teto = _flag(c, "EXECUTION_MAX_NOTIONAL_USDT", None)
     if teto is not None:
@@ -110,3 +116,19 @@ def fechadas_desde(iso_inicio: str, caminho: str = "state/positions.jsonl") -> l
     except Exception:
         return out
     return out
+
+
+def linhas_dca(caminho: str = "state/dca.jsonl") -> list:
+    """Uma linha por ativo com compras DCA confirmadas: compras, quantidade e custo medio."""
+    try:
+        from . import dca as d
+        regs = d.ler_registro(caminho)
+    except Exception:
+        return []
+    out = []
+    for simbolo in sorted({r.get("symbol") for r in regs if r.get("status") == "filled"}):
+        a = d.acumulado(regs, simbolo)
+        out.append("• %s: %d compra(s), %.8f %s, custo médio %.2f (US$ %.2f)" % (
+            simbolo, a["compras"], a["qtd"], simbolo.split("/")[0], a["custo_medio"] or 0.0, a["investido"]))
+    return out
+

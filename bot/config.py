@@ -326,3 +326,18 @@ SCAN_SUMMARY_ENABLED = False      # resumo a cada scan. Rollback: True
 # cron do GitHub rodava a cada 3-5 h (P-17). Rollback: False (e religar o schedule do
 # commander.yml).
 TELEGRAM_COMMANDS_IN_SCAN = True
+
+# ============ DCA SEMANAL (bot/dca.py, D-049, 2026-10-23) ============
+# Substitui o acumulo por RSI (nao aprovado, D-048) e o cron do PAXG (D-032). Compra
+# um valor fixo por semana, a mercado, SEM TP nem SL: o bot nunca vende o DCA.
+# Fica num registro proprio (state/dca.jsonl), FORA do positions.jsonl: nao conta na
+# trava de "1 posicao viva por ativo" (D-022) nem entra no trailing/OCO/renovacao de SL.
+# Conta, sim, nas travas de ordens por dia e no teto por ordem (D-024).
+# EXIGE o execute.php com o FIX 11 no servidor (compra DCA sem TP/SL). Ligar SO depois do
+# deploy conferido por hash. Rollback: False.
+DCA_ENABLED = False
+DCA_ASSETS = {"BTC/USDT": 10.0, "PAXG/USDT": 10.0}   # US$ por semana (<= teto por ordem, D-024)
+DCA_WEEKDAY = 0                 # 0 = segunda-feira (UTC)
+DCA_HOUR_UTC = 13               # a partir das 13:00 UTC (10:00 em Salvador)
+DCA_MONTHLY_CAP_USDT = 50.0     # teto por ativo por mes (5 semanas x US$ 10)
+DCA_FILE = "state/dca.jsonl"

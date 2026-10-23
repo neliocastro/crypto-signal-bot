@@ -27,6 +27,7 @@ python tests/test_trava_perda_diaria.py
 python tests/test_whitelist_php.py
 python tests/test_telegram_mensagens.py
 python tests/test_backtests.py
+python tests/test_dca.py
 php tests/test_watchdog_scan.php        # no GitHub (o checks roda); local só com PHP instalado
 php tests/test_trigger_scan.php
 php tests/test_agent_gate.php
@@ -75,7 +76,8 @@ sha256 `6e3da8cb…`, backup `execute.php.bak-20261015`.
 - **Nunca** cole token, secret ou HMAC em chat, log, print ou commit. Se vazar: revogar na hora e trocar.
 
 ## 4. Cron PAXG no servidor (`paxg_rsi_check.php`)
-Ativo, de hora em hora, por decisão do usuário (D-032). Compra US$ 10 de PAXG com SL −15% quando o RSI 4h < 30,
+**Pausado em 2026-10-23 e substituído pelo DCA semanal (D-049).** A linha do crontab sai quando o DCA estiver no ar.
+O texto abaixo descreve como ele funcionava. Era ativo, de hora em hora, por decisão do usuário (D-032). Compra US$ 10 de PAXG com SL −15% quando o RSI 4h < 30,
 **fora do bot** (sem `positions.jsonl`, OCO guard ou trava de concentração). Parâmetros do `paxg_rsi_check.php`
 conferidos no repositório (RSI 14, limiar 30, cooldown 12 h); valor e SL estão em `gerar_teste_paxg.php`, que só existe
 no servidor (conferido em 2026-10-15: US$ 10, SL −15%, sem TP; sha256 `df762466…`).
@@ -197,3 +199,14 @@ numa conexão só; D-045). O `status` mostra também o `agent_gate.log` e a list
   Espaçar as chamadas. Web, cPanel e relay não são afetados pelo bloqueio.
 - Instalado em 2026-10-21: `agent_gate.php` sha256 `58516b29…` (6880 bytes); backup do `authorized_keys` em
   `/home/ineocom/.ssh/authorized_keys.bak-20261021`.
+
+## 12. DCA semanal (`bot/dca.py`, D-049)
+Compra US$ 10 por semana de BTC e de PAXG, sem TP/SL, no primeiro scan a partir de segunda 13:00 UTC.
+1. **Pré-requisito:** o `execute.php` com o FIX 11 no servidor (seção 2), conferido por hash.
+2. **Ligar:** `DCA_ENABLED = True` no `config.py` (commit e push). Desligar: `False`.
+3. **Conferir a 1ª compra:** mensagem "🧺 DCA semanal" no Telegram, linha `filled` em `state/dca.jsonl`, linha no
+   `state/orders_executed.csv` e, na Gate, a compra sem gatilho de TP/SL.
+4. **Falhou numa semana:** o Telegram avisa e não há nova tentativa até a semana seguinte (proteção contra compra
+   dobrada). Para comprar na mão naquela semana, use a Gate.
+5. **Placar:** `python scripts/placar.py` mostra a seção do DCA (compras, investido, quantidade e custo médio).
+

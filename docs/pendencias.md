@@ -9,10 +9,10 @@
 - **Backup do `.env`**: apagar `/home/ineocom/cryptosignals/secrets/.env.bak-20261020` depois da primeira compra
   real bem-sucedida (é ela que exercita as chaves da Gate e o HMAC do `.env` atual). Tokens antigos já revogados e
   backups com token vencido já apagados em 2026-10-21.
-- **Cron PAXG (D-032)**: fix do P-16 deployado em 2026-10-15 (commit `8dc5668a`, sha256 `0e3624f6…`). Falta ver o
-  primeiro `COMPRA OK` no `paxg_cron.log` e o SL −15% na Gate. Em aberto (o usuário manteve o D-032 por enquanto):
-  registrar essas compras em `positions.jsonl`; se for feito, o trailing precisa pular o PAXG, pois
-  `MARE_ALTA_SYMBOLS = []` trocaria o SL −15% por `close − 3×ATR`. A whitelist do PHP precisa manter o PAXG.
+- **DCA semanal (D-049)**: código no Git, `DCA_ENABLED = False`. Falta: deploy do `execute.php` com o FIX 11 (por
+  hash), ligar `DCA_ENABLED`, conferir a 1ª compra de cada ativo (segunda 13:00 UTC) e, depois, tirar a linha do cron
+  do PAXG do crontab (já pausado com `.paxg_pause`) e arquivar `paxg_rsi_check.php`/`gerar_teste_paxg.php` fora da
+  pasta pública.
 - **Gatilhos expiram em 30 dias**: o SL é renovado (D-033). Falta renovar o TP1 (ação nova no PHP + deploy) e
   confirmar na API da Gate o nome do status de gatilho expirado (o alerta cobre `expired/cancelled/failed`).
 - **Placar**: estimado pelo gatilho (D-034). Falta o fill real da saída (o `oco_sync` do PHP consultar a ordem
@@ -24,9 +24,6 @@
 - **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 2026-09-21: decisão do usuário.
 
 ## Próximos passos
-- **Acúmulo e cron do PAXG (D-048)**: o acúmulo por RSI não foi aprovado. Decidir com o usuário: (a) se quer um DCA
-  simples em BTC e/ou PAXG (exige decidir a proteção: D-006/R-006; e, no BTC, a convivência com a Tendência Diária:
-  D-003/D-022); (b) se o cron do PAXG (D-032, RSI + stop −15%) continua, vira DCA ou é desligado.
 - **Telegram, Fases 2 a 4** (plano de 2026-10-21): catálogo de estratégias no `config.py` com liga/desliga pelo
   Telegram (exige decisão que ajuste o D-004 e a proibição do `CLAUDE.md`); DCA (decidir proteção: D-006/R-006);
   combinações novas (Maré Alta no HYPE, range trading) só após backtest (P-12).
