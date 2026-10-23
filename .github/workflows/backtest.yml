@@ -79,7 +79,11 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/backtest_results.json docs/backtest_report.md docs/backtests/ 2>/dev/null || true
+          # Um git add por caminho: se um nao existir, o Git cancela o comando inteiro (bug de 2026-10-23,
+          # quando os relatorios de docs/backtests/ nao foram gravados porque docs/backtest_report.md nao existia).
+          for p in state/backtest_results.json docs/backtest_report.md docs/backtests; do
+            if [ -e "$p" ]; then git add "$p"; fi
+          done
           if git diff --cached --quiet; then
             echo "Nenhuma mudanca no relatorio."
           else

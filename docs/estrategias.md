@@ -53,6 +53,8 @@ Breakout 1h   -> HYPE                 DESLIGADO desde 2026-10-13 (D-013)
 | Acúmulo RSI 4h (PAXG) | `ACCUMULATION_ENABLED = False` desde 2026-09-04 (código mantido). **O cron do servidor segue ativo por decisão do usuário (D-032)**; compra fora do bot |
 | MACD-only, Integrada, Tendência MACD, Confluência | removidas do código em 2026-08-24 |
 | SHORT | descartado em definitivo (D-002) |
+| Acúmulo na Queda (RSI 4h < 30) em BTC e PAXG | testado em 2026-10-23: **não aprovado** contra um DCA simples (D-048) |
+| Faixa Lateral (range, só compra) | testado em 2026-10-23: **arquivado** (amostra pequena, saldo negativo fora da amostra; D-048) |
 
 ## Roteamento (1 ativo = 1 trilho, D-003)
 

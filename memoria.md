@@ -128,6 +128,15 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   novos). O id interno continua `MARE_ALTA_D1` (executor do TP1, placar, `positions.jsonl`, testes); o módulo e as flags
   `MARE_ALTA_*` também ficam. Decisões e históricos antigos seguem citando "Maré Alta" (mesma estratégia). Outros nomes
   exibidos: "Rompimento 1h" (breakout), "Acúmulo na Queda" (RSI).
+- **D-048 (2026-10-23)** **Acúmulo por RSI não aprovado e range trading arquivado**, pelos backtests com dados reais
+  (2 anos; PAXG 581 dias). Acúmulo RSI 4h < 30 x DCA semanal: custo médio BTC −3,1% / −2,6% / +0,1% (inteiro / 1ª / 2ª
+  metade), PAXG +2,9% / −0,3% / −2,6%: sem vantagem consistente, e até 78 dias sem comprar. O stop de −15% vendeu
+  72 de 90 lotes de BTC (retorno −7,4% contra −2,2% sem stop). Range (só compra, ADX D1 < 20): 7 a 14 trades por
+  ativo, nenhum com amostra mínima e saldo somado fora da amostra negativo (−13,2%; PAXG 5 stops em 6). Não
+  implementar nenhum dos dois; não afrouxar regras para "fazer passar" (R-003, P-12). Se o usuário quiser acumular,
+  o caminho é um DCA simples, com a decisão de proteção (D-006/R-006) ainda em aberto. O cron do PAXG (D-032), que é
+  esse RSI com stop −15%, rendeu −2,2% no período contra +0,4% do DCA: rever com o usuário.
+  `docs/backtests/acumulo_20261023.md`, `docs/backtests/range_20261023.md`
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 
@@ -209,6 +218,9 @@ Formato: problema → causa → regra que ficou.
   com um HTTP 500 do GitHub em 2026-10-19 23:30 UTC. O script real também não checava HTTP e tinha token de junho.
   Regra: todo script de servidor fica versionado no repo, confere o código HTTP e avisa quando falha; ao mexer no
   crontab, conferir que o caminho existe (`ls -la <caminho>`) antes de salvar.
+- **P-21 (10/23)** Os relatórios dos backtests não foram gravados: um único `git add` com um caminho inexistente
+  (`docs/backtest_report.md`) faz o Git cancelar o comando inteiro, e o `2>/dev/null || true` escondeu o erro.
+  Regra: um `git add` por caminho, conferindo se existe; não silenciar erro de passo que precisa funcionar.
 - **P-20 (10/21)** Teste de contenção do D-042 abriu ~9 conexões SSH em segundos e o servidor bloqueou a porta 22
   para o IP do Mac por ~1 min (proteção de excesso de conexões; web, cPanel e relay seguiram no ar). Regra: espaçar as
   chamadas ao `cryptosignals-gate` (no máximo algumas por minuto) e preferir menos conexões.
