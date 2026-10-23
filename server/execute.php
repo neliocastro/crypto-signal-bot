@@ -27,6 +27,8 @@
  *   Rollback: $FILL_LOOKUP = false. (b) acao 'renew_tp': renova o TP1 antes dos 30 dias da Gate. So renova
  *   TP 'open', APAGA o antigo e SO DEPOIS cria o novo (com os dois vivos, um preco cruzando o alvo no meio da
  *   troca dispararia os dois e o segundo venderia saldo que nao e da posicao). Rollback: $TP_RENEW_ENABLED = false.
+ * FIX 13 (2026-10-23): tabelas de reserva ($SAFE_*, so usadas se /spot/currency_pairs falhar) conferidas na
+ *   Gate: entra o PAXG; minimo de TRX 0.1 e de HYPE 0.001. Rollback: backup do FIX 12.
  */
 $DRY_RUN            = false;
 $TPSL_ENABLED       = true;
@@ -39,9 +41,9 @@ $MAX_NOTIONAL_USDT  = 10.0;  // alinhado ao Python (EXECUTION_MAX_NOTIONAL_USDT 
 $SYMBOL_WHITELIST   = ['PAXG/USDT','HYPE/USDT','BTC/USDT','SOL/USDT','TRX/USDT','BNB/USDT']; // D-036 (2026-10-15): universo atual + PAXG (cron D-032)
 $LOG_FILE           = __DIR__ . '/execution_log.jsonl';
 $SEEN_FILE          = __DIR__ . '/seen_signals.json';
-$SAFE_PRICE_PREC = ['BTC_USDT'=>1,'ETH_USDT'=>2,'SOL_USDT'=>2,'XRP_USDT'=>4,'TRX_USDT'=>4,'BNB_USDT'=>1,'LINK_USDT'=>3,'HYPE_USDT'=>2,'AAVE_USDT'=>2]; // conferido via /spot/currency_pairs 2026-07-26
-$SAFE_AMOUNT_PREC = ['BTC_USDT'=>6,'ETH_USDT'=>4,'SOL_USDT'=>3,'XRP_USDT'=>1,'TRX_USDT'=>1,'BNB_USDT'=>3,'LINK_USDT'=>2,'HYPE_USDT'=>3,'AAVE_USDT'=>3]; // conferido via /spot/currency_pairs 2026-07-26
-$SAFE_MIN_BASE = ['BTC_USDT'=>0.000001,'ETH_USDT'=>0.001,'SOL_USDT'=>0.001,'XRP_USDT'=>0.1,'TRX_USDT'=>0.01,'BNB_USDT'=>0.001,'LINK_USDT'=>0.01,'HYPE_USDT'=>0.01,'AAVE_USDT'=>0.001];
+$SAFE_PRICE_PREC = ['BTC_USDT'=>1,'ETH_USDT'=>2,'SOL_USDT'=>2,'XRP_USDT'=>4,'TRX_USDT'=>4,'BNB_USDT'=>1,'LINK_USDT'=>3,'HYPE_USDT'=>2,'AAVE_USDT'=>2,'PAXG_USDT'=>2]; // conferido via /spot/currency_pairs 2026-10-23
+$SAFE_AMOUNT_PREC = ['BTC_USDT'=>6,'ETH_USDT'=>4,'SOL_USDT'=>3,'XRP_USDT'=>1,'TRX_USDT'=>1,'BNB_USDT'=>3,'LINK_USDT'=>2,'HYPE_USDT'=>3,'AAVE_USDT'=>3,'PAXG_USDT'=>3]; // conferido via /spot/currency_pairs 2026-10-23
+$SAFE_MIN_BASE = ['BTC_USDT'=>0.000001,'ETH_USDT'=>0.001,'SOL_USDT'=>0.001,'XRP_USDT'=>0.1,'TRX_USDT'=>0.1,'BNB_USDT'=>0.001,'LINK_USDT'=>0.01,'HYPE_USDT'=>0.001,'AAVE_USDT'=>0.001,'PAXG_USDT'=>0.001]; // conferido via /spot/currency_pairs 2026-10-23 (TRX e HYPE corrigidos)
 $secrets = @parse_ini_file('/home/ineocom/cryptosignals/secrets/.env');
 $HMAC_SECRET = $secrets['EXECUTION_HMAC_SECRET'] ?? '';
 $GATE_KEY    = $secrets['GATE_API_KEY'] ?? '';

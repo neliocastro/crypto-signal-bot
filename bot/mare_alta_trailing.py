@@ -62,11 +62,12 @@ except Exception:
 _HMAC_SECRET = os.environ.get("EXECUTION_HMAC_SECRET", "")
 POSITIONS_FILE = "state/positions.jsonl"
 
-# Casas de preco por par (espelha $SAFE_PRICE_PREC do execute.php).
+# Casas de preco por par (espelha $SAFE_PRICE_PREC do execute.php; conferido em
+# /spot/currency_pairs em 2026-10-23; tests/test_precisao_reserva.py compara os dois lados).
 # Usado apenas para pre-validar/truncar o SL ANTES de enviar (o PHP revalida).
 _SAFE_PRICE_PREC = {
-    "BTC_USDT": 1, "ETH_USDT": 2, "SOL_USDT": 2, "XRP_USDT": 4, "TRX_USDT": 5,
-    "BNB_USDT": 1, "LINK_USDT": 3, "HYPE_USDT": 3, "AAVE_USDT": 2, "PAXG_USDT": 2,
+    "BTC_USDT": 1, "ETH_USDT": 2, "SOL_USDT": 2, "XRP_USDT": 4, "TRX_USDT": 4,
+    "BNB_USDT": 1, "LINK_USDT": 3, "HYPE_USDT": 2, "AAVE_USDT": 2, "PAXG_USDT": 2,
 }
 
 
