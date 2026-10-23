@@ -151,6 +151,8 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   **apagando o antigo antes de criar o novo** (os dois vivos poderiam disparar juntos e vender saldo do DCA ou manual);
   se apagar e não criar, fica `tp_renew_pending` e o scan seguinte cria (`TP_RENEW_ENABLED`, ligar após o deploy).
   Conferido na Gate em 2026-10-23: gatilho executado = `finish`; a ordem de 15 dias atrás ainda é consultável.
+  FIX 12 deployado em 2026-10-23 (sha256 `809cb3cc…`, backup `execute.php.bak-20261023b` = FIX 11) e
+  `TP_RENEW_ENABLED` ligado em seguida.
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 

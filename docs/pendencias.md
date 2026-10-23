@@ -6,8 +6,8 @@
 > Revisado em 2026-10-21.
 
 ## Pendências
-- **Relay FIX 12 (D-050)**: código no Git (fill real no `oco_sync` + ação `renew_tp`). Falta: deploy do `execute.php` por
-  hash, ligar `TP_RENEW_ENABLED` e conferir o primeiro fechamento com `exit_basis: fill_real`. O nome do status de
+- **Relay FIX 12 (D-050)**: deployado e ligado em 2026-10-23 (sha256 `809cb3cc…`). Falta conferir o primeiro fechamento
+  com `exit_basis: fill_real` e, quando houver um TP1 com 25 dias, a primeira renovação. O nome do status de
   gatilho vencido segue sem confirmação (nenhum venceu ainda); o alerta cobre `expired/cancelled/failed`.
 - **Backup do `.env`**: apagar `/home/ineocom/cryptosignals/secrets/.env.bak-20261020` depois da primeira compra
   real bem-sucedida (é ela que exercita as chaves da Gate e o HMAC do `.env` atual). Tokens antigos já revogados e

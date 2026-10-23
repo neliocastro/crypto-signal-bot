@@ -142,7 +142,7 @@ Mudou o comportamento? Atualize o cenário e o teste no mesmo commit.
 | `DCA_ENABLED` / `DCA_ASSETS` / `DCA_MONTHLY_CAP_USDT` | `True` / BTC e PAXG US$ 10 / 50 | DCA semanal sem stop (D-049); relay FIX 11 no servidor |
 | `SL_RENEW_ENABLED` / `SL_RENEW_AFTER_DAYS` | `True` / 25 | renova o SL antes dos 30 dias da Gate (D-033) |
 | `EXIT_RECORD_ENABLED` / `EXIT_FEE_RATE` | `True` / 0,001 | grava saída e P&L estimados no fechamento (D-034) |
-| `TP_RENEW_ENABLED` | `False` | renova o TP1 pendente aos 25 dias (D-050); ligar após o FIX 12 |
+| `TP_RENEW_ENABLED` | `True` | renova o TP1 pendente aos 25 dias (D-050); relay FIX 12 no servidor |
 | `SL_EXPIRED_ALERT_ENABLED` | `True` | alerta 1x se SL ou TP1 pendente morrer sem executar (D-033) |
 | `SIGNAL_COOLDOWN_HOURS` | 4 | cooldown por `símbolo|estratégia` |
 | `REQUIRE_PROTECTION` (PHP) | `true` | compra sem TP nem SL é recusada (D-006) |

@@ -244,11 +244,12 @@ def test_relay_renew_tp_confere_apaga_e_so_depois_cria():
     assert "isset($g['avg_deal_price'])" in src and "$fetch_fill($fetch_st(" in src
 
 
-def test_flag_python_desligada_ate_o_deploy():
+def test_flag_python_ligada_depois_do_deploy():
+    # TP_RENEW_ENABLED ligado em 2026-10-23, depois do FIX 12 deployado e conferido (sha256 809cb3cc).
     import importlib
     from bot import config
     importlib.reload(config)
-    assert config.TP_RENEW_ENABLED is False, "so ligar depois do deploy do FIX 12 (CLAUDE.md)"
+    assert config.TP_RENEW_ENABLED is True
 
 
 if __name__ == "__main__":

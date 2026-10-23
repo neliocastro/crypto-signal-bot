@@ -62,8 +62,9 @@ grep -nP "[\x00-\x08\x0B\x0C\x0E-\x1F]" $F      # bytes de controle (exit 1 = li
 ```
 Hash local: `shasum -a 256 server/execute.php`.
 
-Versões do relay em produção: **FIX 11 (DCA sem TP/SL, D-049)**, deployado em 2026-10-23 a partir do commit
-`e08f5d35`, sha256 `945b2015…`, 21772 bytes, backup `execute.php.bak-20261023` (= D-036). Anteriores: D-036
+Versões do relay em produção: **FIX 12 (fill real + `renew_tp`, D-050)**, deployado em 2026-10-23 a partir do commit
+`4af28995`, sha256 `809cb3cc…`, 27034 bytes, backup `execute.php.bak-20261023b` (= FIX 11). Anteriores: FIX 11 (DCA
+sem TP/SL, D-049), sha256 `945b2015…`, backup `execute.php.bak-20261023` (= D-036); D-036
 (whitelist), sha256 `4ec3b375…`, backup `execute.php.bak-20261015b` (= FIX 10); FIX 10 (TP parcial), sha256
 `6e3da8cb…`.
 
