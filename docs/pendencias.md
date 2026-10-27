@@ -13,8 +13,7 @@
   13:03 UTC (semana 2026W44), ambas `filled` em `state/dca.jsonl`: BTC US$ 9,94 (0,000124 BTC) e PAXG US$ 8,06
   (0,002 PAXG). Falta: conferir na Gate a ordem do PAXG `1155916130372` (`finish_as`, para descartar fill parcial por
   liquidez) e a do BTC `1155916086454`. O cron do PAXG foi aposentado em 2026-10-26 (linha fora do crontab; scripts
-  em `/home/ineocom/cryptosignals/arquivo/`). Sobra na pasta pública o `paxg_rsi_check.php.bak-20261015` (backup do
-  rollback antigo, já sem função): arquivar junto, com decisão do usuário.
+  em `/home/ineocom/cryptosignals/arquivo/`, junto com o `paxg_rsi_check.php.bak-20261015`).
 - **Porteiro (`server/agent_gate.php`)**: a ação `hashes` ainda lista `paxg_rsi_check.php` e `gerar_teste_paxg.php`
   (linhas 73 e 76), que agora estão em `arquivo/`; o `resumo` os mostra como ausentes. Tirá-los da lista exige novo
   deploy do porteiro (D-042) e `tests/test_agent_gate.php`.

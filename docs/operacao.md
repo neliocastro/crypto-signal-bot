@@ -93,7 +93,8 @@ conferidos no repositório (RSI 14, limiar 30, cooldown 12 h); valor e SL estão
 no servidor (conferido em 2026-10-15: US$ 10, SL −15%, sem TP; sha256 `df762466…`).
 O comprador é chamado por `exec()` com `$PHP_BIN = '/usr/local/bin/php'`. Com `'php'` do PATH, o cron usa o CGI e toda
 compra falha com HTTP 500 (P-16). Para checar falhas: `grep -c 'FALHA na compra' $B/paxg_cron.log`.
-Versão em produção: deployada em 2026-10-15, sha256 `0e3624f6…`, 5397 bytes, backup `paxg_rsi_check.php.bak-20261015`.
+Versão em produção: deployada em 2026-10-15, sha256 `0e3624f6…`, 5397 bytes, backup `paxg_rsi_check.php.bak-20261015`
+(arquivado em `arquivo/` em 2026-10-26, sha256 `63b20d46…`, 5267 bytes).
 Comandos de quando estava ativo (hoje o script está em `arquivo/` e o crontab não tem mais a linha):
 ```bash
 B=/home/ineocom/public_html/cryptosignals
