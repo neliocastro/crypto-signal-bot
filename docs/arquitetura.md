@@ -48,7 +48,7 @@ Mudar qualquer item desta tabela exige autorização do usuário (`CLAUDE.md`).
 | `dashboard_writer.py` | dashboard (`DASHBOARD_ENABLED = False`) |
 | `reports/daily_summary.py` | resumo diário no Telegram |
 
-`server/`: `execute.php` (relay), `paxg_rsi_check.php` (cron PAXG), `gate_cleanup.php` (limpeza manual de órfãs).
+`server/`: `execute.php` (relay), `paxg_rsi_check.php` (cron PAXG, aposentado em 2026-10-26; só histórico), `gate_cleanup.php` (limpeza manual de órfãs).
 `scripts/`: backtests sob demanda. `tests/`: testes standalone (sem pytest).
 
 ## Relay PHP (`server/execute.php`)
@@ -116,7 +116,7 @@ terminam com "Scan PULADO". Concorrência: `scan-${ref}`, enfileira sem cancelar
 | Relay | `/home/ineocom/public_html/cryptosignals/execute.php` |
 | Log do relay | `/home/ineocom/public_html/cryptosignals/execution_log.jsonl` (UTC, campo `"event":"execute"`) |
 | Idempotência | `/home/ineocom/public_html/cryptosignals/seen_signals.json` |
-| Cron PAXG | `/home/ineocom/public_html/cryptosignals/paxg_rsi_check.php` + `paxg_cron.log`, pausa `.paxg_pause` |
+| Cron PAXG (aposentado) | sem linha no crontab desde 2026-10-26; scripts em `/home/ineocom/cryptosignals/arquivo/`; na pasta pública ficam só `paxg_cron.log` e `.paxg_pause` |
 | Segredos | `/home/ineocom/cryptosignals/secrets/.env` (fora da web root): `GATE_API_KEY`, `GATE_API_SECRET`, `EXECUTION_HMAC_SECRET`, `TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID`, `SELF_DISPATCH_PAT` |
 | Pasta pública | `public_html/cryptosignals/.htaccess`: pela web só o `execute.php` responde; o resto dá 403 (D-040) |
 | Trigger do scan | `/home/ineocom/cryptosignals/bin/trigger_scan.php` + `trigger_scan.log`, estado `.trigger_state.json`, pausa `.trigger_pause` (D-039) |

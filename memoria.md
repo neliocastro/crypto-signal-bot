@@ -142,7 +142,10 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   `strategy == "DCA"` (relay FIX 11, `$DCA_NO_PROTECTION`). O DCA fica em `state/dca.jsonl`, fora do
   `positions.jsonl`: não conta na trava de posição viva (D-022) nem no trailing/OCO; convive com a Tendência Diária
   no BTC. Uma tentativa por semana, sem compra dobrada. FIX 11 deployado em 2026-10-23 (sha256 `945b2015…`, backup
-  `execute.php.bak-20261023`) e `DCA_ENABLED` ligado em seguida; cron do PAXG pausado (`.paxg_pause`).
+  `execute.php.bak-20261023`) e `DCA_ENABLED` ligado em seguida; cron do PAXG pausado (`.paxg_pause`). 1ª compra em
+  2026-10-26 (BTC e PAXG `filled`); o PAXG compra em passos de 0,001 PAXG da Gate, então o aporte fica abaixo de
+  US$ 10 (hoje ~80%; pode cair mais com o preço menor). Em 2026-10-26 a linha do cron do PAXG saiu do crontab e `paxg_rsi_check.php` e
+  `gerar_teste_paxg.php` foram arquivados em `/home/ineocom/cryptosignals/arquivo/` (`docs/operacao.md`, seção 4).
   `docs/decisoes/D-049-dca-semanal.md`
 - **D-050 (2026-10-23)** **Fill real da saída e renovação do TP1** (relay FIX 12). (a) O `oco_sync` devolve o fill real
   da ordem disparada (`GET /spot/orders/{fired_order_id}`; usar `avg_deal_price`, pois o `fill_price` dessa resposta é o

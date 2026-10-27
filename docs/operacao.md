@@ -82,7 +82,11 @@ sem TP/SL, D-049), sha256 `945b2015…`, backup `execute.php.bak-20261023` (= D-
 - **Nunca** cole token, secret ou HMAC em chat, log, print ou commit. Se vazar: revogar na hora e trocar.
 
 ## 4. Cron PAXG no servidor (`paxg_rsi_check.php`)
-**Pausado em 2026-10-23 e substituído pelo DCA semanal (D-049).** A linha do crontab sai quando o DCA estiver no ar.
+**Aposentado em 2026-10-26 e substituído pelo DCA semanal (D-049).** Pausado em 2026-10-23; a linha saiu do crontab
+do `ineocom` e os dois scripts foram para `/home/ineocom/cryptosignals/arquivo/` (modo 600, `ineocom`), com sha256
+conferido (`0e3624f6…` e `df762466…`). Backup do crontab anterior: `arquivo/crontab-ineocom.bak-20261026`. Ficam na
+pasta pública só o `paxg_cron.log` (o watchdog o lê), o `.paxg_pause` e o `.paxg_last_buy`. Reativar exigiria devolver
+os scripts, a linha do cron e remover o `.paxg_pause`: não faça sem decisão nova (D-048 reprovou o RSI).
 O texto abaixo descreve como ele funcionava. Era ativo, de hora em hora, por decisão do usuário (D-032). Compra US$ 10 de PAXG com SL −15% quando o RSI 4h < 30,
 **fora do bot** (sem `positions.jsonl`, OCO guard ou trava de concentração). Parâmetros do `paxg_rsi_check.php`
 conferidos no repositório (RSI 14, limiar 30, cooldown 12 h); valor e SL estão em `gerar_teste_paxg.php`, que só existe
@@ -90,13 +94,11 @@ no servidor (conferido em 2026-10-15: US$ 10, SL −15%, sem TP; sha256 `df76246
 O comprador é chamado por `exec()` com `$PHP_BIN = '/usr/local/bin/php'`. Com `'php'` do PATH, o cron usa o CGI e toda
 compra falha com HTTP 500 (P-16). Para checar falhas: `grep -c 'FALHA na compra' $B/paxg_cron.log`.
 Versão em produção: deployada em 2026-10-15, sha256 `0e3624f6…`, 5397 bytes, backup `paxg_rsi_check.php.bak-20261015`.
+Comandos de quando estava ativo (hoje o script está em `arquivo/` e o crontab não tem mais a linha):
 ```bash
 B=/home/ineocom/public_html/cryptosignals
-crontab -l -u ineocom | grep -i paxg               # agendamento
-tail -n 20 $B/paxg_cron.log                         # decisões
-/usr/local/bin/php $B/paxg_rsi_check.php --dry      # testar sem comprar
-touch $B/.paxg_pause && chown ineocom:ineocom $B/.paxg_pause   # PAUSAR
-rm -f $B/.paxg_pause                                # REATIVAR
+crontab -l -u ineocom | grep -i paxg               # agendamento (hoje: nada)
+tail -n 20 $B/paxg_cron.log                         # decisões (histórico)
 ```
 Em crontab use sempre `/usr/local/bin/php` (CLI). `Content-type: text/html` ou `Status: 500` no log = binário CGI.
 

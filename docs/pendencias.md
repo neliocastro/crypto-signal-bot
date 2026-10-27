@@ -15,12 +15,16 @@
 - **DCA semanal (D-049)**: ligado em 2026-10-23 (FIX 11 no servidor, sha256 `945b2015…`). 1ª compra em 2026-10-26
   13:03 UTC (semana 2026W44), ambas `filled` em `state/dca.jsonl`: BTC US$ 9,94 (0,000124 BTC) e PAXG US$ 8,06
   (0,002 PAXG). Falta: conferir na Gate a ordem do PAXG `1155916130372` (`finish_as`, para descartar fill parcial por
-  liquidez) e a do BTC `1155916086454`; depois, tirar a linha do cron do PAXG do crontab (já pausado) e arquivar
-  `paxg_rsi_check.php`/`gerar_teste_paxg.php` fora da pasta pública.
+  liquidez) e a do BTC `1155916086454`. O cron do PAXG foi aposentado em 2026-10-26 (linha fora do crontab; scripts
+  em `/home/ineocom/cryptosignals/arquivo/`). Sobra na pasta pública o `paxg_rsi_check.php.bak-20261015` (backup do
+  rollback antigo, já sem função): arquivar junto, com decisão do usuário.
+- **Porteiro (`server/agent_gate.php`)**: a ação `hashes` ainda lista `paxg_rsi_check.php` e `gerar_teste_paxg.php`
+  (linhas 73 e 76), que agora estão em `arquivo/`; o `resumo` os mostra como ausentes. Tirá-los da lista exige novo
+  deploy do porteiro (D-042) e `tests/test_agent_gate.php`.
 - **DCA abaixo de US$ 10 (achado 2026-10-26)**: o PAXG ficou em US$ 8,06 porque a Gate compra em passos de 0,001
   PAXG (`amount_precision` 3, ~US$ 4) e arredonda para baixo: US$ 10 ÷ US$ 4.030 = 0,00248 → 0,002. Dedução pelos
-  números do registro, ainda não confirmada na API. Não é bug e respeita o teto D-024; o aporte do PAXG varia
-  entre ~80% e 100% do valor. Recomendação: não mexer (compensar o resto ou subir o valor mexe em sizing e pede
+  números do registro, ainda não confirmada na API. Não é bug e respeita o teto D-024; o aporte do PAXG fica
+  abaixo do valor (hoje ~80%; com o preço menor pode cair mais, ex.: ~57% a US$ 3.500). Recomendação: não mexer (compensar o resto ou subir o valor mexe em sizing e pede
   aprovação). O `acumulado()` do `bot/dca.py` usa o `filled_total` real, então o custo médio fica certo.
 - **Reauditoria do degrau**: `python scripts/placar.py --degrau`. Em 2026-10-15: 6/20 trades (−US$ 2,41, PF 0); sem os
   de cadência degradada, 3/20 (−US$ 1,15, PF 0). Reprovado; reauditar ao chegar a 20.
