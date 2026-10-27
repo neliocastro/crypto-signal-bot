@@ -208,6 +208,9 @@ numa conexão só; D-045). O `status` mostra também o `agent_gate.log` e a list
   Espaçar as chamadas. Web, cPanel e relay não são afetados pelo bloqueio.
 - Instalado em 2026-10-21: `agent_gate.php` sha256 `58516b29…` (6880 bytes); backup do `authorized_keys` em
   `/home/ineocom/.ssh/authorized_keys.bak-20261021`.
+- Atualizado em 2026-10-26 (commit `f365926b`): a ação `hashes` deixa de listar os dois scripts do PAXG, arquivados.
+  sha256 `50bc78a1…` (8016 bytes), modo 600, `ineocom`; backup do anterior (`6c0fc576…`) em
+  `/home/ineocom/cryptosignals/arquivo/agent_gate.php.bak-20261026`. A ação `hashes` lista agora 5 arquivos.
 
 ## 12. DCA semanal (`bot/dca.py`, D-049)
 Compra US$ 10 por semana de BTC e de PAXG, sem TP/SL, no primeiro scan a partir de segunda 13:00 UTC.

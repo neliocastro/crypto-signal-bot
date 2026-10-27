@@ -119,6 +119,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-045 (2026-10-21)** **Porteiro com `resumo`** (ajuste do D-042): `status` + `hashes` + `http` numa conexão só (P-20),
   e o `status` passa a mostrar o `agent_gate.log` e a lista de arquivos da pasta pública (vigiar arquivo estranho, P-19).
   Continua só leitura. Instalado em 2026-10-21 (sha256 `6c0fc576…`), conferido pelo próprio `resumo`.
+  Atualizado em 2026-10-26 (sha256 `50bc78a1…`): `hashes` sem os scripts do PAXG, arquivados (`docs/operacao.md`, seção 11).
 - **D-046 (2026-10-21)** **Telegram só com eventos + comandos no scan** (Fases 0 e 1 do plano de mensagens): desliga o
   resumo a cada scan (`SCAN_SUMMARY_ENABLED`; eram ~288 msgs/dia com diagnóstico de MACD de estratégias removidas) e o
   paper trading (`PAPER_EVAL_ENABLED`, D-028); o resumo diário e o `/status` mostram estratégias ligadas/desligadas,
