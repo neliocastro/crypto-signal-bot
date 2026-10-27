@@ -3,7 +3,7 @@
 > Estado volátil do projeto (D-038): o que falta fazer e o que acompanhar. Muda a cada sessão; as **decisões** ficam no
 > `memoria.md`. Ao resolver um item, apague-o daqui e registre o resultado onde ele pertence (decisão → `memoria.md`,
 > procedimento → `operacao.md`). Datas em AAAA-MM-DD; horários em UTC.
-> Revisado em 2026-10-21.
+> Revisado em 2026-10-26.
 
 ## Pendências
 - **Relay FIX 12 (D-050)**: deployado e ligado em 2026-10-23 (sha256 `809cb3cc…`). Falta conferir o primeiro fechamento
@@ -12,10 +12,16 @@
 - **Backup do `.env`**: apagar `/home/ineocom/cryptosignals/secrets/.env.bak-20261020` depois da primeira compra
   real bem-sucedida (é ela que exercita as chaves da Gate e o HMAC do `.env` atual). Tokens antigos já revogados e
   backups com token vencido já apagados em 2026-10-21.
-- **DCA semanal (D-049)**: ligado em 2026-10-23 (FIX 11 no servidor, sha256 `945b2015…`). Falta: conferir a 1ª compra
-  de BTC e de PAXG na segunda 2026-10-26 a partir das 13:00 UTC (Telegram, `state/dca.jsonl`, Gate); depois, tirar a
-  linha do cron do PAXG do crontab (já pausado) e arquivar `paxg_rsi_check.php`/`gerar_teste_paxg.php` fora da pasta
-  pública.
+- **DCA semanal (D-049)**: ligado em 2026-10-23 (FIX 11 no servidor, sha256 `945b2015…`). 1ª compra em 2026-10-26
+  13:03 UTC (semana 2026W44), ambas `filled` em `state/dca.jsonl`: BTC US$ 9,94 (0,000124 BTC) e PAXG US$ 8,06
+  (0,002 PAXG). Falta: conferir na Gate a ordem do PAXG `1155916130372` (`finish_as`, para descartar fill parcial por
+  liquidez) e a do BTC `1155916086454`; depois, tirar a linha do cron do PAXG do crontab (já pausado) e arquivar
+  `paxg_rsi_check.php`/`gerar_teste_paxg.php` fora da pasta pública.
+- **DCA abaixo de US$ 10 (achado 2026-10-26)**: o PAXG ficou em US$ 8,06 porque a Gate compra em passos de 0,001
+  PAXG (`amount_precision` 3, ~US$ 4) e arredonda para baixo: US$ 10 ÷ US$ 4.030 = 0,00248 → 0,002. Dedução pelos
+  números do registro, ainda não confirmada na API. Não é bug e respeita o teto D-024; o aporte do PAXG varia
+  entre ~80% e 100% do valor. Recomendação: não mexer (compensar o resto ou subir o valor mexe em sizing e pede
+  aprovação). O `acumulado()` do `bot/dca.py` usa o `filled_total` real, então o custo médio fica certo.
 - **Reauditoria do degrau**: `python scripts/placar.py --degrau`. Em 2026-10-15: 6/20 trades (−US$ 2,41, PF 0); sem os
   de cadência degradada, 3/20 (−US$ 1,15, PF 0). Reprovado; reauditar ao chegar a 20.
 - **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 2026-09-21: decisão do usuário.
