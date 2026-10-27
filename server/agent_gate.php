@@ -70,10 +70,8 @@ function ag_formatar_lista(array $itens): array {
 function ag_arquivos_hash(array $AG): array {
     return [
         $AG['pub'] . '/execute.php',
-        $AG['pub'] . '/paxg_rsi_check.php',
         $AG['pub'] . '/watchdog_scan.php',
         $AG['pub'] . '/.htaccess',
-        $AG['pub'] . '/gerar_teste_paxg.php',
         $AG['bin'] . '/trigger_scan.php',
         $AG['bin'] . '/agent_gate.php',
     ];

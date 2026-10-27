@@ -57,7 +57,7 @@ t('ultimas_linhas', function () {
 t('arquivos_de_hash_sao_fixos_e_sem_segredo', function () {
     $AG = ['bin' => '/b', 'pub' => '/p', 'env' => '/e/.env', 'url' => 'u'];
     $fs = ag_arquivos_hash($AG);
-    eq(count($fs), 7);
+    eq(count($fs), 5);
     foreach ($fs as $f) if (strpos($f, '.env') !== false || strpos($f, 'secrets') !== false) throw new Exception($f);
 });
 
