@@ -90,7 +90,7 @@ terminam com "Scan PULADO". Concorrência: `scan-${ref}`, enfileira sem cancelar
 
 | Workflow | Gatilho | Função |
 |---|---|---|
-| `main.yml` | cron `*/15` + `workflow_dispatch` | scan, commit de `state/`, re-disparo (falha se ≠ HTTP 204) |
+| `main.yml` | cron `*/15` + `workflow_dispatch` | scan, commit de `state/` (até 3 tentativas; falha se não gravar, D-052), re-disparo (falha se ≠ HTTP 204) |
 | `checks.yml` | push em `server/`, `bot/`, `tests/` e todo pull request (D-051; desliga com a variável `CHECKS_ON_PR=false`) | `php -l` no relay + `py_compile` + testes |
 | `commander.yml` | **só manual** desde 2026-10-21 (D-046); os comandos são lidos no início de cada scan do `main.yml` (~5 min) | lê comandos do Telegram (`/status`, `/pausar`, `/retomar`, `/intervalo`, `/forcar`, `/dnd`…) |
 | `daily_summary.yml` | cron 12:00 UTC (09:00 BRT) | resumo diário |
