@@ -236,6 +236,9 @@ Formato: problema → causa → regra que ficou.
   com um HTTP 500 do GitHub em 2026-10-19 23:30 UTC. O script real também não checava HTTP e tinha token de junho.
   Regra: todo script de servidor fica versionado no repo, confere o código HTTP e avisa quando falha; ao mexer no
   crontab, conferir que o caminho existe (`ls -la <caminho>`) antes de salvar.
+- **P-22 (10/28)** O `main.yml` faz `git push || echo "push falhou ..."`: um push rejeitado deixa o run verde sem gravar o
+  `state/`. Regra: não pôr no `main` regra que exija PR ou status check (bloquearia o bot em silêncio); só
+  Restrict deletions + Block force pushes. Tornar o push barulhento é código de workflow: pede aprovação (D-051).
 - **P-21 (10/23)** Os relatórios dos backtests não foram gravados: um único `git add` com um caminho inexistente
   (`docs/backtest_report.md`) faz o Git cancelar o comando inteiro, e o `2>/dev/null || true` escondeu o erro.
   Regra: um `git add` por caminho, conferindo se existe; não silenciar erro de passo que precisa funcionar.

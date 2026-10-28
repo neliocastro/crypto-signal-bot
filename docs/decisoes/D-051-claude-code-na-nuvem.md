@@ -38,8 +38,10 @@ Rollback: apagar o ambiente de nuvem e desinstalar o Claude GitHub App; o fluxo 
 
 ## Consequências
 - O que exige servidor, Gate ou Telegram não dá para validar na nuvem; isso é de propósito.
-- O GitHub proxy não restringe para quais branches a sessão faz push: a proteção do `main` é recomendada
-  (`CLOUD_SETUP.md`, checklist), sem bloquear os commits de `state/` do bot.
+- O GitHub proxy não restringe para quais branches a sessão faz push. O `main` recebe só um ruleset que bloqueia
+  force-push e exclusão. **Não** se exige PR nem status check no `main`: o bot commita `state/` direto e o
+  `main.yml` engole um push rejeitado (`git push || echo ...`), o que perderia o estado e poderia liberar compra
+  duplicada (P-22). Por isso "mudança relevante vai por PR" é regra de trabalho, não trava do GitHub.
 - Reavaliar se surgir uma tarefa de nuvem que precise de uma API externa: vira decisão nova antes de qualquer
   network secret.
 

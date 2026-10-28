@@ -17,7 +17,8 @@ com o relay, com o servidor nem com o Telegram, e não recebe nenhum segredo.
    `neliocastro/crypto-signal-bot`. O App também habilita o **Auto-fix** de PR.
    Alternativa: `/web-setup` no terminal (usa o token do `gh` local).
 2. As credenciais do GitHub **não entram na VM**: o *GitHub proxy* as anexa do lado do servidor. O proxy recusa
-   apagar branch e enviar tag, mas **não limita quais branches** recebem push. Por isso a seção 6 pede a proteção do `main`.
+   apagar branch e enviar tag, mas **não limita quais branches** recebem push. Por isso o checklist (seção 7) pede um ruleset que bloqueie force-push e exclusão do `main`. Enviar direto ao `main`
+   continua possível: a regra de só mudar por PR é de trabalho (D-051), não do GitHub.
 
 ## 2. Ambiente de nuvem (uma vez)
 
@@ -106,9 +107,10 @@ manual do `docs/operacao.md`.
 - [ ] O Claude GitHub App está instalado só neste repositório, ou só nos que você quiser.
 - [ ] Ambiente com **Network access = Trusted**, **Environment variables vazio**, **Network secrets vazio**.
 - [ ] O setup script é só o da seção 2, sem nenhum valor sensível (todo mundo que usa o ambiente consegue lê-lo).
-- [ ] No GitHub, regra de proteção do `main`: o push direto fica para você e o bot. Exigir PR para os demais e o
-      `checks` verde para o merge, se fizer sentido. Atenção: o bot commita `state/` no `main`; a regra não pode
-      bloquear o `GITHUB_TOKEN` do workflow.
+- [ ] No GitHub, ruleset do `main` só com **Restrict deletions** e **Block force pushes** (Settings → Rules →
+      Rulesets). **Não** marque "Require a pull request" nem "Require status checks": o bot commita `state/` direto no
+      `main` e, se o push for rejeitado, o `main.yml` segue verde (`git push || echo ...`) sem gravar o estado, o que
+      pode liberar compra duplicada (P-22). O PR continua sendo disciplina de trabalho (D-051), não trava do GitHub.
 - [ ] Visibilidade das sessões em **Private** (conta Pro/Max). Não compartilhe sessões: o repositório é público,
       mas a conversa pode ter dados de operação.
 - [ ] Primeira sessão: pedir `git ls-files | grep -E '(^|/)\.env'` (esperado: só `.env.example`) e rodar os checks
