@@ -30,6 +30,10 @@ Telegram (sinais, ordens, alertas)                      execution_log.jsonl (UTC
 
 Mudar qualquer item desta tabela exige autorização do usuário (`CLAUDE.md`).
 
+**Desenvolvimento (D-051):** além do Mac, sessões do Claude Code na nuvem (VM da Anthropic, rede Trusted, sem
+variáveis e sem segredos) editam o código e rodam os testes, e entregam por PR. Elas não alcançam a Gate.io, o relay,
+o Telegram nem o servidor. Configuração e checklist: `CLOUD_SETUP.md`; nomes das variáveis: `.env.example`.
+
 ## Módulos (`bot/`)
 
 | Módulo | Papel |

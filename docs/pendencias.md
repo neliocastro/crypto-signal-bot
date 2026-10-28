@@ -5,6 +5,12 @@
 > procedimento → `operacao.md`). Datas em AAAA-MM-DD; horários em UTC.
 > Revisado em 2026-10-26.
 
+## Em andamento
+Tarefas que atravessam sessões ou máquinas (D-051): objetivo, feito, próximo passo, bloqueios. Nada pessoal.
+- **Claude Code na nuvem (D-051)**: `CLOUD_SETUP.md`, `.env.example` e `.gitignore` prontos em 2026-10-27. Próximo
+  passo é do usuário: criar o ambiente (Trusted, sem variáveis, sem network secrets, setup da seção 2) e rodar o
+  checklist da seção 7. A proteção do `main` é opcional e não pode bloquear os commits de `state/` do bot.
+
 ## Pendências
 - **Relay FIX 12 (D-050)**: deployado e ligado em 2026-10-23 (sha256 `809cb3cc…`). Falta conferir o primeiro fechamento
   com `exit_basis: fill_real` e, quando houver um TP1 com 25 dias, a primeira renovação. O nome do status de
