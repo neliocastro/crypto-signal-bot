@@ -7,9 +7,9 @@
 
 ## Em andamento
 Tarefas que atravessam sessões ou máquinas (D-051): objetivo, feito, próximo passo, bloqueios. Nada pessoal.
-- **Claude Code na nuvem (D-051)**: ambiente criado e validado em 2026-10-28 (testes passam; nenhum segredo do bot na
-  VM). Falta o usuário criar o ruleset do `main` com só Restrict deletions + Block force pushes (nada de exigir PR ou
-  status check: P-22) e colar no ambiente o setup script novo do `CLOUD_SETUP.md` (só o `ccxt`).
+- Nenhuma. O Claude Code na nuvem (D-051) foi concluído em 2026-10-28: ambiente `crypto-signal-bot` criado e validado,
+  ruleset do `main` ativo (só Restrict deletions + Block force pushes; nada de exigir PR ou status check: P-22) e setup
+  script só com o `ccxt`.
 
 ## Pendências
 - **Relay FIX 12 (D-050)**: deployado e ligado em 2026-10-23 (sha256 `809cb3cc…`). Falta conferir o primeiro fechamento
