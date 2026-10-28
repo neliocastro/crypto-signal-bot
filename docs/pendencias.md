@@ -7,14 +7,11 @@
 
 ## Em andamento
 Tarefas que atravessam sessões ou máquinas (D-051): objetivo, feito, próximo passo, bloqueios. Nada pessoal.
-- **Claude Code na nuvem (D-051)**: `CLOUD_SETUP.md`, `.env.example` e `.gitignore` prontos em 2026-10-27. Próximo
-  passo é do usuário: criar o ambiente (Trusted, sem variáveis, sem network secrets, setup da seção 2) e rodar o
-  checklist da seção 7. No `main`, só o ruleset de Restrict deletions + Block force pushes (nada de exigir PR ou status check: P-22).
+- **Claude Code na nuvem (D-051)**: ambiente criado e validado em 2026-10-28 (testes passam; nenhum segredo do bot na
+  VM). Falta o usuário criar o ruleset do `main` com só Restrict deletions + Block force pushes (nada de exigir PR ou
+  status check: P-22) e colar no ambiente o setup script novo do `CLOUD_SETUP.md` (só o `ccxt`).
 
 ## Pendências
-- **Push do `state/` estrito (D-052)**: depois do merge, conferir que o próximo scan segue gravando `state/` (commit
-  `chore: update signal state`) e que o `main.yml` fica verde. Se um run ficar vermelho no passo "Commit state",
-  é o alerta funcionando: ver a causa antes de tocar no kill-switch.
 - **Relay FIX 12 (D-050)**: deployado e ligado em 2026-10-23 (sha256 `809cb3cc…`). Falta conferir o primeiro fechamento
   com `exit_basis: fill_real` e, quando houver um TP1 com 25 dias, a primeira renovação. O nome do status de
   gatilho vencido segue sem confirmação (nenhum venceu ainda); o alerta cobre `expired/cancelled/failed`.

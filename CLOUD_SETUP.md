@@ -30,13 +30,22 @@ No seletor de ambiente abaixo da caixa de mensagem: **New environment**. Preench
 | **Network access** | **Trusted** (padrão) | Libera PyPI, GitHub etc. Gate.io, Telegram e o servidor **não** estão na lista: a sessão não alcança o relay nem a exchange. Não use **Full**. |
 | **Environment variables** | **vazio** | Os testes não precisam de variável. Quem usa o ambiente consegue ler esses valores: segredo nunca vai aqui. |
 | **Network secrets** | **nenhum** | Ver seção 3. |
-| **Setup script** | o bloco abaixo | Instala o que os checks do `CLAUDE.md` pedem. |
+| **Setup script** | o bloco abaixo | Só o `ccxt`, para importar `bot/data_fetcher.py`. Os testes não precisam de nada além do que a VM já traz. |
 
 ```bash
 #!/bin/bash
-# Roda como root no Ubuntu 24.04 antes do Claude iniciar. PHP 8.3 e Python 3 ja vem instalados.
-pip install -r requirements.txt pyyaml || true
+# Roda como root no Ubuntu 24.04 antes do Claude iniciar. A VM ja traz Python 3.13, PHP 8.3, pandas, numpy, requests e yaml.
+pip install ccxt==4.4.50 || true
 ```
+
+Não use `pip install -r requirements.txt` aqui: no Python 3.13 da VM o pacote `ta` não compila e o `pip` aborta
+**sem instalar nada**, e o `|| true` esconde a falha. Verificado na primeira sessão (2026-10-28): com a VM como veio,
+os 11 testes Python, os 3 PHP e o `check_workflows.py` passam. O `ta` não é importado por nenhum arquivo do
+repositório; ele só consta no `requirements.txt` (o GitHub Actions usa Python 3.11 e compila normalmente).
+
+Na VM aparecem `GH_TOKEN`, `GITHUB_TOKEN`, `AWS_*` e `CLOUDSDK_AUTH_ACCESS_TOKEN`: são marcadores do proxy
+(`GH_TOKEN` e `GITHUB_TOKEN` valem `proxy-injected`; os demais têm o mesmo tamanho de 14 caracteres), não credenciais.
+Nenhuma variável do bot (`GATE_*`, `EXECUTION_HMAC_SECRET`, `SELF_DISPATCH_PAT`, `TELEGRAM_*`) existe lá.
 
 O setup roda **antes** das variáveis do ambiente existirem e fica em cache por cerca de 7 dias.
 
