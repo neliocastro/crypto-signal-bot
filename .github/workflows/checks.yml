@@ -5,7 +5,12 @@ name: checks
 #     sintaxe so apareceria la, com dinheiro real. Rode este check antes do deploy.
 #   - py_compile + testes standalone (canario de roteamento, saida TP1).
 #   - workflows: YAML valido + `bash -n` de cada bloco run (P-05; D-043).
+# Roda tambem em todo pull_request (D-051), sem filtro de caminho: assim o check
+# pode ser exigido no merge sem ficar pendente em PR so de docs.
+# Kill-switch: variavel do repositorio CHECKS_ON_PR = false desliga so o gatilho de PR.
+# Rollback: apagar o bloco `pull_request:` e a linha `if:` do job.
 on:
+  pull_request:
   push:
     paths:
       - 'server/**'
@@ -17,6 +22,7 @@ on:
 
 jobs:
   checks:
+    if: github.event_name != 'pull_request' || vars.CHECKS_ON_PR != 'false'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
