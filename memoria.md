@@ -243,7 +243,7 @@ Formato: problema → causa → regra que ficou.
   crontab, conferir que o caminho existe (`ls -la <caminho>`) antes de salvar.
 - **P-22 (10/28)** O `main.yml` faz `git push || echo "push falhou ..."`: um push rejeitado deixa o run verde sem gravar o
   `state/`. Regra: não pôr no `main` regra que exija PR ou status check (bloquearia o bot em silêncio); só
-  Restrict deletions + Block force pushes. Tornar o push barulhento é código de workflow: pede aprovação (D-051).
+  Restrict deletions + Block force pushes. Resolvido pelo D-052 (2026-10-28): o push do `state/` tenta 3 vezes e falha alto.
 - **P-21 (10/23)** Os relatórios dos backtests não foram gravados: um único `git add` com um caminho inexistente
   (`docs/backtest_report.md`) faz o Git cancelar o comando inteiro, e o `2>/dev/null || true` escondeu o erro.
   Regra: um `git add` por caminho, conferindo se existe; não silenciar erro de passo que precisa funcionar.
