@@ -79,7 +79,7 @@ Nada fica preso a uma máquina: a sessão roda na nuvem e o código vive no GitH
    (o PR também pode ser criado pelo cartão **Changes**).
 2. Revise no cartão **Changes**: diff linha a linha, comentários por linha devolvidos ao Claude, **Compare against**.
 3. Confira no GitHub:
-   - o workflow `checks` verde no PR;
+   - o workflow `checks` verde no PR (roda em todo PR; se faltar, veja a variável `CHECKS_ON_PR` do repositório);
    - a lista de arquivos tocados;
    - nenhum valor parecido com token no diff.
 4. Merge **só por você**, no GitHub. Depois do merge, confira de novo o `checks` no `main`.

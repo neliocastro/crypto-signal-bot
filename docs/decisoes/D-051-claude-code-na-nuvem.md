@@ -30,6 +30,10 @@ O único achado com formato de token são valores fictícios de `tests/test_agen
 4. A sessão na nuvem não acessa o servidor (D-042 intacto). Conferência de servidor é feita no Mac ou com o usuário
    colando a saída.
 
+5. O workflow `checks` roda também em todo `pull_request` (sem filtro de caminho), para valer como portão do merge.
+   Kill-switch: variável do repositório `CHECKS_ON_PR=false` desliga só o gatilho de PR; rollback: apagar o bloco
+   `pull_request:` e a linha `if:` do job.
+
 Rollback: apagar o ambiente de nuvem e desinstalar o Claude GitHub App; o fluxo local continua igual.
 
 ## Consequências
