@@ -164,12 +164,16 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-038 (2026-10-19)** Estrutura de documentação (substitui o D-030): `CLAUDE.md` (índice, regras, fluxo,
   emergência) + `memoria.md` (decisões e lições) + `docs/pendencias.md` (estado volátil) + `docs/decisoes/` (ADR só
   para decisão nova com trade-off) + `docs/{arquitetura, estrategias, operacao, resultado_financeiro}.md` +
-  `docs/historico/` (evidência, sem edição) + `.agent-work/` (journal local de tarefa) + memória do agente (preferências
-  do usuário, fora do repo; trecho AJUSTADO pelo D-041) + `.gitignore`. `docs/decisoes/D-038-estrutura-documentacao.md`
+  `docs/historico/` (evidência, sem edição) + `.agent-work/` (journal local de tarefa; AJUSTADO pelo D-051: o estado
+  vai para `pendencias.md`) + memória do agente (preferências do usuário, fora do repo; trecho AJUSTADO pelo D-041) +
+  `.gitignore`. `docs/decisoes/D-038-estrutura-documentacao.md`
 - **D-041 (2026-10-21)** **Preferências de trabalho do usuário no `CLAUDE.md`** (bloco "Como trabalhar com o usuário"),
   em texto neutro, para irem junto com o repositório em qualquer máquina. O repositório é **público** (conferido em
   2026-10-21): nada pessoal ou sensível em arquivo versionado. A memória local do agente fica só para o que não for
   regra de trabalho. Ajusta o item 7 do D-038.
+- **D-051 (2026-10-27)** **Claude Code na nuvem sem segredos**: rede Trusted, sem variáveis nem network secrets, sem
+  acesso ao servidor (D-042 intacto). Mudança relevante vai por PR com merge do usuário; o estado de tarefa entre
+  sessões vai para `pendencias.md` ou para o PR (ajusta o journal do D-038). `CLOUD_SETUP.md`, `docs/decisoes/D-051-claude-code-na-nuvem.md`
 - **D-031** Toda feature nova tem kill-switch booleano e rollback de 1 linha; mudanças aditivas; imports opcionais
   com degradação segura.
 

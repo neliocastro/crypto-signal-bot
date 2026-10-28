@@ -3,8 +3,13 @@
 # Segredos (os do servidor vivem em /home/ineocom/cryptosignals/secrets/.env, fora do repo)
 .env
 .env.*
+!.env.example
 *.pem
 *.key
+*.p12
+id_rsa*
+id_ed25519*
+secrets/
 
 # Python
 __pycache__/

@@ -19,7 +19,8 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 | `docs/operacao.md` | runbooks: auditoria, deploy do relay, token, cron PAXG, reconciliação, watchdog |
 | `docs/resultado_financeiro.md` | placar real (datado); `python scripts/placar.py` gera o atual |
 | `docs/historico/` | evidência original das decisões; não editar, só consultar |
-| `.agent-work/<tarefa>.md` | journal local (fora do Git) de tarefa em andamento; ler ao retomar |
+| `.agent-work/<tarefa>.md` | rascunho local (fora do Git); não chega na nuvem (D-051) |
+| `CLOUD_SETUP.md` | sessão do Claude Code na nuvem: ambiente, PR, o que nunca vai para lá (D-051) |
 
 **Autoridade:** valores = código (`bot/config.py` é a fonte única). Porquês = decisões aprovadas e datadas no
 `memoria.md`, que prevalecem sobre os outros docs. Os docs descrevem. Se código, memória e docs divergirem,
@@ -39,16 +40,18 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 7. Depois de uma decisão importante aprovada, atualize o `memoria.md` (e o doc técnico afetado) no mesmo commit.
 
 ## Fluxo de trabalho
-1. Ler `docs/pendencias.md` e, se houver, o journal da tarefa em `.agent-work/`.
+1. Ler `docs/pendencias.md` (inclusive "Em andamento") e, se houver, o PR aberto da tarefa.
 2. Mudança relevante: plano resumido → aprovação do usuário → implementação.
 3. Rodar os checks abaixo e **mostrar o diff antes de commitar**; commitar só com aprovação.
 4. Commit **só dos arquivos listados** (`git -c core.fileMode=false add <arquivos>`: o SSD é exFAT e marca tudo como
-   modificado), mensagem em português, direto no `main`; `pull --rebase` antes do push (o bot commita `state/` sem
-   parar); depois do push, conferir o workflow `checks`.
+   modificado), mensagem em português. Mudança relevante (código, workflow, relay, flags, decisão) vai por **branch
+   + PR** e o merge é do usuário, com o `checks` verde; ajuste trivial de doc pode ir direto no `main` (D-051).
+   `pull --rebase` antes do push (o bot commita `state/` sem parar); depois do push, conferir o workflow `checks`.
 5. Mudança no servidor: roteiro com o SHA do commit **já preenchido**, conferência de bytes e hash, backup antes,
    `chown ineocom:ineocom`, e só então registrar o deploy em `operacao.md`/`memoria.md`.
-6. Tarefa que atravessa sessões ou espera o usuário agir no servidor: abrir `.agent-work/<tarefa>.md` com objetivo,
-   feito, próximo passo e bloqueios; ao concluir, levar o que precisa durar para o doc certo e apagar o journal.
+6. Tarefa que atravessa sessões ou máquinas, ou espera o usuário agir no servidor: registrar em `docs/pendencias.md`,
+   seção "Em andamento" (ou na descrição do PR), com objetivo, feito, próximo passo e bloqueios. Nada pessoal: o
+   repositório é público. Ao concluir, levar o que precisa durar para o doc certo e apagar o item (D-051).
 7. Fim da sessão: atualizar `docs/pendencias.md`.
 
 ## Como trabalhar com o usuário
@@ -56,6 +59,9 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
   `ssh cryptosignals-gate <ação>` (D-042/D-045: `help`, `status`, `hashes`, `crontab`, `env-keys`, `http`, `resumo`;
   prefira `resumo`, que junta as conferências numa conexão só, P-20). Conferência que o
   porteiro cobre, o agente faz sozinho em vez de pedir ao usuário.
+- Em sessão do Claude Code **na nuvem** não há acesso ao servidor nem segredo nenhum (D-051, `CLOUD_SETUP.md`):
+  conferência de servidor fica para uma sessão no Mac ou para o usuário colar a saída. Nunca levar a chave do
+  porteiro, o `.env` ou um Secret para o ambiente de nuvem.
 - Comando de servidor: um bloco por passo, com valores **já preenchidos** (SHA, sha256, bytes, caminhos absolutos),
   o resultado esperado e o rollback. Nunca deixar placeholder (`<SHA>`, `<token>`) num comando executável.
 - Todo comando para o servidor vem dentro da trava de hostname, para não rodar no Mac por engano (o `!` do Claude
