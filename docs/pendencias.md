@@ -12,6 +12,9 @@ Tarefas que atravessam sessões ou máquinas (D-051): objetivo, feito, próximo 
   checklist da seção 7. No `main`, só o ruleset de Restrict deletions + Block force pushes (nada de exigir PR ou status check: P-22).
 
 ## Pendências
+- **Push do `state/` estrito (D-052)**: depois do merge, conferir que o próximo scan segue gravando `state/` (commit
+  `chore: update signal state`) e que o `main.yml` fica verde. Se um run ficar vermelho no passo "Commit state",
+  é o alerta funcionando: ver a causa antes de tocar no kill-switch.
 - **Relay FIX 12 (D-050)**: deployado e ligado em 2026-10-23 (sha256 `809cb3cc…`). Falta conferir o primeiro fechamento
   com `exit_basis: fill_real` e, quando houver um TP1 com 25 dias, a primeira renovação. O nome do status de
   gatilho vencido segue sem confirmação (nenhum venceu ainda); o alerta cobre `expired/cancelled/failed`.

@@ -174,6 +174,11 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-051 (2026-10-27)** **Claude Code na nuvem sem segredos**: rede Trusted, sem variáveis nem network secrets, sem
   acesso ao servidor (D-042 intacto). Mudança relevante vai por PR com merge do usuário; o estado de tarefa entre
   sessões vai para `pendencias.md` ou para o PR (ajusta o journal do D-038). `CLOUD_SETUP.md`, `docs/decisoes/D-051-claude-code-na-nuvem.md`
+- **D-052 (2026-10-28)** **Push do `state/` falha alto** (o `git push || echo` engolia a falha e o `state/` se perdia; lição P-22, PR 5): no passo "Commit state" do `main.yml`, o
+  `git pull --rebase` + `git push` tenta até 3 vezes (`PUSH_ATTEMPTS`) e, se não gravar, o passo falha (run vermelho,
+  `::error`). O re-disparo tem `if: always()`, então a cadência não para. Kill-switch e rollback de 1 linha:
+  `COMMIT_PUSH_STRICT: "false"` (volta ao `|| true` / `|| echo`). Simulado em repositório local (push aceito, rejeitado,
+  rollback e corrida). Só vale depois do merge; confira o primeiro scan.
 - **D-031** Toda feature nova tem kill-switch booleano e rollback de 1 linha; mudanças aditivas; imports opcionais
   com degradação segura.
 

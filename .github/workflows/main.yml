@@ -48,6 +48,12 @@ jobs:
         run: python -m bot.main
 
       - name: Commit state
+        env:
+          # D-052 (P-22): o push do state/ falhava em silencio (run verde sem gravar o estado, e o runner
+          # descarta o commit). Com "true", tenta de novo e, se nao conseguir, FALHA o passo (run vermelho).
+          # Kill-switch / rollback: "false" restaura o comportamento antigo (pull --rebase || true; push || echo).
+          COMMIT_PUSH_STRICT: "true"
+          PUSH_ATTEMPTS: "3"
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -56,8 +62,25 @@ jobs:
             echo "Sem mudancas de estado para commitar."
           else
             git commit -m "chore: update signal state + dashboard [skip ci]"
-            git pull --rebase --autostash origin main || true
-            git push || echo "push falhou (corrida concorrente) - proximo scan reenvia"
+            if [ "${COMMIT_PUSH_STRICT:-false}" != "true" ]; then
+              git pull --rebase --autostash origin main || true
+              git push || echo "push falhou (corrida concorrente) - proximo scan reenvia"
+            else
+              pushed=0
+              for n in $(seq 1 "${PUSH_ATTEMPTS:-3}"); do
+                if git pull --rebase --autostash origin main && git push; then
+                  pushed=1
+                  break
+                fi
+                git rebase --abort 2>/dev/null || true
+                echo "::warning title=Push do state::tentativa $n de ${PUSH_ATTEMPTS:-3} falhou; nova tentativa em $((5 * n))s."
+                sleep $((5 * n))
+              done
+              if [ "$pushed" != "1" ]; then
+                echo "::error title=Push do state falhou::o state/ deste scan NAO foi gravado no main (posicoes e ordens podem estar desatualizadas). Causas: regra do main exigindo PR/status check, conflito ou GitHub instavel."
+                exit 1
+              fi
+            fi
           fi
 
       # ---------------------------------------------------------------
