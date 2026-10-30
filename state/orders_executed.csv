@@ -395,3 +395,4 @@ ts_utc,signal_id,symbol,side,notional_usdt,ref_price,fill_price,slippage_pct,mod
 2026-10-12T04:00:45.044873+00:00,8847d89b7ab6bec6,HYPE/USDT,buy,10.0,87.37,,,REAL,blocked_by_guard,concentracao: ja ha 1 posicao(oes) aberta(s) em HYPE/USDT (max 1)
 2026-10-26T13:03:19.466811+00:00,dca-BTC_USDT-2026W44,BTC/USDT,buy,10.0,80160.8,80177.15564517,,REAL,filled,
 2026-10-26T13:03:24.852280+00:00,dca-PAXG_USDT-2026W44,PAXG/USDT,buy,10.0,4028.53,4030.12,,REAL,filled,
+2026-10-30T00:00:30.040445+00:00,31b725ed68553a9b,TRX/USDT,buy,10.0,0.3534,0.3551,,REAL,filled,
