@@ -28,6 +28,10 @@ Tarefas que atravessam sessões ou máquinas (D-051): objetivo, feito, próximo 
   não falta de liquidez); o `amount_precision` em si não foi consultado. Não é bug e respeita o teto D-024; o aporte do PAXG fica
   abaixo do valor (hoje ~80%; com o preço menor pode cair mais, ex.: ~57% a US$ 3.500). Recomendação: não mexer (compensar o resto ou subir o valor mexe em sizing e pede
   aprovação). O `acumulado()` do `bot/dca.py` usa o `filled_total` real, então o custo médio fica certo.
+- **Valor do DCA revisado em 2026-11-05**: mantido em US$ 10/semana em BTC e em PAXG (decisão do usuário; é o máximo
+  sem mexer no relay, que tem teto de US$ 10 por ordem). Nesse ritmo (~US$ 18/semana, por causa do arredondamento do
+  PAXG), o USDT livre na Gate acaba por volta de 2027-06. Reavaliar antes disso ou se o usuário passar a aportar mais de
+  ~US$ 80/mês; aí o caminho recomendado é 2 compras por semana por ativo (ajusta o D-049, sem servidor).
 - **Reauditoria do degrau**: `python scripts/placar.py --degrau`. Pelo D-053 conta desde 2026-10-15: em 2026-11-05,
   1/20 trades (−US$ 0,55). Reprovado; reauditar ao chegar a 20. Revisar a estratégia com
   `scripts/backtest_tendencia_diaria.py` (resultado de 2026-11-05 em `docs/backtests/tendencia_diaria_20261105.md`).
