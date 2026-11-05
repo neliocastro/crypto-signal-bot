@@ -3,7 +3,7 @@
 > Estado volátil do projeto (D-038): o que falta fazer e o que acompanhar. Muda a cada sessão; as **decisões** ficam no
 > `memoria.md`. Ao resolver um item, apague-o daqui e registre o resultado onde ele pertence (decisão → `memoria.md`,
 > procedimento → `operacao.md`). Datas em AAAA-MM-DD; horários em UTC.
-> Revisado em 2026-10-26.
+> Revisado em 2026-11-05.
 
 ## Em andamento
 Tarefas que atravessam sessões ou máquinas (D-051): objetivo, feito, próximo passo, bloqueios. Nada pessoal.
@@ -12,8 +12,9 @@ Tarefas que atravessam sessões ou máquinas (D-051): objetivo, feito, próximo 
   script só com o `ccxt`.
 
 ## Pendências
-- **Relay FIX 12 (D-050)**: deployado e ligado em 2026-10-23 (sha256 `809cb3cc…`). Falta conferir o primeiro fechamento
-  com `exit_basis: fill_real` e, quando houver um TP1 com 25 dias, a primeira renovação. O nome do status de
+- **Relay FIX 12 (D-050)**: deployado e ligado em 2026-10-23 (sha256 `809cb3cc…`). Primeiro fechamento com
+  `exit_basis: fill_real` conferido: TRX de 2026-10-30 (stop a 0,336, −US$ 0,55). Falta, quando houver um TP1 com
+  25 dias, a primeira renovação. O nome do status de
   gatilho vencido segue sem confirmação (nenhum venceu ainda); o alerta cobre `expired/cancelled/failed`.
 - **DCA semanal (D-049)**: ligado em 2026-10-23 (FIX 11 no servidor, sha256 `945b2015…`). 1ª compra em 2026-10-26
   13:03 UTC (semana 2026W44), ambas `filled` em `state/dca.jsonl`: BTC US$ 9,94 (0,000124 BTC) e PAXG US$ 8,06
@@ -27,8 +28,8 @@ Tarefas que atravessam sessões ou máquinas (D-051): objetivo, feito, próximo 
   não falta de liquidez); o `amount_precision` em si não foi consultado. Não é bug e respeita o teto D-024; o aporte do PAXG fica
   abaixo do valor (hoje ~80%; com o preço menor pode cair mais, ex.: ~57% a US$ 3.500). Recomendação: não mexer (compensar o resto ou subir o valor mexe em sizing e pede
   aprovação). O `acumulado()` do `bot/dca.py` usa o `filled_total` real, então o custo médio fica certo.
-- **Reauditoria do degrau**: `python scripts/placar.py --degrau`. Em 2026-10-15: 6/20 trades (−US$ 2,41, PF 0); sem os
-  de cadência degradada, 3/20 (−US$ 1,15, PF 0). Reprovado; reauditar ao chegar a 20.
+- **Reauditoria do degrau**: `python scripts/placar.py --degrau`. Em 2026-11-05: 7/20 trades (−US$ 2,96, PF 0); sem os
+  de cadência degradada, 4/20 (−US$ 1,70, PF 0). Reprovado; reauditar ao chegar a 20.
 - **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 2026-09-21: decisão do usuário.
 
 ## Próximos passos

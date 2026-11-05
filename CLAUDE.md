@@ -21,6 +21,7 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 | `docs/historico/` | evidência original das decisões; não editar, só consultar |
 | `.agent-work/<tarefa>.md` | rascunho local (fora do Git); não chega na nuvem (D-051) |
 | `CLOUD_SETUP.md` | sessão do Claude Code na nuvem: ambiente, PR, o que nunca vai para lá (D-051) |
+| `.claude/skills/auditoria-crypto-bot/` | pedido de auditoria, "está tudo certo?", P&L, placar ou últimas operações: rodar a skill (só leitura) |
 
 **Autoridade:** valores = código (`bot/config.py` é a fonte única). Porquês = decisões aprovadas e datadas no
 `memoria.md`, que prevalecem sobre os outros docs. Os docs descrevem. Se código, memória e docs divergirem,
@@ -43,9 +44,10 @@ num servidor cPanel. Dono: Nélio Castro. Fuso: **America/Bahia (UTC−3)**. Res
 1. Ler `docs/pendencias.md` (inclusive "Em andamento") e, se houver, o PR aberto da tarefa.
 2. Mudança relevante: plano resumido → aprovação do usuário → implementação.
 3. Rodar os checks abaixo e **mostrar o diff antes de commitar**; commitar só com aprovação.
-4. Commit **só dos arquivos listados** (`git -c core.fileMode=false add <arquivos>`: o SSD é exFAT e marca tudo como
-   modificado), mensagem em português. Mudança relevante (código, workflow, relay, flags, decisão) vai por **branch
-   + PR** e o merge é do usuário, com o `checks` verde; ajuste trivial de doc pode ir direto no `main` (D-051).
+4. Commit **só dos arquivos listados** (`git -c core.fileMode=false add <arquivos>`; desde 2026-11-05 o clone de
+   trabalho no Mac fica no disco interno e o antigo, no SSD exFAT, que marcava tudo como modificado, está obsoleto),
+   mensagem em português. Mudança relevante (código, workflow, relay, flags, decisão) vai por **branch + PR**
+   e o merge é do usuário, com o `checks` verde; ajuste trivial de doc pode ir direto no `main` (D-051).
    `pull --rebase` antes do push (o bot commita `state/` sem parar); depois do push, conferir o workflow `checks`.
 5. Mudança no servidor: roteiro com o SHA do commit **já preenchido**, conferência de bytes e hash, backup antes,
    `chown ineocom:ineocom`, e só então registrar o deploy em `operacao.md`/`memoria.md`.
