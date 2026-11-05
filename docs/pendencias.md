@@ -28,8 +28,9 @@ Tarefas que atravessam sessões ou máquinas (D-051): objetivo, feito, próximo 
   não falta de liquidez); o `amount_precision` em si não foi consultado. Não é bug e respeita o teto D-024; o aporte do PAXG fica
   abaixo do valor (hoje ~80%; com o preço menor pode cair mais, ex.: ~57% a US$ 3.500). Recomendação: não mexer (compensar o resto ou subir o valor mexe em sizing e pede
   aprovação). O `acumulado()` do `bot/dca.py` usa o `filled_total` real, então o custo médio fica certo.
-- **Reauditoria do degrau**: `python scripts/placar.py --degrau`. Em 2026-11-05: 7/20 trades (−US$ 2,96, PF 0); sem os
-  de cadência degradada, 4/20 (−US$ 1,70, PF 0). Reprovado; reauditar ao chegar a 20.
+- **Reauditoria do degrau**: `python scripts/placar.py --degrau`. Pelo D-053 conta desde 2026-10-15: em 2026-11-05,
+  1/20 trades (−US$ 0,55). Reprovado; reauditar ao chegar a 20. Revisar a estratégia com
+  `scripts/backtest_tendencia_diaria.py` (resultado de 2026-11-05 em `docs/backtests/tendencia_diaria_20261105.md`).
 - **BTC manual do usuário** (0,0031756 BTC) sem ordens de proteção desde 2026-09-21: decisão do usuário.
 
 ## Próximos passos

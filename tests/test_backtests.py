@@ -15,10 +15,13 @@ import sys
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(_ROOT, "scripts"))
+sys.path.insert(0, _ROOT)
 
 import bt_comum as bt                 # noqa: E402
 import backtest_acumulo as ac         # noqa: E402
 import backtest_range as rg           # noqa: E402
+import backtest_tendencia_diaria as td  # noqa: E402
+from bot.mare_alta import check_mare_alta  # noqa: E402
 
 H4 = 4 * bt.MS_H
 T0 = 1_700_000_000_000 // bt.MS_D * bt.MS_D      # meia-noite UTC
@@ -122,6 +125,49 @@ def test_range_metricas_e_veredito():
     assert rg.veredito({"n": 30, "pf": 1.1}, bom) == "APROVADO"
     assert rg.veredito({"n": 30, "pf": 0.9}, bom) == "REPROVADO"
     assert rg.veredito({"n": 30, "pf": 2.0}, {"n": 10, "pf": 3.0}) == "AMOSTRA PEQUENA"
+
+
+# --------------------- Tendencia Diaria (backtest_tendencia_diaria) ---------------------
+def _diarias(precos, amp=0.01):
+    out, ant = [], precos[0]
+    for k, p in enumerate(precos):
+        out.append((T0 + k * bt.MS_D, ant, max(ant, p) * (1 + amp), min(ant, p) * (1 - amp), p))
+        ant = p
+    return out
+
+
+def _onda(n=260):
+    return [100 + k * 0.3 + 4 * math.sin(k / 3.0) + 2 * math.sin(k / 1.3) for k in range(n)]   # alta com recuos
+
+
+def test_tendencia_sinal_igual_ao_do_bot():
+    c = _diarias(_onda())
+    s = td.sinais(c)
+    assert any(s), "a onda deveria gerar sinais"
+    for i in range(60, len(c) - 1):
+        jan = [list(x) + [0.0] for x in c[:i + 1]] + [list(c[i]) + [0.0]]   # indice -2 = vela i
+        assert bool(check_mare_alta(jan)) == s[i], i
+
+
+def test_tendencia_stop_fixo_perde_o_risco():
+    precos = [100.0] * 60 + [80.0] * 5
+    c = _diarias(precos, amp=0.0)
+    sinal = [False] * len(c)
+    sinal[59] = True
+    t = td.simular(c, sinal)[0]
+    assert t["ret"] < -0.008 and not t["aberto"], t          # bateu o stop (piso 0,8%)
+
+
+def test_tendencia_tp1_breakeven_e_trailing():
+    precos = [100.0] * 60 + [100.0, 112.0, 130.0, 150.0, 60.0]
+    c = _diarias(precos, amp=0.0)
+    sinal = [False] * len(c)
+    sinal[59] = True
+    t = td.simular(c, sinal)[0]
+    # metade no TP1 (+10%) e o resto saiu no trailing, acima da entrada
+    assert 0.05 < t["ret"] < 0.5 and not t["aberto"], t
+    m = td.metricas([t, {"ret": -0.02}])
+    assert m["n"] == 2 and m["pf"] > 1
 
 
 if __name__ == "__main__":
