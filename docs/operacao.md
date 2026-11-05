@@ -5,6 +5,10 @@
 
 ## 1. Saúde do sistema (auditoria rápida)
 
+**Auditoria completa:** a skill `auditoria-crypto-bot` (`.claude/skills/`) faz as conferências desta tabela e monta o
+relatório (últimas operações, P&L, degrau, DCA). Coleta sozinha, só leitura:
+`python .claude/skills/auditoria-crypto-bot/scripts/coleta.py`. Na nuvem o servidor fica como não verificado (D-051).
+
 | Pergunta | Como verificar |
 |---|---|
 | A cadência está normal? | `gh run list --workflow main.yml` → runs `workflow_dispatch` a cada ~5 min. Sem dispatch há horas = token ou cron do servidor com problema |
