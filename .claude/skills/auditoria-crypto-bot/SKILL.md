@@ -57,7 +57,7 @@ Comece pela conclusão em 1–2 linhas (“tudo certo” ou o problema principal
    numerados por prioridade, cada um com recomendação (adotar / adotar em parte / não adotar) quando houver ação.
 2. **Últimas operações**: tabela Data (UTC) | Operação | Resultado (fechamentos + compras, mais recente primeiro).
 3. **P&L**: tabela de recortes do placar (Todos, sem cadência degradada, por estratégia); critério do degrau D-024
-   (trades desde 2026-09-04, P&L, PF, aprovado?); tabela do DCA (investido, custo médio e, se houver preço, P&L aberto).
+   (janela do D-053, desde 2026-10-15: trades, P&L, PF, aprovado?); tabela do DCA (investido, custo médio e, se houver preço, P&L aberto).
    Deixar claro que o placar é estimativa (D-034), exceto linhas `fill_real`.
 4. **O que não consegui conferir**: Gate, Actions, servidor, posições manuais (não reprecificadas), com o motivo e
    como conferir (ex.: `ssh cryptosignals-gate resumo` no Mac).

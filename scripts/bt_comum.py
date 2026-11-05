@@ -133,7 +133,8 @@ def baixar_candles(simbolo, timeframe, dias, exchanges=("gateio", "binance", "by
     passo = {"1h": MS_H, "4h": 4 * MS_H, "1d": MS_D}[timeframe]
     for nome in exchanges:
         try:
-            ex = getattr(ccxt, nome)({"enableRateLimit": True})
+            ex = getattr(ccxt, nome)({"enableRateLimit": True, "timeout": 60000})
+            ex.session.trust_env = True      # respeita HTTPS_PROXY/CA do ambiente (nuvem); sem proxy, nada muda
             ex.load_markets()
             if simbolo not in ex.markets:
                 continue

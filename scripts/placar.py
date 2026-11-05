@@ -20,7 +20,7 @@ USO
     python scripts/placar.py
     python scripts/placar.py --desde 2026-09-04     # trades ABERTOS a partir da data (regra D-024)
     python scripts/placar.py --arquivo outro.jsonl
-    python scripts/placar.py --degrau               # criterios do degrau US$ 20 (D-024), com e sem deg
+    python scripts/placar.py --degrau               # criterios do degrau US$ 20 (D-024/D-053), com e sem deg
 """
 import argparse
 import json
@@ -35,7 +35,8 @@ from bot.oco_guard import exit_pnl_est          # noqa: E402
 FEE_RATE = 0.001
 DEGRADADA_INI = "2026-09-14T21:13"     # janela de cadencia degradada (UTC, por opened_at)
 DEGRADADA_FIM = "2026-10-09T01:02"
-DEGRAU_DESDE = "2026-09-04"            # D-024: so trades abertos a partir daqui
+DEGRAU_DESDE = "2026-10-15"            # D-053 (ajusta o D-024): so trades com a saida atual (D-026/D-027)
+DEGRAU_DESDE_ANTERIOR = "2026-09-04"   # janela original do D-024, mostrada so como referencia
 DEGRAU_MIN_TRADES = 20
 # Inferencia so p/ linhas antigas. ETH/XRP etc.: trilho incerto (D-003) -> nao_registrada.
 _INFER = {"HYPE/USDT": "Breakout / Tendência", "PAXG/USDT": "Acúmulo (RSI sobrevenda)",
@@ -134,6 +135,10 @@ def main(argv=None):
         print("|---|---|---|---|---|")
         for nome, n, pnl, pf, ok in degrau(trades):
             print("| %s | %d | %+.2f | %s | %s |" % (nome, n, pnl, _fmt_pf(pf), "SIM" if ok else "NAO"))
+        antes, _ = carregar(a.arquivo, DEGRAU_DESDE_ANTERIOR)
+        r = resumo(antes)
+        print("\nReferencia (janela original do D-024, desde %s): %d trades, P&L %+.2f, PF %s. "
+              "Nao conta para o degrau (D-053)." % (DEGRAU_DESDE_ANTERIOR, r["n"], r["pnl"], _fmt_pf(r["pf"])))
         return 0
     trades, outros = carregar(a.arquivo, a.desde)
 

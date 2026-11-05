@@ -60,6 +60,7 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
 - **D-024 (2026-08-12; reafirmada em 2026-09-16 e 2026-10-08)** **Teto US$ 10 por ordem.** Degrau US$ 20 só com
   **20 trades fechados abertos desde 2026-09-04**, **P&L > 0** e **PF ≥ 1** nessa janela. Ao subir: mudar Python e PHP
   juntos e reavaliar `EXECUTION_DAILY_LOSS_STOP`. `historico/reauditoria_degrau_2026-10-08.md`
+  Janela AJUSTADA pelo D-053: conta desde 2026-10-15.
 - **D-025 (2026-09-16)** O bot **nunca cancela ordem que não criou**: ordens manuais do usuário ficam fora do OCO guard.
   `historico/prioridade1_2026-09-16.md`
 - **D-026 (2026-10-15)** Trailing do Maré Alta **só com vela D1 fechada** (`MARE_ALTA_TRAILING_CLOSED_ONLY`).
@@ -157,6 +158,10 @@ Histórico vivo de decisões e aprendizados. Só o que ajuda a continuidade, sem
   Conferido na Gate em 2026-10-23: gatilho executado = `finish`; a ordem de 15 dias atrás ainda é consultável.
   FIX 12 deployado em 2026-10-23 (sha256 `809cb3cc…`, backup `execute.php.bak-20261023b` = FIX 11) e
   `TP_RENEW_ENABLED` ligado em seguida.
+- **D-053 (2026-11-05)** **Degrau conta só trades com a saída atual** (ajusta a janela do D-024): abertos a partir de
+  2026-10-15 (D-026/D-027), mesmos critérios. Refeitos com a regra atual, os 7 trades da janela antiga iriam de
+  −US$ 2,96 para −US$ 1,37; só 1 deles rodou com a regra atual (R-003). Rollback: `DEGRAU_DESDE = "2026-09-04"` no
+  `scripts/placar.py`. `docs/decisoes/D-053-degrau-conta-so-a-saida-atual.md`, `docs/backtests/tendencia_diaria_20261105.md`
 - **D-028 (2026-10-13)** As posições-papel XRP (23/08) e PAXG (28/08) em `state/paper_positions.json` são
   **obsoletas e ignoradas** (não são ordens reais).
 

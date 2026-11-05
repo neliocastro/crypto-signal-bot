@@ -1,6 +1,6 @@
 # Estratégias, roteamento e parâmetros de execução
 
-> Revisado em 2026-10-15. Descreve **o que o bot opera hoje** e com quais parâmetros. Valores conferidos em
+> Revisado em 2026-11-05. Descreve **o que o bot opera hoje** e com quais parâmetros. Valores conferidos em
 > `bot/config.py` e `bot/mare_alta.py`; em divergência, o código vence. O porquê de cada escolha está em
 > `memoria.md` (IDs D-/R-). Ao mudar roteamento, kill-switch ou parâmetro, atualize este arquivo no mesmo commit.
 
@@ -30,7 +30,9 @@ Breakout 1h   -> HYPE                 DESLIGADO desde 2026-10-13 (D-013)
   Se o relay não aplicar o TP parcial (qty abaixo do mínimo), o TP sai na base inteira e o bot avisa no Telegram;
   essa posição segue o modo antigo (TP 2,0R + trailing desde o início).
 - **Validação:** walk-forward jul/2026 (carteira PF 1,64; OOS PF 2,08). Backtest fiel com stop 2,5×:
-  BTC 1,28 · SOL 4,51 · TRX 2,21 · BNB 2,15. O script desse backtest não está no repositório.
+  BTC 1,28 · SOL 4,51 · TRX 2,21 · BNB 2,15 (script não versionado). Refeito em 2026-11-05 com a saída atual por
+  `scripts/backtest_tendencia_diaria.py`: em 2025+ PF BTC 1,53 · SOL 2,08 · TRX 1,21 · BNB 3,55; nas 25 moedas
+  líquidas, 0,92 (`docs/backtests/tendencia_diaria_20261105.md`).
 - Kill-switches: `MARE_ALTA_ENABLED`, `MARE_ALTA_SHADOW_MODE` (False = ordens reais), `MARE_ALTA_TRAILING_ENABLED`,
   `MARE_ALTA_TRAILING_CLOSED_ONLY`, `MARE_ALTA_PARTIAL_TP_ENABLED`.
 - **Validade dos gatilhos (D-033):** a Gate expira TP e SL em 30 dias. Com 25 dias ou mais, o SL de qualquer posição
