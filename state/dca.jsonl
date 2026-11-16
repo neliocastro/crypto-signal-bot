@@ -10,3 +10,7 @@
 {"semana": "2026W46", "symbol": "BTC/USDT", "notional_usdt": 10.0, "ts": "2026-11-09T13:00:26.997547+00:00", "signal_id": "dca-BTC_USDT-2026W46", "status": "filled", "reason": null, "fill_price": 74912.3, "filled_total": "9.9633359", "order_id": "1163173505957"}
 {"semana": "2026W46", "symbol": "PAXG/USDT", "notional_usdt": 10.0, "ts": "2026-11-09T13:00:26.997547+00:00", "signal_id": "dca-PAXG_USDT-2026W46", "status": "tentativa"}
 {"semana": "2026W46", "symbol": "PAXG/USDT", "notional_usdt": 10.0, "ts": "2026-11-09T13:00:26.997547+00:00", "signal_id": "dca-PAXG_USDT-2026W46", "status": "filled", "reason": null, "fill_price": 4112.1, "filled_total": "8.2242", "order_id": "1163173573077"}
+{"semana": "2026W47", "symbol": "BTC/USDT", "notional_usdt": 10.0, "ts": "2026-11-16T13:03:02.971590+00:00", "signal_id": "dca-BTC_USDT-2026W47", "status": "tentativa"}
+{"semana": "2026W47", "symbol": "BTC/USDT", "notional_usdt": 10.0, "ts": "2026-11-16T13:03:02.971590+00:00", "signal_id": "dca-BTC_USDT-2026W47", "status": "filled", "reason": null, "fill_price": 64251.3, "filled_total": "9.9589515", "order_id": "1167339187714"}
+{"semana": "2026W47", "symbol": "PAXG/USDT", "notional_usdt": 10.0, "ts": "2026-11-16T13:03:02.971590+00:00", "signal_id": "dca-PAXG_USDT-2026W47", "status": "tentativa"}
+{"semana": "2026W47", "symbol": "PAXG/USDT", "notional_usdt": 10.0, "ts": "2026-11-16T13:03:02.971590+00:00", "signal_id": "dca-PAXG_USDT-2026W47", "status": "filled", "reason": null, "fill_price": 3863.59, "filled_total": "7.72718", "order_id": "1167339351499"}
